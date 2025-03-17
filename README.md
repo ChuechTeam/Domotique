@@ -52,8 +52,9 @@ Recommandation : utiliser l'application [Insomnia](https://insomnia.rest/downloa
 
 Voir le dossier `docs/` du projet :
 
-| Documentation                                        | Description                                                           |
-|------------------------------------------------------|-----------------------------------------------------------------------|
-| **[Architecture](docs/ARCHITECTURE.md)**             | Description de l'architecture du projet                               |
-| **[Cookbook Templates](docs/COOKBOOK_Templates.md)** | Feuille pratique pour écrire des templates JTE (Java Template Engine) |
-| **[Help](docs/HELP.md)**                             | Liens un peu au pif de documentation                                  |
+| Documentation                                              | Description                                                           |
+|------------------------------------------------------------|-----------------------------------------------------------------------|
+| **[Architecture](docs/ARCHITECTURE.md)**                   | Description de l'architecture du projet                               |
+| **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)** | Feuille pratique pour `Future<T>` de Vert.x                           |
+| **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Feuille pratique pour écrire des templates JTE (Java Template Engine) |
+| **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                  |
