@@ -19,5 +19,10 @@ public enum Gender {
     /**
      * The user prefers not to tell us their gender. Why? Who knows.
      */
-    UNDISCLOSED
+    UNDISCLOSED;
+
+    /// Converts a byte value to a Gender enum.
+    public static Gender fromByte(byte b) {
+        return values()[b];
+    }
 }

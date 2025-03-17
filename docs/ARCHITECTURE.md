@@ -2,8 +2,12 @@
 
 - **docs**: Fichiers de documentation pratiques
 - **src/main** : Code de l'application
+  - **assets** : Fichiers statiques (images, css, js, etc.) disponibles à la racine du serveur web (ex : `localhost:8080/image.jpeg` -> `static/image.jpeg`)
   - **java** : Fichiers Java
-  - **jte** : Templates/pages HTML au format [JTE](https://jte.gg/syntax)
-  - **resources** : Fichiers de configuration
-    - **static** : Fichiers statiques (images, css, js, etc.) disponibles à la racine du serveur web (ex : `localhost:8080/image.jpeg` -> `static/image.jpeg`)
+    - **fr/domotique** : Notre code
+      - **api** : Toutes les "sections" de notre API, toutes les requêtes possibles et leur fonctionnement
+      - **data** : Systèmes et utilitiares permettant d'interagir avec la base de donnée
+  - **logs** : Fichier de logs des exécutions précédentes du serveur
+  - **resources** : Fichiers de configuration et documentation d'API
+  - **views** : Templates/pages HTML au format [JTE](https://jte.gg/syntax) (pas encore en place)
 - **src/test** : Le code des tests prédéfinis (pas important pour l'instant)

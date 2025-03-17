@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
+<!--
+   The logging configuration, to... configure logging using Logback.
+
+   Resources:
+     - General: https://logback.qos.ch/manual/configuration.html
+     - Appenders: https://logback.qos.ch/manual/appenders.html
+     - Patterns: https://logback.qos.ch/manual/layouts.html#logger
+     - ChatGPT
+-->
+<configuration>
+  <!-- Boring imports -->
+  <import class="ch.qos.logback.core.ConsoleAppender"/>
+  <import class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
+
+  <!-- Disable Logback's default logging messages (ugly + we don't care) -->
+  <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+  <!-- The log format for console logging, referred as STDOUT. -->
+  <appender name="STDOUT" class="ConsoleAppender">
+    <encoder>
+      <!--
+        %highlight: Changes the color to match the log level
+        %-5level: The log level, left-aligned, with a width of 5 characters
+        %-40logger{20}: The logger name, left-aligned, with a width of 40 characters
+        %msg: The log message
+        %kvp: The key-value pairs (MDC)
+        %n: A newline
+        %ex: The exception, if any
+      -->
+      <pattern>%highlight(%-5level) %-45logger{30} %msg %kvp%n%ex</pattern>
+    </encoder>
+  </appender>
+
+  <!-- The log format when writing to the log file (domotique.log), referred as FILE -->
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>logs/domotique.log</file>
+    <append>true</append>
+    <encoder>
+      <!--
+        %d{HH:mm:ss.SSS}: The current time in HH:mm:ss.SSS format
+        %thread: The thread name
+        %-5level: The log level, left-aligned, with a width of 5 characters
+        %logger: The logger name
+        %msg: The log message
+        %kvp: The key-value pairs (MDC)
+        %n: A newline (two of them)
+      -->
+      <pattern>%d{HH:mm:ss.SSS} %-5level %-70logger{70}  [%thread]%n    %msg %kvp%n%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Log everything being at least as important as INFO, on both FILE and STDOUT. -->
+  <root level="info">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
+  </root>
+
+  <!-- Log ANYTHING from our own code, including stuff below INFO (DEBUG & TRACE). -->
+  <logger name="fr.domotique" level="trace"/>
+
+  <!-- Makes sure the log file is saved on app shutdown. -->
+  <shutdownHook class="DefaultShutdownHook" delay="200"/>
+</configuration>

@@ -1,73 +1,142 @@
-import org.springframework.boot.gradle.tasks.run.BootRun
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 
 plugins {
     java
-    id("org.springframework.boot") version "3.4.3"
-    id("io.spring.dependency-management") version "1.1.7"
-    id("gg.jte.gradle") version "3.1.16"
+    application
+    id("com.gradleup.shadow") version "9.0.0-beta10"
 }
 
 group = "fr.domotique"
-version = "0.0.1-SNAPSHOT"
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+version = "1.0.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("gg.jte:jte:3.1.16")
-    implementation("gg.jte:jte-spring-boot-starter-3:3.1.16")
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("com.mysql:mysql-connector-j")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+val vertxVersion = "5.0.0.CR5"
+val junitJupiterVersion = "5.9.1"
+
+val mainVerticleName = "fr.domotique.MainVerticle"
+val launcherClassName = "fr.domotique.Launcher"
+val launcherModuleName = "fr.domotique.web"
+
+val watchForChange = "src/**/*"
+val doOnChange = "${projectDir}/gradlew classes"
+
+application {
+    mainClass.set(launcherClassName)
+    mainModule.set(launcherModuleName)
 }
 
-jte {
-    generate()
-    binaryStaticContent = true
+dependencies {
+    // Vert.x stuff
+    implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
+    implementation("io.vertx:vertx-launcher-application")
+    implementation("io.vertx:vertx-web")
+
+    // Vert.x MySQL client
+    implementation("io.vertx:vertx-mysql-client")
+    implementation("com.ongres.scram:client:2.1")
+    implementation("com.ongres.scram:scram-client:3.0")
+
+    // Logging
+    implementation("ch.qos.logback:logback-classic:1.5.16")
+
+    // JSON support
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
+
+    // Liquibase stuff
+    implementation("org.liquibase:liquibase-core:4.27.0")
+    implementation("com.mysql:mysql-connector-j:9.2.0")
+    implementation("com.mattbertolini:liquibase-slf4j:5.1.0")
+
+    // Annotations
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.2")
+
+    // Tests
+    testImplementation("io.vertx:vertx-junit5")
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(23)
+    }
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
+}
+
+tasks.withType<ShadowJar> {
+    archiveClassifier.set("fat")
+    manifest {
+        attributes(mapOf("Main-Verticle" to mainVerticleName))
+    }
+    mergeServiceFiles()
+
+    // Put all resources in the shadow jar for release.
+    from("src/main/") {
+        include("assets/")
+        include("views/")
+        into("/")
+    }
+
+    exclude("config-dev.properties")
+    exclude("config-dev-local.properties")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        events = setOf(PASSED, SKIPPED, FAILED)
+    }
 }
 
-tasks.withType<BootRun> {
-    // Make sure we use the development profile!
-    jvmArgs = listOf("-Dspring.profiles.active=dev")
+// Possible thing to do for better modularity. But right now it works so who cares anyway
+//tasks.named<ProcessResources>("processResources") {
+//    doLast {
+//        copy {
+//            from(source)
+//            into(project.layout.buildDirectory.dir("classes/java/main"))
+//        }
+//    }
+//}
+
+
+// Create the "updateDatabase" task to run MigrationRunner.
+tasks.register<JavaExec>("updateDatabase") {
+    group = "application"
+
+    mainClass = "fr.domotique.data.MigrationRunner"
+
+    classpath = sourceSets["main"].runtimeClasspath
+    args = listOf("update")
 }
 
-// This block just adds the application-dev-local.properties file if it doesn't exist
+// Configure java properties (dev mode mainly) & working directory for all run tasks
+tasks.withType<JavaExec> {
+    jvmArgs = listOf("-Dvertxweb.environment=dev", "-Ddomotique.srcroot=" + rootDir.resolve("src/main"))
+    workingDir = rootDir.resolve("src/main")
+}
+
+// This block just adds the config-dev-local.properties file if it doesn't exist
 gradle.projectsEvaluated {
-    val file = projectDir.resolve("src/main/resources/application-dev-local.properties")
+    val file = projectDir.resolve("src/main/resources/config-dev-local.properties")
     if (!file.exists()) {
         file.parentFile.mkdirs()
         file.createNewFile()
         file.writeText("""
-            # ----- Database credentials -----
+            # --- config-dev-local.properties ---
+            # Contains configuration that are personal to YOU! This file won't be sent to GitHub, so you can put
+            # anything personal here.
             
-            # Name and address of the database (default name is domo; automatically created!)
-            # 3306 is the default port for MySQL, change it if you... changed it?
-            spring.datasource.url=jdbc:mysql://localhost:3306/domo?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
-            
-            # Username and password to use -- Replace this with the right password/username!
-            spring.datasource.username=root
-            spring.datasource.password=cytech1000
+            # Database credentials -- fill in your username & password here!
+            # Quick URL explaination: mysql://USERNAME:PASSWORD@HOST:PORT/DATABASE   [... and other random options]
+            domotique.databaseUri=mysql://root:cytech1000@localhost:3306/domo?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
             
             # Put a custom port (uncomment to use)
             # server.port=8080
             """.trimIndent())
-        println("Created application-dev-local.properties file")
+        println("Created config-dev-local.properties file")
     }
 }

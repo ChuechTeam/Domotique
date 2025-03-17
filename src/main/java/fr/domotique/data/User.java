@@ -1,72 +1,72 @@
 package fr.domotique.data;
 
-import jakarta.persistence.*;
+import io.vertx.sqlclient.*;
 
 /**
  * A user of the domotique app. Can log in using a combination of email and hashed password.
  *
  * @author Dynamic
  */
-@Entity
-@Table(name = "User",
-        indexes = {
-                // Add an index to quickly find a user by email and password
-                @Index(columnList = "email, passHash")
-        })
 public class User {
     /**
-     * The unique identifier of the user.
+     * The unique identifier of the user. A value of 0 means that the user will be created soon.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Enable AUTO INCREMENT to get automatic IDs
-    private long id;
+    private int id;
 
     /**
      * The email address of the user. Must be unique. Is used to log in.
      */
-    @Column(unique = true, nullable = false)
     private String email;
 
     /**
      * The gender of the user.
      */
-    @Column(nullable = false)
     private Gender gender;
 
     /**
-     * The hashed password of the user.
-     * <p>
-     * Try a <a href="https://www.baeldung.com/spring-security-registration-password-encoding-bcrypt">hashing tutorial</a>
+     * The hashed password of the user. Uses PBKDF2 algorithm.
+     *
+     * @see io.vertx.ext.auth.hashing.HashingStrategy
      */
-    @Column(nullable = false)
     private String passHash;
-
-    /**
-     * Used only by JPA (the SQL magic thing) so it can initialize every attribute of the User.
-     */
-    protected User() {}
 
     /**
      * Make a new user with all their necessary information
      *
+     * @param id the identifier of this user; 0 -> automatically generated
      * @param email the email address of the user
      * @param gender the gender of the user
      * @param passHash the HASHED password of the user
-     *                 (<a href="https://www.baeldung.com/spring-security-registration-password-encoding-bcrypt">hashing tutorial</a>)
      */
-    public User(String email, Gender gender, String passHash) {
+    public User(int id, String email, Gender gender, String passHash) {
+        this.id = id;
         this.email = email;
         this.gender = gender;
         this.passHash = passHash;
     }
 
+    /// Maps an SQL [Row] to a [User], considering all of its fields are in order, starting from `startIdx`.
+    public static User map(Row row, int startIdx) {
+        return new User(
+                row.getInteger(startIdx),
+                row.getString(startIdx + 1),
+                Gender.fromByte(row.get(Byte.class, startIdx + 2)),
+                row.getString(startIdx + 3)
+        );
+    }
+
+    /// Maps an SQL [Row] to a [User], considering all of its fields are in order.
+    public static User map(Row row) {
+        return map(row, 0);
+    }
+
     // Boring getters and setters
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
