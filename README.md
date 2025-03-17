@@ -14,6 +14,8 @@
 
 ## Première configuration
 
+Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !
+
 1. Cloner le dépôt dans un dossier au choix et s'y rendre  
    **Terminal (Linux & Windows) :**
    ```bash
