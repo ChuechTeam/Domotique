@@ -23,11 +23,11 @@ Pour recevoir des objets Java du contrôleur, on utilise :
 @import fr.domotique.model.User
 @import java.util.List
 
-<!-- Contrôleur : model.setAttribute("utilisateur", monUser); -->
+<!-- viewArg("utilisateur", monUser); -->
 @param User utilisateur
-<!-- Contrôleur : model.setAttribute("messages", maListe); -->
+<!-- viewArg("messages", maListe); -->
 @param List<String> messages
-<!-- Contrôleur : model.setAttribute("estConnecte", true); -->
+<!-- viewArg("estConnecte", true); -->
 @param boolean estConnecte = false <!-- paramètre optionnel avec valeur par défaut -->
 ```
 
