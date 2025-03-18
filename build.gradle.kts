@@ -26,7 +26,7 @@ val doOnChange = "${projectDir}/gradlew classes"
 
 application {
     mainClass.set(launcherClassName)
-    mainModule.set(launcherModuleName)
+//    mainModule.set(launcherModuleName)
 }
 
 dependencies {
@@ -37,8 +37,8 @@ dependencies {
 
     // Vert.x MySQL client
     implementation("io.vertx:vertx-mysql-client")
-    implementation("com.ongres.scram:client:2.1")
-    implementation("com.ongres.scram:scram-client:3.0")
+//    implementation("com.ongres.scram:client:2.1")
+//    implementation("com.ongres.scram:scram-client:3.0")
 
     // Logging
     implementation("ch.qos.logback:logback-classic:1.5.16")
@@ -46,13 +46,16 @@ dependencies {
     // JSON support
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
 
+    // JTE Templating support
+    implementation("io.vertx:vertx-web-templ-jte")
+
     // Liquibase stuff
     implementation("org.liquibase:liquibase-core:4.27.0")
     implementation("com.mysql:mysql-connector-j:9.2.0")
     implementation("com.mattbertolini:liquibase-slf4j:5.1.0")
 
     // Annotations
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.2")
+    compileOnly("org.jetbrains:annotations:26.0.2")
 
     // Tests
     testImplementation("io.vertx:vertx-junit5")
@@ -65,6 +68,23 @@ java {
     }
     sourceCompatibility = JavaVersion.VERSION_23
     targetCompatibility = JavaVersion.VERSION_23
+}
+
+tasks.withType<Javadoc> {
+    (options as StandardJavadocDocletOptions).apply {
+        // Link to Vert.x API documentation
+        links = listOf("https://vertx.io/docs/5.0.0.CR5/apidocs/")
+
+        // Add Highlight.js for code syntax highlighting in documentation
+        bottom = """
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+            <script>hljs.highlightAll();</script>
+        """.trimIndent().replace("\n", "")
+
+        addBooleanOption("-allow-script-in-comments", true)
+    }
 }
 
 tasks.withType<ShadowJar> {

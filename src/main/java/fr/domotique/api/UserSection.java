@@ -9,7 +9,7 @@ import org.slf4j.*;
 /// All API endpoints to access user data, and do authentication.
 public class UserSection extends Section {
     // The store to access the User table in the database
-    private final UserTable userTable;
+    final UserTable userTable;
 
     /// Creates a new UserSection with the given server.
     public UserSection(Server server) {
@@ -20,10 +20,10 @@ public class UserSection extends Section {
     }
 
     // All routes of this section will begin by /api/users
-    private static final String PATH_PREFIX = "/api/users*";
+    static final String PATH_PREFIX = "/api/users*";
 
     // The logger used to print messages to the console with nice colors.
-    private static final Logger log = LoggerFactory.getLogger(UserSection.class);
+    static final Logger log = LoggerFactory.getLogger(UserSection.class);
 
     @Override
     public void register(Router router) {
@@ -57,7 +57,7 @@ public class UserSection extends Section {
     }
 
     // GET /api/users/:userId
-    private Future<PublicUser> getUser(RoutingContext context) {
+    Future<PublicUser> getUser(RoutingContext context) {
         // Read the user id from the path parameter (/api/users/:userId)
         int userId = readIntPathParam(context, "userId");
 
@@ -66,7 +66,7 @@ public class UserSection extends Section {
     }
 
     // POST /api/users
-    private Future<PublicUser> register(RoutingContext context) {
+    Future<PublicUser> register(RoutingContext context) {
         // The input JSON taken by this endpoint.
         // {
         //     "email": "hello@abc.fr"
@@ -80,7 +80,7 @@ public class UserSection extends Section {
 
         // Check if the user is already logged in; if so, don't register a user who's already registered!
         if (auth.isLoggedIn()) {
-            throw new RequestProblemException("Vous êtes déjà connecté !", 400, "ALREADY_LOGGED_IN");
+            throw new RequestException("Vous êtes déjà connecté !", 400, "ALREADY_LOGGED_IN");
         }
 
         // Read the JSON from the request
@@ -90,7 +90,7 @@ public class UserSection extends Section {
         Validation.email(input.email, "L'e-mail est invalide.");
         Validation.nonBlank(input.password, "Le mot de passe est vide.");
         if (input.password.length() < 8) {
-            throw new RequestProblemException("Le mot de passe doit faire au moins 8 caractères.", 422);
+            throw new RequestException("Le mot de passe doit faire au moins 8 caractères.", 422);
         }
 
         // Hash the password, and create the User object
@@ -111,7 +111,7 @@ public class UserSection extends Section {
     }
 
     // POST /api/users/login
-    private Future<PublicUser> login(RoutingContext context) {
+    Future<PublicUser> login(RoutingContext context) {
         // The input JSON taken by this endpoint.
         // {
         //     "email": "hello@def.fr"
@@ -138,7 +138,7 @@ public class UserSection extends Section {
                 .map(user -> {
                     // Make sure the given password matches the user's password, and that the user exists!
                     if (user == null || !auth.checkPassword(input.password, user.getPassHash())) {
-                        throw new RequestProblemException("E-mail ou mot de passe incorrect.", 401);
+                        throw new RequestException("E-mail ou mot de passe incorrect.", 401);
                     }
 
                     // Log in the user to the current session.
@@ -150,7 +150,7 @@ public class UserSection extends Section {
     }
 
     // POST /api/users/logout
-    private Future<Void> logout(RoutingContext context) {
+    Future<Void> logout(RoutingContext context) {
         // Get the Authenticator.
         Authenticator auth = Authenticator.get(context);
 
@@ -162,7 +162,7 @@ public class UserSection extends Section {
     }
 
     // GET /api/users/me
-    private Future<PublicUser> me(RoutingContext context) {
+    Future<PublicUser> me(RoutingContext context) {
         // Get the Authenticator.
         Authenticator auth = Authenticator.get(context);
 

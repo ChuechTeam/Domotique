@@ -1,22 +1,11 @@
 # Comment utiliser les templates ?
 
-1. Écrire les templates en format `.jte` dans le dossier `src/main/jte/` du projet.  
-   **Exemple :** `src/main/jte/superPage.jte`
-2. L'utiliser comme ça dans un contrôleur Java : 
-    ```java
-    @Controller
-    public class MyController {
-        @GetMapping("/welcome")
-        public String welcome() {
-            // Utilise le template src/jte/superPage.jte
-            return "superPage";
-        }
-    }
-    ```
+1. Écrire les templates en format `.jte` dans le dossier `src/main/views/` du projet.  
+   **Exemple :** `src/main/views/superPage.jte`
 
 # Comment écrire un template ?
 
-Après avoir créé un fichier `.jte` dans le dossier `src/main/jte/`, on peut **écrire
+Après avoir créé un fichier `.jte` dans le dossier `src/main/views/`, on peut **écrire
 du HTML agrémenté de Java**, avec plusieurs façons de le faire. 
 
 **Fortement recommendé** : Installer le [plugin JTE](https://plugins.jetbrains.com/plugin/14521-jte)

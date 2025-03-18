@@ -3,6 +3,7 @@ package fr.domotique.data;
 import io.vertx.core.*;
 import io.vertx.mysqlclient.*;
 import io.vertx.sqlclient.*;
+import org.jetbrains.annotations.*;
 
 /// Contains many functions to interact with the [User] table in the database.
 ///
@@ -26,8 +27,8 @@ public class UserTable {
         this.client = client;
     }
 
-    /// Gets the user with the given ID.
-    public Future<User> get(int id) {
+    /// Gets the user with the given ID. Can return `null`.
+    public Future<@Nullable User> get(int id) {
         // What we're doing:
         // 1. prepareQuery : make a SQL statement taking parameters (in question marks)
         //
@@ -47,7 +48,7 @@ public class UserTable {
     ///
     /// @param email the email of the user
     /// @return the user, or `null` if not found
-    public Future<User> getByEmail(String email) {
+    public Future<@Nullable User> getByEmail(String email) {
         // What we're doing:
         // 1. prepareQuery : make a SQL statement taking parameters (in question marks)
         //

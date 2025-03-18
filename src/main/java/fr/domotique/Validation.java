@@ -1,7 +1,5 @@
 package fr.domotique;
 
-import fr.domotique.api.*;
-
 /// Contains functions that validate user values.
 ///
 /// All functions end the request with a 422/400 status code if the value is invalid.
@@ -42,10 +40,10 @@ public final class Validation {
     /// ```
     public static void email(String value, String errMessage) {
         if (value == null) {
-            throw new RequestProblemException(errMessage, 422);
+            throw new RequestException(errMessage, 422);
         }
         if (!value.contains("@") || value.length() < 3) {
-            throw new RequestProblemException(errMessage, 422);
+            throw new RequestException(errMessage, 422);
         }
     }
 
@@ -70,7 +68,7 @@ public final class Validation {
     /// @see String#isBlank()
     public static void nonBlank(String value, String errMessage) {
         if (value == null || value.isBlank()) {
-            throw new RequestProblemException(errMessage, 422);
+            throw new RequestException(errMessage, 422);
         }
     }
 }

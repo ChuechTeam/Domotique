@@ -2,6 +2,8 @@
 
 ## Prérequis
 
+Vous avez la flemme et êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !
+
 - JDK (Java Development Kit) 23 ou plus  
   **Commandes Ubuntu (une ligne = une commande)**
   ```bash
@@ -9,8 +11,7 @@
   echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
   sudo apt update && sudo apt install -y temurin-23-jdk
   ```
-  **Windows
-  ** : [Télécharger le JDK Temurin 23](https://adoptium.net/fr/temurin/releases/?version=23&os=windows&arch=x64)
+  **Windows** : [Télécharger le JDK Temurin 23](https://adoptium.net/fr/temurin/releases/?version=23&os=windows&arch=x64)
 - MySQL 8.0 ou plus
 
 ## Première configuration
@@ -41,7 +42,9 @@ Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le scri
 
 ## Comment tester le backend ?
 
-Recommandation : utiliser l'application [Yaak](https://yaak.app/download) puis importer le fichier OpenAPI
+Recommendation utiliser la documentation incluse : `http://localhost:7777/api-docs`
+
+Autre possibilité : utiliser l'application [Yaak](https://yaak.app/download) puis importer le fichier OpenAPI
 `src/main/resources/openapi.yml`.
 
 ## Documentation supplémentaire
@@ -55,4 +58,5 @@ Voir le dossier `docs/` du projet :
 | **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Feuille pratique pour `SqlClient` de Vert.x                           |
 | **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Feuille pratique pour les `records` Java                              |
 | **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Feuille pratique pour écrire des templates JTE (Java Template Engine) |
+| **Script Javadoc** (`docs/javadoc`) | Script à lancer pour générer les javadocs accessibles sur navigateur  |
 | **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                  |

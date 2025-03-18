@@ -3,6 +3,7 @@ package fr.domotique;
 import io.vertx.core.*;
 import io.vertx.ext.web.*;
 import io.vertx.ext.web.sstore.*;
+import io.vertx.ext.web.templ.jte.*;
 import io.vertx.mysqlclient.*;
 import io.vertx.sqlclient.*;
 import org.slf4j.*;
@@ -67,10 +68,13 @@ public class MainVerticle extends VerticleBase {
         }
 
         // Create the session store, storing user sessions for logged-in users, currently in-memory.
-        var sessionStore = LocalSessionStore.create(vertx);
+        LocalSessionStore sessionStore = LocalSessionStore.create(vertx);
+
+        // Make the JTE templating engine, so we can render HTML
+        JteTemplateEngine templateEngine = JteTemplateEngine.create(vertx, "views");
 
         // Create the server object, with our new SqlClient and the configuration
-        var server = new Server(client, sessionStore, config, vertx);
+        var server = new Server(client, sessionStore, templateEngine, config, vertx);
 
         // Set how many instances of RouterVerticle to deploy (one per CPU)
         var options = new DeploymentOptions()
@@ -81,6 +85,9 @@ public class MainVerticle extends VerticleBase {
         return vertx.deployVerticle(() -> new RouterVerticle(server), options)
                 .andThen(x -> {
                     log.info("Server ready at http://localhost:{} ({} instances)", config.port(), options.getInstances());
+                    if (config.isDevelopment()) {
+                        log.info("API documentation is available at http://localhost:{}/api-docs", config.port());
+                    }
                 });
     }
 }

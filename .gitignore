@@ -39,7 +39,7 @@ out/
 .vscode/
 
 ### JTE ###
-/jte-classes/
+jte-classes/
 
 application-dev-local.properties
 logs/

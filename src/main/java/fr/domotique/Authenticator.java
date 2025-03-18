@@ -1,13 +1,11 @@
 package fr.domotique;
 
-import fr.domotique.api.*;
 import fr.domotique.data.*;
 import io.vertx.core.*;
 import io.vertx.ext.auth.hashing.*;
 import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
-
-import edu.umd.cs.findbugs.annotations.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -27,7 +25,7 @@ import java.util.*;
 ///
 ///     // Check if user is logged in
 ///     if (!auth.isLoggedIn()) {
-///         throw new RequestProblemException("You must be logged in", 401);
+///         throw new RequestException("You must be logged in", 401);
 ///     }
 ///
 ///     // Get the user id of the current user
@@ -47,7 +45,7 @@ public class Authenticator {
 
     // Id of the logged-in user; 0 means no user logged in
     private int userId = 0;
-    /// Cached logged-in user object
+    /// Cached logged-in user object; can be null!
     private @Nullable User user = null;
 
     /// The key used for [#get(RoutingContext)]
@@ -60,8 +58,8 @@ public class Authenticator {
     private static final HashingStrategy hashAlgo = HashingStrategy.load();
 
     /// Exception thrown when the user is not logged in.
-    public static final RequestProblemException UNAUTHORIZED_EXCEPTION
-            = new RequestProblemException("Vous devez être connecté pour effectuer cette action.", 401, "UNAUTHORIZED");
+    public static final RequestException UNAUTHORIZED_EXCEPTION
+            = new RequestException("Vous devez être connecté pour effectuer cette action.", 401, "UNAUTHORIZED");
 
     /// Creates a new authenticator for the current request.
     public Authenticator(RoutingContext ctx, Server server) {
@@ -160,7 +158,7 @@ public class Authenticator {
     /// If no user is logged in, ends the request with a 401 "Unauthorized" status code.
     ///
     /// @return the user id; can't be 0
-    /// @throws RequestProblemException when the user is not logged in
+    /// @throws RequestException when the user is not logged in
     public int getUserIdOrFail() {
         requireAuth();
         return userId;
@@ -169,7 +167,7 @@ public class Authenticator {
     /// Returns the currently logged-in user from the database.
     ///
     /// @return the logged-in user, or `null` if no user is logged in
-    public Future<User> getUser() {
+    public Future<@Nullable User> getUser() {
         // When the user is not logged in, return null directly.
         if (userId == 0) {
             return Future.succeededFuture(null);
