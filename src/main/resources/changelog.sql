@@ -13,6 +13,8 @@
 --   -> gradle updateDatabase --args="drop-all"
 --   -> ./liquibase drop-all
 
+-- liquibase formatted sql
+
 -- changeset dynamic:init
 CREATE TABLE user(
     id INT PRIMARY KEY AUTO_INCREMENT,

@@ -41,12 +41,12 @@ public class RouterVerticle extends VerticleBase {
     /**
      * The server settings, like port number and database connection
      */
-    private final Server server;
+    final Server server;
 
     /**
      * Logger to help us track what's happening in the server
      */
-    private static final Logger log = LoggerFactory.getLogger(RouterVerticle.class);
+    static final Logger log = LoggerFactory.getLogger(RouterVerticle.class);
 
     /**
      * Creates a new RouterVerticle with the given server settings.
@@ -55,6 +55,14 @@ public class RouterVerticle extends VerticleBase {
      */
     public RouterVerticle(Server server) {
         this.server = server;
+    }
+
+    /// The array with all [sections][Section] we should activate.
+    Section[] allSections() {
+        return new Section[] {
+            new UserSection(server),
+            new HomeSection(server)
+        };
     }
 
     /**
@@ -97,13 +105,10 @@ public class RouterVerticle extends VerticleBase {
         // Could also be used later on to add support for file uploads.
         r.route().handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
 
-        // Register all sections of our API.
-        var userApi = new UserSection(server);
-        userApi.register(r);
-
-        // Register all sections of our website.
-        var homeSection = new HomeSection(server);
-        homeSection.register(r);
+        // Register all sections.
+        for (Section section : allSections()) {
+            section.register(r);
+        }
 
         // note to self: ctx.addEndHandlers can be useful for middlewares
 

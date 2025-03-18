@@ -40,6 +40,10 @@ Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le scri
    **Terminal (Windows) :** `gradlew.bat run`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
 
+## Ouh là je suis perdu là
+
+Regarde le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
+
 ## Comment tester le backend ?
 
 Recommendation utiliser la documentation incluse : `http://localhost:7777/api-docs`
@@ -51,12 +55,13 @@ Autre possibilité : utiliser l'application [Yaak](https://yaak.app/download) pu
 
 Voir le dossier `docs/` du projet :
 
-| Documentation                                              | Description                                                           |
-|------------------------------------------------------------|-----------------------------------------------------------------------|
-| **[Architecture](docs/ARCHITECTURE.md)**                   | Description de l'architecture du projet                               |
-| **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)** | Feuille pratique pour `Future<T>` de Vert.x                           |
-| **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Feuille pratique pour `SqlClient` de Vert.x                           |
-| **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Feuille pratique pour les `records` Java                              |
-| **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Feuille pratique pour écrire des templates JTE (Java Template Engine) |
-| **Script Javadoc** (`docs/javadoc`) | Script à lancer pour générer les javadocs accessibles sur navigateur  |
-| **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                  |
+| Documentation                                              | Description                                                          |
+|------------------------------------------------------------|----------------------------------------------------------------------|
+| **[Architecture](docs/ARCHITECTURE.md)**                   | Description de l'architecture du projet                              |
+| **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)** | Fiche pratique pour `Future<T>` de Vert.x                            |
+| **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Fiche pratique pour `SqlClient` de Vert.x                            |
+| **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Fiche pratique pour les `records` Java                               |
+| **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Fiche pratique pour écrire des templates JTE (Java Template Engine)  |
+| **[Cookbook Database Update](docs/COOKBOOK_DatabaseUpdate.md)** | Fiche pratique pour utiliser Liquibase                          |
+| **Script Javadoc** (`docs/javadoc`) | Script à lancer pour générer les javadocs accessibles sur navigateur |
+| **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                 |

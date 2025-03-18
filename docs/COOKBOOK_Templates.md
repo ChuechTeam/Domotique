@@ -31,28 +31,22 @@ Pour recevoir des objets Java du contrôleur, on utilise :
 @param boolean estConnecte = false <!-- paramètre optionnel avec valeur par défaut -->
 ```
 
-Pour cet exemple, le contrôleur peut ressembler à :
-
+Pour cet exemple, la section peut ressembler à :
 ```java
-@Controller
-public class ExempleController {
-    // "model" permet de donner des paramètres @param au template
-    @GetMapping("/discussions")
-    public String discussions(Model model) {
-        // Création d'un utilisateur
-        User utilisateur = new User("Jean", "jean@example.com");
-        
-        // Création d'une liste de messages
-        List<String> messages = List.of("Bonjour", "Bonsoir", "Au revoir");
+// Dans une classe qui hérite de Section
+Future<Void> discussions(RoutingContext context) {
+    // Création d'un utilisateur
+    User utilisateur = new User("Jean", "jean@example.com");
+     
+    // Création d'une liste de messages
+    List<String> messages = List.of("Bonjour", "Bonsoir", "Au revoir");
 
-        // Ajout des attributs au modèle pour le template
-        model.addAttribute("utilisateur", utilisateur); // -> @param User utilisateur
-        model.addAttribute("messages", messages);       // -> @param List<String> messages
-        model.addAttribute("estConnecte", true);        // -> @param boolean estConnecte
-        
-        // On utilise le template
-        return "monTemplate";  // Correspond à src/main/jte/monTemplate.jte
-    }
+    // Rendu du template avec les paramètres
+    return view(context, "monTemplate", 
+        viewArg("utilisateur", utilisateur), // -> @param User utilisateur
+        viewArg("messages", messages),       // -> @param List<String> messages
+        viewArg("estConnecte", true)         // -> @param boolean estConnecte
+    );
 }
 ```
 
