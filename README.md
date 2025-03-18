@@ -3,13 +3,14 @@
 ## Prérequis
 
 - JDK (Java Development Kit) 23 ou plus  
-  **Commandes Ubuntu (une ligne = une commande)** 
+  **Commandes Ubuntu (une ligne = une commande)**
   ```bash
   wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
   echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
   sudo apt update && sudo apt install -y temurin-23-jdk
   ```
-  **Windows** : [Télécharger le JDK Temurin 23](https://adoptium.net/fr/temurin/releases/?version=23&os=windows&arch=x64)
+  **Windows
+  ** : [Télécharger le JDK Temurin 23](https://adoptium.net/fr/temurin/releases/?version=23&os=windows&arch=x64)
 - MySQL 8.0 ou plus
 
 ## Première configuration
@@ -40,15 +41,8 @@ Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le scri
 
 ## Comment tester le backend ?
 
-Recommandation : utiliser l'application [Insomnia](https://insomnia.rest/download) puis importer le fichier OpenAPI `src/main/resources/openapi.yml`.
-
-- Cliquer sur "Continue"
-- Cliquer sur "Use a local scratch pad"
-- Cliquer sur "Scratch pad" > "Import"
-- Choisir le fichier `src/main/resources/openapi.yml` puis "Import"
-- Choisir l'environement localhost   
-  ![Step 1](docs/insomnia_step1.png)
-- Lancer une requête au choix
+Recommandation : utiliser l'application [Yaak](https://yaak.app/download) puis importer le fichier OpenAPI
+`src/main/resources/openapi.yml`.
 
 ## Documentation supplémentaire
 
@@ -58,5 +52,7 @@ Voir le dossier `docs/` du projet :
 |------------------------------------------------------------|-----------------------------------------------------------------------|
 | **[Architecture](docs/ARCHITECTURE.md)**                   | Description de l'architecture du projet                               |
 | **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)** | Feuille pratique pour `Future<T>` de Vert.x                           |
+| **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Feuille pratique pour `SqlClient` de Vert.x                           |
+| **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Feuille pratique pour les `records` Java                              |
 | **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Feuille pratique pour écrire des templates JTE (Java Template Engine) |
 | **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                  |

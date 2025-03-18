@@ -109,6 +109,9 @@ tasks.register<JavaExec>("updateDatabase") {
 
     mainClass = "fr.domotique.data.MigrationRunner"
 
+    // I have no clue why that's not done by default...
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+
     classpath = sourceSets["main"].runtimeClasspath
     args = listOf("update")
 }

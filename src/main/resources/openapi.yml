@@ -185,9 +185,5 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUser'
-        '404':
+        '204':
           description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'

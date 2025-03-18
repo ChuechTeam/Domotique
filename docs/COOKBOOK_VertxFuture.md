@@ -21,6 +21,8 @@ promise.fail("something went wrong");
 
 ## Gérer les résultats des Futures
 
+**Attention** : Il est interdit d'enchaîner plusieurs `onSuccess` de suite (idem pour `onFailure` et `onComplete`) !
+
 ```java
 future
     .onSuccess(result -> {
