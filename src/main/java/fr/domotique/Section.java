@@ -154,7 +154,7 @@ public abstract class Section {
     /// someFuture.andThen(x -> {
     ///     if (x.succeeded()){
     ///         doThing(x.result());
-    ///}
+    ///     }
     ///})
     ///```
     ///
@@ -162,7 +162,7 @@ public abstract class Section {
     /// ```java
     /// someFuture.andThen(whenOk(x -> {
     ///     doThing(x);
-    ///}));
+    /// }));
     ///```
     public static <T> Handler<AsyncResult<T>> whenOk(Handler<T> handler) {
         return x -> {
@@ -240,7 +240,7 @@ public abstract class Section {
     ///        viewArg("user", "Alice"),
     ///        viewArg("money", -300),
     ///        viewArg("isAdmin", false)
-    ///);
+    ///    );
     ///}
     ///```
     ///
@@ -266,7 +266,7 @@ public abstract class Section {
     }
 
     /// Create a view argument to be used with
-    /// [the view function][Section#view(io.vertx.ext.web.RoutingContext, java.lang.String, java.util.Map)].
+    /// [the view function][Section#view(RoutingContext, String, Map.Entry\[\])].
     protected final Map.Entry<String, Object> viewArg(String key, Object value) {
         return Map.entry(key, value);
     }
