@@ -70,8 +70,9 @@ java {
     targetCompatibility = JavaVersion.VERSION_23
 }
 
-// Change the Java sources folder to be src/back/java instead of src/main/java
+// Change the Java/Resources sources folder to be src/back/ instead of src/main/
 sourceSets["main"].java.srcDirs("src/back/java")
+sourceSets["main"].resources.srcDirs("src/back/resources")
 
 tasks.withType<Javadoc> {
     (options as StandardJavadocDocletOptions).apply {
