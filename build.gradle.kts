@@ -21,12 +21,10 @@ val mainVerticleName = "fr.domotique.MainVerticle"
 val launcherClassName = "fr.domotique.Launcher"
 val launcherModuleName = "fr.domotique.web"
 
-val watchForChange = "src/**/*"
-val doOnChange = "${projectDir}/gradlew classes"
-
 application {
     mainClass.set(launcherClassName)
-//    mainModule.set(launcherModuleName)
+    // JPMS is broken with JTE, so let's not use it for now.
+    //  mainModule.set(launcherModuleName)
 }
 
 dependencies {
@@ -34,6 +32,7 @@ dependencies {
     implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
     implementation("io.vertx:vertx-launcher-application")
     implementation("io.vertx:vertx-web")
+    implementation("io.vertx:vertx-web-proxy")
 
     // Vert.x MySQL client
     implementation("io.vertx:vertx-mysql-client")
@@ -63,12 +62,16 @@ dependencies {
 }
 
 java {
+    // Embrace modernity!!!
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
     }
     sourceCompatibility = JavaVersion.VERSION_23
     targetCompatibility = JavaVersion.VERSION_23
 }
+
+// Change the Java sources folder to be src/back/java instead of src/main/java
+sourceSets["main"].java.srcDirs("src/back/java")
 
 tasks.withType<Javadoc> {
     (options as StandardJavadocDocletOptions).apply {
@@ -83,6 +86,7 @@ tasks.withType<Javadoc> {
             <script>hljs.highlightAll();</script>
         """.trimIndent().replace("\n", "")
 
+        // No idea why this is needed for "bottom" to work properly. Allow script in COMMENTS?!
         addBooleanOption("-allow-script-in-comments", true)
     }
 }
@@ -138,7 +142,7 @@ tasks.register<JavaExec>("updateDatabase") {
 
 // Configure java properties (dev mode mainly) & working directory for all run tasks
 tasks.withType<JavaExec> {
-    jvmArgs = listOf("-Dvertxweb.environment=dev", "-Ddomotique.srcroot=" + rootDir.resolve("src/main"))
+    jvmArgs = listOf("-Dvertxweb.environment=dev", "-Ddomotique.srcroot=" + rootDir.resolve("src/back"))
     workingDir = rootDir.resolve("src/main")
 }
 

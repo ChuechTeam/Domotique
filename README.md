@@ -2,7 +2,7 @@
 
 ## Prérequis
 
-Vous avez la flemme et êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !
+🤩 **Vous avez la flemme et êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !**
 
 - JDK (Java Development Kit) 23 ou plus  
   **Commandes Ubuntu (une ligne = une commande)**
@@ -12,30 +12,43 @@ Vous avez la flemme et êtes sur Linux ? Clonez le repo et lancez le script `./s
   sudo apt update && sudo apt install -y temurin-23-jdk
   ```
   **Windows** : [Télécharger le JDK Temurin 23](https://adoptium.net/fr/temurin/releases/?version=23&os=windows&arch=x64)
+- Node.js 20 ou plus et NPM  
+  **Commandes Ubuntu (une ligne = une commande)**
+  ```bash
+  sudo apt install -y npm
+  ```
+  **Windows** : [Télécharger Node.js](https://nodejs.org/en/download/current/)
 - MySQL 8.0 ou plus
 
 ## Première configuration
 
-Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !
+🤩 **Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !**
 
-1. Cloner le dépôt dans un dossier au choix et s'y rendre  
+1. Cloner le dépôt dans un dossier au choix et s'y rendre (important !)
    **Terminal (Linux & Windows) :**
    ```bash
    git clone https://github.com/ChuechTeam/Domotique.git
    cd Domotique
    ```
    **IntelliJ :** File > New > Project from Version Control > GitHub
-2. Télécharger toutes les dépendances du projet   
-   **Terminal (Linux) :** `./gradlew build`     
-   **Terminal (Windows) :** `gradlew.bat build`    
+2. Télécharger toutes les dépendances du projet Java  
+   **Terminal (Linux) :** `./gradlew build`  
+   **Terminal (Windows) :** `gradlew.bat build`  
    **IntelliJ :** Onglet Gradle > Sync All Gradle Projects
-3. Mettre l'utilisateur et le mot de passe MySQL dans le fichier de configuration
+3. Télécharger toutes les dépendances du projet Frontend  
+   **Terminal (Linux & Windows) :** 
+   ```bash
+   cd src/front
+   npm install
+   cd ../..
+   ```
+4. Mettre l'utilisateur et le mot de passe MySQL dans le fichier de configuration
    `src/main/java/resources/config-dev-local.properties`
-4. Initialiser la base de données   
+5. Initialiser la base de données   
    **Terminal (Linux) :** `./gradlew updateDatabase` ou `./liquibase`     
    **Terminal (Windows) :** `gradlew.bat build` ou `./liquibase.bat`    
    **IntelliJ :** Onglet Gradle > Sync All Gradle Projects
-5. Lancer l'application !  
+6. Lancer l'application !  
    **Terminal (Linux) :** `./gradlew run`    
    **Terminal (Windows) :** `gradlew.bat run`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
@@ -46,7 +59,7 @@ Regarde le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
 
 ## Comment tester le backend ?
 
-Recommendation utiliser la documentation incluse : `http://localhost:7777/api-docs`
+**Recommendation :** utiliser la documentation incluse `http://localhost:7777/api-docs`
 
 Autre possibilité : utiliser l'application [Yaak](https://yaak.app/download) puis importer le fichier OpenAPI
 `src/main/resources/openapi.yml`.

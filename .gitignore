@@ -36,10 +36,11 @@ out/
 /.nb-gradle/
 
 ### VS Code ###
-.vscode/
+!src/front/.vscode/extensions.json
+.vscode/**
 
 ### JTE ###
 jte-classes/
 
-application-dev-local.properties
+config-dev-local.properties
 logs/

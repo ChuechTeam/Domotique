@@ -125,3 +125,13 @@ La configuration de l'application est définie dans plusieurs fichiers du dossie
 - `config-dev-local.properties` : configuration appliquée en développement, pas envoyée sur GitHub (à utiliser pour les mdp de BDD)
 
 Elle est au format properties, donc `clé=valeur`. Les clés possibles sont écrites sur la javadoc de `Config`.
+
+### Frontend
+
+Le frontend est rangé dans... le dossier `src/front`. 
+
+Le serveur de développement Vue.js peut être : 
+- lancé manuellement avec `npm run dev` (en étant dans le dossier `src/front`)
+- lancé automatiquement en lançant le serveur Vert.x avec `./gradlew run`
+
+Toutes les requêtes hors-API du serveur Vert.x sont redirigées vers le serveur de développement Vue.js.
