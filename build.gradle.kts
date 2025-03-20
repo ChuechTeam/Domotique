@@ -100,7 +100,7 @@ tasks.withType<ShadowJar> {
     mergeServiceFiles()
 
     // Put all resources in the shadow jar for release.
-    from("src/main/") {
+    from("src/back/") {
         include("assets/")
         include("views/")
         into("/")
@@ -144,7 +144,7 @@ tasks.register<JavaExec>("updateDatabase") {
 // Configure java properties (dev mode mainly) & working directory for all run tasks
 tasks.withType<JavaExec> {
     jvmArgs = listOf("-Dvertxweb.environment=dev", "-Ddomotique.srcroot=" + rootDir.resolve("src/back"))
-    workingDir = rootDir.resolve("src/main")
+    workingDir = rootDir.resolve("src/back")
 }
 
 // This block just adds the config-dev-local.properties file if it doesn't exist

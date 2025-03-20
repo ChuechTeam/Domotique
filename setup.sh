@@ -40,13 +40,13 @@ else
 fi
 
 # Find the root directory of the bash script file
-DIR="$(dirname "$0")"
+DIR=$(realpath "$(dirname "$0")")
 
 # Change the current directory to $DIR; we could probably change it back but honestly... not worth the hassle
 cd "$DIR" || exit
 
 echo "🏗️ Initializing the Java project (src/back)..."
-"$DIR/gradlew" classes
+./gradlew classes
 echo "✅ Java project initialized!"
 
 echo "🏗️ Initializing the Vue project (src/front)..."
@@ -56,7 +56,7 @@ echo "✅ Vue project initialized!"
 
 echo "🏗️ Initializing the database..."
 cd "$DIR" || exit
-if ! "$DIR/gradlew" updateDatabase; then
+if ! ./gradlew updateDatabase; then
   echo "❌ Failed to initialize the database! Make sure the username and the password are correct in src/back/resources/config-dev-local.properties"
   exit 1
 else
