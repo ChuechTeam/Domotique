@@ -1,6 +1,7 @@
 package fr.domotique;
 
 import fr.domotique.api.*;
+import fr.domotique.apidocs.*;
 import fr.domotique.site.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.*;
@@ -61,7 +62,7 @@ public class RouterVerticle extends VerticleBase {
 
     /// The array with all [sections][Section] we should activate.
     Section[] allSections() {
-        return new Section[] {
+        return new Section[]{
             new UserSection(server),
             new HomeSection(server)
         };
@@ -125,21 +126,13 @@ public class RouterVerticle extends VerticleBase {
 
         // Create and start the HTTP server
         return vertx.createHttpServer()
-                .requestHandler(r)
-                .listen(server.config().port());
+            .requestHandler(r)
+            .listen(server.config().port());
     }
 
     /// This function is called when an exception is thrown during a request,
     /// and will adapt the response accordingly.
     private static void handleRequestProblems(RoutingContext ctx) {
-        // Declare a little record so we can send JSON with these properties:
-        // {
-        //    "message": "Exception's message",
-        //    "code": "EXCEPTION_ERR_CODE", // or null if errorCode is null
-        //    "details": {...} // or null if details is null
-        // }
-        record ErrorResponse(String message, String code, Object data) {}
-
         // Is this exception one of those special RequestExceptions?
         if (ctx.failure() instanceof RequestException pb) {
             // Yes! Now make sure we can write to the response.
@@ -149,41 +142,27 @@ public class RouterVerticle extends VerticleBase {
             }
 
             // And now, write a JSON response with information about the error
-            var responseToSend = new ErrorResponse(pb.getMessage(), pb.getErrorCode(), pb.getDetails());
+            var responseToSend = new ErrorResponse<>(pb.getMessage(), pb.getErrorCode(), pb.getDetails());
             ctx.response()
-                    .setStatusCode(pb.getStatusCode())
-                    .putHeader(HttpHeaders.CONTENT_TYPE, "text/json; charset=utf-8")
-                    .end(Json.encode(responseToSend));
+                .setStatusCode(pb.getStatusCode())
+                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                .end(Json.encode(responseToSend));
         } else {
             // Nope, give it to the other error handler
             ctx.next();
         }
     }
 
-    /// Serves the openapi.yml file in development mode at the /api-docs/openapi.yml URL,
+    /// Serves the generated openapi.yml file in development mode at the /api-docs/openapi.yml URL,
     /// and serves the Swagger UI page as well.
-    private void serveApiDocumentation(Router r) throws IOException {
-        // First read the entirety of the openapi.yml file in a "yml" buffer.
-        final Buffer yml;
-        try (InputStream stream = RouterVerticle.class.getResourceAsStream("/openapi.yml")) {
-            if (stream != null) {
-                yml = Buffer.buffer(stream.readAllBytes());
-            } else {
-                yml = null;
-            }
-        }
+    private void serveApiDocumentation(Router r) {
+        // First serve the files for the Scalar API Docs
+        r.route("/api-docs*").handler(StaticHandler.create("scalar"));
 
-        // The serve it! (if possible...)
-        if (yml != null) {
-            // First serve the files for the Scalar API Docs
-            r.route("/api-docs*").handler(StaticHandler.create("scalar"));
-
-            // Then serve the openapi.yml file from the buffer
-            r.route("/api-docs/openapi.yml").handler(ctx -> {
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/yaml").end(yml);
-            });
-        } else {
-            log.warn("No openapi.yml file found, openapi.yml will not be available.");
-        }
+        // Generate the API docs on demand. It's not very efficient but it won't be queried often so who cares?
+        r.route("/api-docs/openapi.yml").handler(ctx -> {
+            String s = DocsGen.generate(r);
+            ctx.response().putHeader("Content-Type", "text/yaml").end(s);
+        });
     }
 }

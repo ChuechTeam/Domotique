@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.*;
 import io.vertx.core.json.*;
@@ -170,6 +171,23 @@ public abstract class Section {
                 handler.handle(x.result());
             }
         };
+    }
+
+    public static RouteDoc doc(Route route) {
+        var rd = new RouteDoc();
+        route.putMetadata(RouteDoc.KEY, rd);
+        return rd;
+    }
+
+
+    /// Creates a new router (using the server's vertx instance).
+    ///
+    /// This is equivalent to
+    /// ```java
+    /// Router.router(server.vertx());
+    /// ```
+    protected Router newRouter() {
+        return Router.router(server.vertx());
     }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`.

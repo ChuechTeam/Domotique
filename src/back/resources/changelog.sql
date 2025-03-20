@@ -20,6 +20,8 @@ CREATE TABLE user(
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) NOT NULL,
     gender TINYINT NOT NULL,
+    role TINYINT NOT NULL,
+    level TINYINT NOT NULL,
     pass_hash VARCHAR(255) NOT NULL,
 
     UNIQUE INDEX idx_mail(email)

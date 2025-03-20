@@ -53,6 +53,9 @@ dependencies {
     implementation("com.mysql:mysql-connector-j:9.2.0")
     implementation("com.mattbertolini:liquibase-slf4j:5.1.0")
 
+    // API documentation
+    implementation("io.swagger.core.v3:swagger-core:2.2.28")
+
     // Annotations
     compileOnly("org.jetbrains:annotations:26.0.2")
 
