@@ -149,7 +149,7 @@ tasks.withType<JavaExec> {
 
 // This block just adds the config-dev-local.properties file if it doesn't exist
 gradle.projectsEvaluated {
-    val file = projectDir.resolve("src/main/resources/config-dev-local.properties")
+    val file = projectDir.resolve("src/back/resources/config-dev-local.properties")
     if (!file.exists()) {
         file.parentFile.mkdirs()
         file.createNewFile()
