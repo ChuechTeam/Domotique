@@ -98,7 +98,7 @@ public class MainVerticle extends VerticleBase {
         vertx.createHttpClient().connect(new HttpConnectOptions().setHost("localhost").setPort(5173).setSsl(false))
             .onSuccess(HttpClientConnection::close)
             .onFailure(x -> {
-                log.info("Vue.js dev server not running. Starting it...", x);
+                log.info("Vue.js dev server not running. Starting it...");
                 vertx.executeBlocking(() -> {
                     try {
                         // Create process builder to run npm command
