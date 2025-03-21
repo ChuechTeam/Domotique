@@ -1,5 +1,7 @@
 # Comment utiliser le client API JavaScript
 
+N'oubliez pas de consulter la documentation à l'URL [http://localhost:7777/api-docs](http://localhost:7777/api-docs) !!!
+
 ## Pour récupérer une section
 
 Toutes les sections de l'API sont présentes dans le module `api`.

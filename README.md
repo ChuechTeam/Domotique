@@ -53,6 +53,8 @@
    **Terminal (Windows) :** `gradlew.bat run`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
 
+Puis, ouvre le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
+
 ## Ouh là je suis perdu là
 
 Regarde le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
@@ -68,14 +70,14 @@ Autre possibilité : utiliser l'application [Yaak](https://yaak.app/download) pu
 
 Voir le dossier `docs/` du projet :
 
-| Documentation                                              | Description                                                          |
-|------------------------------------------------------------|----------------------------------------------------------------------|
-| **[Architecture](docs/ARCHITECTURE.md)**                   | Description de l'architecture du projet                              |
-| **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)** | Fiche pratique pour `Future<T>` de Vert.x                            |
-| **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Fiche pratique pour `SqlClient` de Vert.x                            |
-| **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Fiche pratique pour les `records` Java                               |
-| **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Fiche pratique pour écrire des templates JTE (Java Template Engine)  |
+| Documentation                                                   | Description                                                          |
+|-----------------------------------------------------------------|----------------------------------------------------------------------|
+| **[Architecture](docs/ARCHITECTURE.md)**                        | Description de l'architecture du projet                              |
+| **[Cookbook Vert.x Future](docs/COOKBOOK_VertxFuture.md)**      | Fiche pratique pour `Future<T>` de Vert.x                            |
+| **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**            | Fiche pratique pour `SqlClient` de Vert.x                            |
+| **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**       | Fiche pratique pour les `records` Java                               |
+| **[Cookbook Templates](docs/COOKBOOK_Templates.md)**            | Fiche pratique pour écrire des templates JTE (Java Template Engine)  |
 | **[Cookbook Database Update](docs/COOKBOOK_DatabaseUpdate.md)** | Fiche pratique pour utiliser Liquibase                               |
-| **[API JavaScript](docs/API_JavaScript.md) | Guide pour utiliser le client API du JavaScript                      |
-| **Script Javadoc** (`docs/javadoc`) | Script à lancer pour générer les javadocs accessibles sur navigateur |
-| **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                 |
+| **[API JavaScript](docs/API_JavaScript.md)**                    | Guide pour utiliser le client API du JavaScript                      |
+| **Script Javadoc** (`docs/javadoc`)                             | Script à lancer pour générer les javadocs accessibles sur navigateur |
+| **[Help](docs/HELP.md)**                                        | Liens un peu au pif de documentation                                 |
