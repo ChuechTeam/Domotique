@@ -108,6 +108,12 @@ public class RouterVerticle extends VerticleBase {
         // Could also be used later on to add support for file uploads.
         r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
 
+        // Disable caching.
+        r.route("/api/*").handler(ctx -> {
+            ctx.response().putHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
+            ctx.next();
+        });
+
         // Register all sections.
         for (Section section : allSections()) {
             section.register(r);

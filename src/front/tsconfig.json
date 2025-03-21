@@ -1,0 +1,21 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "allowJs": true,
+    "checkJs": false,
+    "noImplicitAny": false,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/front/src/*"]
+    },
+    "types": ["vite/client"],
+    "noEmit": true
+  },
+  "include": ["src/front/src/**/*.ts", "src/front/src/**/*.d.ts", "src/front/src/**/*.tsx", "src/front/src/**/*.vue"],
+  "exclude": ["node_modules", "dist"]
+}

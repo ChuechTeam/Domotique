@@ -2,7 +2,6 @@ package fr.domotique.data;
 
 import io.vertx.core.*;
 import io.vertx.sqlclient.*;
-import io.vertx.sqlclient.data.*;
 import org.jetbrains.annotations.*;
 
 /// Contains many functions to interact with the [User] table in the database.
@@ -84,7 +83,7 @@ public class UserTable extends Table {
         //                   use it to give the ID of the user we've just created!
         return client.preparedQuery("""
                 INSERT INTO user
-                    (email, email_confirmation_token, email_confirmed, pass_hash, first_name, last_name, gender, role, level, points) 
+                    (email, email_confirmation_token, email_confirmed, pass_hash, first_name, last_name, gender, role, level, points)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             .execute(Tuple.of(
                 user.getEmail(),

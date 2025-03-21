@@ -75,6 +75,7 @@ Voir le dossier `docs/` du projet :
 | **[Cookbook Vert.x SQL](docs/COOKBOOK_VertxSql.md)**       | Fiche pratique pour `SqlClient` de Vert.x                            |
 | **[Cookbook Java Records](docs/COOKBOOK_JavaRecords.md)**  | Fiche pratique pour les `records` Java                               |
 | **[Cookbook Templates](docs/COOKBOOK_Templates.md)**       | Fiche pratique pour écrire des templates JTE (Java Template Engine)  |
-| **[Cookbook Database Update](docs/COOKBOOK_DatabaseUpdate.md)** | Fiche pratique pour utiliser Liquibase                          |
+| **[Cookbook Database Update](docs/COOKBOOK_DatabaseUpdate.md)** | Fiche pratique pour utiliser Liquibase                               |
+| **[API JavaScript](docs/API_JavaScript.md) | Guide pour utiliser le client API du JavaScript                      |
 | **Script Javadoc** (`docs/javadoc`) | Script à lancer pour générer les javadocs accessibles sur navigateur |
 | **[Help](docs/HELP.md)**                                   | Liens un peu au pif de documentation                                 |

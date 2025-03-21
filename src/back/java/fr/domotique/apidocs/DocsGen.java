@@ -28,7 +28,7 @@ public final class DocsGen {
             .description("API documentation for the Domotique website.")
             .version("0.1.0"))
         .servers(List.of(new Server()
-            .url("http://localhost:7777") // TODO: Adapt to port settings
+            .url("/") // TODO: Adapt to port settings
             .description("Local server")))
         .components(new Components().schemas(new HashMap<>()))
         .paths(new Paths());
@@ -283,7 +283,7 @@ public final class DocsGen {
                 return new NumberSchema();
             } else if (clazz.equals(String.class)) {
                 return new StringSchema();
-            } else if (clazz.equals(Boolean.class)) {
+            } else if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
                 return new BooleanSchema();
             } else if (clazz.equals(Instant.class)) {
                 return new StringSchema().format("date-time");
