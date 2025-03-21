@@ -97,7 +97,14 @@ public class UserSection extends Section {
                          String lastName,
                          Gender gender,
                          Role role,
-                         String password) {}
+                         String password) {
+        public RegisterInput {
+            // Sanitize all sensitive strings (not password)
+            email = Sanitize.string(email);
+            firstName = Sanitize.string(firstName);
+            lastName = Sanitize.string(lastName);
+        }
+    }
 
     Future<CompleteUser> register(RoutingContext context) {
         // Grab the Authenticator
@@ -115,11 +122,6 @@ public class UserSection extends Section {
         //     "password": "password123"
         // }
         RegisterInput input = readBody(context, RegisterInput.class);
-
-        // Remove extra spaces and just remove anything unwanted overall.
-        String email = Sanitize.string(input.email);
-        String firstName = Sanitize.string(input.firstName);
-        String lastName = Sanitize.string(input.lastName);
 
         // Do a series of validation (including password strength)
         try (var block = Validation.start()) {
@@ -148,12 +150,12 @@ public class UserSection extends Section {
 
         // Now, create the user!
         var user = new User(0,
-            email,
+            input.email,
             confirmationToken,
             false,
             passwordHashed,
-            firstName,
-            lastName,
+            input.firstName,
+            input.lastName,
             input.gender,
             input.role,
             input.role == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
@@ -199,7 +201,11 @@ public class UserSection extends Section {
             )));
 
     // The input JSON taken by this endpoint.
-    record LoginInput(String email, String password) {}
+    record LoginInput(String email, String password) {
+        public LoginInput {
+            email = Sanitize.string(email);
+        }
+    }
 
     Future<CompleteUser> login(RoutingContext context) {
         // Get the Authenticator, and check if the user is already logged in.
@@ -312,7 +318,13 @@ public class UserSection extends Section {
         String firstName,
         String lastName,
         Gender gender
-    ) {}
+    ) {
+        public UpdateProfileInput {
+            // Sanitize strings before doing anything else.
+            firstName = Sanitize.string(firstName);
+            lastName = Sanitize.string(lastName);
+        }
+    }
 
     Future<UserProfile> updateProfile(RoutingContext context) {
         Authenticator auth = Authenticator.get(context);
@@ -321,18 +333,15 @@ public class UserSection extends Section {
 
         UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
 
-        String firstName = Sanitize.string(input.firstName);
-        String lastName = Sanitize.string(input.lastName);
-
         try (var block = Validation.start()) {
-            UserValidation.firstName(block, firstName);
-            UserValidation.lastName(block, lastName);
+            UserValidation.firstName(block, input.firstName);
+            UserValidation.lastName(block, input.lastName);
         }
 
         return auth.getUserOrFail()
             .compose(u -> {
-                u.setFirstName(firstName);
-                u.setLastName(lastName);
+                u.setFirstName(input.firstName);
+                u.setLastName(input.lastName);
                 u.setGender(input.gender);
 
                 return server.db().users().update(u);

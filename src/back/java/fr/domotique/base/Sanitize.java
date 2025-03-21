@@ -7,6 +7,8 @@ public final class Sanitize {
     }
 
     /// Sanitizes the string by removing leading and trailing whitespace.
+    ///
+    /// Returns `null` if the string is null.
     public static String string(String s) {
         if (s == null) {
             return null;
