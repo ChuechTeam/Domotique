@@ -2,9 +2,7 @@ package fr.domotique;
 
 import fr.domotique.api.*;
 import fr.domotique.apidocs.*;
-import fr.domotique.site.*;
 import io.vertx.core.*;
-import io.vertx.core.buffer.*;
 import io.vertx.core.http.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
@@ -12,8 +10,6 @@ import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.proxy.handler.*;
 import io.vertx.httpproxy.*;
 import org.slf4j.*;
-
-import java.io.*;
 
 /**
  * A RouterVerticle handles incoming HTTP requests by directing them to the right place.
@@ -63,8 +59,7 @@ public class RouterVerticle extends VerticleBase {
     /// The array with all [sections][Section] we should activate.
     Section[] allSections() {
         return new Section[]{
-            new UserSection(server),
-            new HomeSection(server)
+            new UserSection(server)
         };
     }
 
@@ -108,7 +103,7 @@ public class RouterVerticle extends VerticleBase {
         // Could also be used later on to add support for file uploads.
         r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
 
-        // Disable caching.
+        // Make sure the client does NOT cache requests to the API.
         r.route("/api/*").handler(ctx -> {
             ctx.response().putHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
             ctx.next();
@@ -165,10 +160,13 @@ public class RouterVerticle extends VerticleBase {
         // First serve the files for the Scalar API Docs
         r.route("/api-docs*").handler(StaticHandler.create("scalar"));
 
-        // Generate the API docs on demand. It's not very efficient but it won't be queried often so who cares?
-        r.route("/api-docs/openapi.yml").handler(ctx -> {
-            String s = DocsGen.generate(r);
-            ctx.response().putHeader("Content-Type", "text/yaml").end(s);
-        });
+        // Generate the docs in background. It's a bit inefficient for every core to calculate it,
+        // but it's so insignifiant that we don't care.
+        Future<String> ymlTask = vertx.executeBlocking(() -> DocsGen.generate(r));
+
+        // Then serve it when ready
+        r.route("/api-docs/openapi.yml").handler(ctx -> ymlTask
+            .onSuccess(yml -> ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/yaml").end(yml))
+            .onFailure(ctx::fail));
     }
 }

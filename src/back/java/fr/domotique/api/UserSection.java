@@ -45,6 +45,8 @@ public class UserSection extends Section {
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
         userRoutes.post("/login").respond(this::login).putMetadata(RouteDoc.KEY, LOGIN_DOC);
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
+        userRoutes.post("/me/profile").respond(this::updateProfile).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
+        userRoutes.post("/me/password").respond(this::changePassword).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
 
         // Finally, register that router to the main router, prefixed by /api/users
         doc(router.route(PATH_PREFIX).subRouter(userRoutes))
@@ -56,7 +58,7 @@ public class UserSection extends Section {
 
     // GET /api/users/:userId
     static final RouteDoc GET_USER_DOC = new RouteDoc("findUser")
-        .summary("Get user by ID")
+        .summary("Get user profile by ID")
         .description("Gets a user by their ID, and return their public data.")
         .param("userId", int.class, "The ID of the user.")
         .response(200, UserProfile.class, "The user's data.")
@@ -112,14 +114,14 @@ public class UserSection extends Section {
         RegisterInput input = readBody(context, RegisterInput.class);
 
         // Trim the strings to remove extra spaces
-        String email = input.email.trim();
-        String firstName = input.firstName.trim();
-        String lastName = input.lastName.trim();
+        String email = Sanitize.string(input.email);
+        String firstName = Sanitize.string(input.firstName);
+        String lastName = Sanitize.string(input.lastName);
 
         // Do a series of validation (including password strength)
         Validation.email(email, "L'e-mail est invalide.");
-        Validation.nonBlank(firstName, "Le prénom est vide.");
-        Validation.nonBlank(lastName, "Le nom est vide.");
+        validateFirstName(firstName);
+        validateLastName(lastName);
         Validation.nonBlank(input.password, "Le mot de passe est vide.");
         if (input.password.length() < 8) {
             throw new RequestException("Le mot de passe doit faire au moins 8 caractères.", 422);
@@ -161,13 +163,9 @@ public class UserSection extends Section {
                 context.response().setStatusCode(201);
                 return CompleteUser.fromUser(u);
             })
-            .recover(ex -> {
-                if (ex instanceof DuplicateException) {
-                    return Future.failedFuture(new RequestException("Un utilisateur est déjà enregistré avec cet e-mail.", 422));
-                } else {
-                    return Future.failedFuture(ex);
-                }
-            });
+            .recover(errMap(DuplicateException.class,
+                _ -> new RequestException("Un utilisateur est déjà enregistré avec cet e-mail.", 422))
+            );
     }
 
     // POST /api/users/login
@@ -255,6 +253,95 @@ public class UserSection extends Section {
             .map(CompleteUser::fromUser);
     }
 
+    // --- Updates ---
+
+    // POST /api/users/me/profile
+    static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
+        .summary("Update profile")
+        .description("Update the profile of the currently authenticated user.")
+        .param("userId", "The ID of the user.")
+        .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE))
+        .response(200, UserProfile.class, "The new updated profile.");
+
+    record UpdateProfileInput(
+        String firstName,
+        String lastName,
+        Gender gender
+    ) {}
+
+    Future<UserProfile> updateProfile(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
+        auth.requireAuth();
+
+        UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
+
+        String firstName = Sanitize.string(input.firstName);
+        String lastName = Sanitize.string(input.lastName);
+
+        validateFirstName(firstName);
+        validateLastName(lastName);
+
+        return auth.getUserOrFail()
+            .compose(u -> {
+                u.setFirstName(firstName);
+                u.setLastName(lastName);
+                u.setGender(input.gender);
+
+                return userTable.update(u);
+            })
+            .map(UserProfile::fromUser);
+    }
+
+    // POST /api/users/me/password
+    static final RouteDoc CHANGE_PASSWORD_DOC = new RouteDoc("changePassword")
+        .summary("Change password")
+        .description("Change the password of the currently authenticated user.")
+        .requestBody(ChangePasswordInput.class, new ChangePasswordInput("oldPassword123", "newPassword456"))
+        .response(204, "Password successfully changed.")
+        .response(401, ErrorResponse.class, "You are not logged in.")
+        .response(403, ErrorResponse.class, "The old password is incorrect.")
+        .response(422, ErrorResponse.class, "The new password is invalid.");
+
+    record ChangePasswordInput(
+        String oldPassword,
+        String newPassword
+    ) {}
+
+    Future<Void> changePassword(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
+        // Require authentication
+        auth.requireAuth();
+
+        ChangePasswordInput input = readBody(context, ChangePasswordInput.class);
+
+        // Validate new password
+        Validation.nonBlank(input.newPassword, "Le nouveau mot de passe est vide.");
+        if (input.newPassword.length() < 8) {
+            throw new RequestException("Le nouveau mot de passe doit faire au moins 8 caractères.", 422);
+        }
+
+        return auth.getUserOrFail()
+            .compose(user -> {
+                // Verify old password
+                if (!auth.checkPassword(input.oldPassword, user.getPassHash())) {
+                    throw new RequestException("L'ancien mot de passe est incorrect.", 403);
+                }
+
+                // Hash the new password
+                String newPasswordHashed = auth.hashPassword(input.newPassword);
+                user.setPassHash(newPasswordHashed);
+
+                // Update user in database
+                return userTable.update(user);
+            })
+            .map(user -> {
+                log.info("User {} successfully changed their password", user.getId());
+                return null; // Return null to get a 204 No Content response
+            });
+    }
+
     // --- Email confirmation ---
 
     // GET /confirmEmail?token=xxx&user=xxx
@@ -272,26 +359,44 @@ public class UserSection extends Section {
     void confirmEmail(RoutingContext context) {
         Authenticator auth = Authenticator.get(context);
 
+        // Grab both query parameters: ?token=xxx&user=xxx
         String tokenParam = context.queryParams().get("token");
         String userParam = context.queryParams().get("user");
 
+        // Read them
         Long tokenLong = readUnsignedLongOrNull(tokenParam);
         Integer userId = readIntOrNull(userParam);
 
+        // If any is invalid, redirect to error
         if (tokenLong == null || userId == null) {
-            context.redirect("/?confirmResult=ok");
+            context.redirect("/?confirmResult=err");
             return;
         }
 
+        // Query the database for that user
         userTable.get(userId)
             .onSuccess(u -> {
-                if (u != null && u.getEmailConfirmationToken() == tokenLong) {
+                // If the token is right, and the user is not already confirmed, confirm the email
+                if (u != null && u.getEmailConfirmationToken() == tokenLong && !u.isEmailConfirmed()) {
+                    // Confirm the email
                     u.setEmailConfirmed(true);
 
+                    // Update the user in the database
                     userTable.update(u)
-                        .onSuccess(v -> context.redirect("/?confirmResult=ok"))
+                        .onSuccess(v -> {
+                            log.info("User {} successfully confirmed their email", u.getId());
+
+                            // Now also authenticate the user if not done already
+                            if (!auth.isLoggedIn()) {
+                                auth.login(userId);
+                            }
+
+                            // Redirect to the home page with a success message
+                            context.redirect("/?confirmResult=ok");
+                        })
                         .onFailure(ex -> context.redirect("/?confirmResult=err"));
                 } else {
+                    // Nope, redirect to the home page with an error
                     context.redirect("/?confirmResult=err");
                 }
             })
@@ -303,23 +408,35 @@ public class UserSection extends Section {
         // Send the confirmation email
         // Get base URL (e.g., "http://localhost:7777")
         String baseUrl = ctx.request().scheme() + "://"
-                         + ctx.request().authority().host()
-                         + ":" + ctx.request().authority().port();
+            + ctx.request().authority().host()
+            + ":" + ctx.request().authority().port();
 
         // Construct the confirmation URL
         String confirmUrl = baseUrl + "/confirmEmail?token=" + u.getEmailConfirmationToken() + "&user=" + u.getId();
 
-        // Render the template then send it
-        return server.templateEngine().render(Map.of(
-                "firstName", u.getFirstName(),
-                "lastName", u.getLastName(),
-                "url", confirmUrl
-            ), "email.jte")
+        // Prepare template data for the email
+        Map<String, Object> htmlArguments = Map.of(
+            "firstName", u.getFirstName(),
+            "lastName", u.getLastName(),
+            "url", confirmUrl
+        );
+        final String emailSubject = "Confirmation de votre e-mail";
+
+        // Render the template using the email.jte file then send it
+        return server.templateEngine().render(htmlArguments, "email.jte")
             .compose(emailBody ->
-                server.email().send(u.getEmail(), "Confirmation de votre e-mail", emailBody.toString()))
+                server.email().send(u.getEmail(), emailSubject, emailBody.toString()))
             .andThen(whenOk(_ -> {
                 log.info("Confirmation e-mail sent to user {}", u.getId());
             }))
             .map(u);
+    }
+
+    private void validateFirstName(String s) {
+        Validation.nonBlank(s, "Le prénom est vide.");
+    }
+
+    private void validateLastName(String s) {
+        Validation.nonBlank(s, "Le nom est vide.");
     }
 }

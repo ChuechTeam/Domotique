@@ -15,13 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ChangePasswordInput,
   CompleteUser,
   ErrorResponse,
   LoginInput,
   RegisterInput,
+  UpdateProfileInput,
   UserProfile,
 } from '../models/index';
 import {
+    ChangePasswordInputFromJSON,
+    ChangePasswordInputToJSON,
     CompleteUserFromJSON,
     CompleteUserToJSON,
     ErrorResponseFromJSON,
@@ -30,9 +34,15 @@ import {
     LoginInputToJSON,
     RegisterInputFromJSON,
     RegisterInputToJSON,
+    UpdateProfileInputFromJSON,
+    UpdateProfileInputToJSON,
     UserProfileFromJSON,
     UserProfileToJSON,
 } from '../models/index';
+
+export interface ChangePasswordRequest {
+    changePasswordInput: ChangePasswordInput;
+}
 
 export interface FindUserRequest {
     userId: number;
@@ -46,10 +56,51 @@ export interface RegisterRequest {
     registerInput: RegisterInput;
 }
 
+export interface UpdateProfileRequest {
+    updateProfileInput: UpdateProfileInput;
+}
+
 /**
  * 
  */
 export class UsersApi extends runtime.BaseAPI {
+
+    /**
+     * Change the password of the currently authenticated user.
+     * Change password
+     */
+    async changePasswordRaw(requestParameters: ChangePasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['changePasswordInput'] == null) {
+            throw new runtime.RequiredError(
+                'changePasswordInput',
+                'Required parameter "changePasswordInput" was null or undefined when calling changePassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/users/me/password`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ChangePasswordInputToJSON(requestParameters['changePasswordInput']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Change the password of the currently authenticated user.
+     * Change password
+     */
+    async changePassword(requestParameters: ChangePasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.changePasswordRaw(requestParameters, initOverrides);
+    }
 
     /**
      * 
@@ -80,7 +131,7 @@ export class UsersApi extends runtime.BaseAPI {
 
     /**
      * Gets a user by their ID, and return their public data.
-     * Get user by ID
+     * Get user profile by ID
      */
     async findUserRaw(requestParameters: FindUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
         if (requestParameters['userId'] == null) {
@@ -106,7 +157,7 @@ export class UsersApi extends runtime.BaseAPI {
 
     /**
      * Gets a user by their ID, and return their public data.
-     * Get user by ID
+     * Get user profile by ID
      */
     async findUser(requestParameters: FindUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserProfile | null | undefined > {
         const response = await this.findUserRaw(requestParameters, initOverrides);
@@ -248,6 +299,44 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async register(requestParameters: RegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompleteUser> {
         const response = await this.registerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update the profile of the currently authenticated user.
+     * Update profile
+     */
+    async updateProfileRaw(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
+        if (requestParameters['updateProfileInput'] == null) {
+            throw new runtime.RequiredError(
+                'updateProfileInput',
+                'Required parameter "updateProfileInput" was null or undefined when calling updateProfile().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/users/me/profile`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateProfileInputToJSON(requestParameters['updateProfileInput']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserProfileFromJSON(jsonValue));
+    }
+
+    /**
+     * Update the profile of the currently authenticated user.
+     * Update profile
+     */
+    async updateProfile(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserProfile> {
+        const response = await this.updateProfileRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
