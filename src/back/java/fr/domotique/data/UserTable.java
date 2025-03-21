@@ -7,14 +7,11 @@ import org.jetbrains.annotations.*;
 
 /// Contains many functions to interact with the [User] table in the database.
 ///
-/// This class doesn't need any particular lifetime considerations; you can just instantiate it
-/// however you like!
-///
 /// ## Example
 ///
 /// ```java
 /// // Get the user with ID 5
-/// userTable.get(5).onSuccess(user -> { ... });
+/// server.db().users().get(5).onSuccess(user -> { ... });
 ///```
 public class UserTable extends Table {
     /// The SQL client allowing us to run SQL queries on the MySQL database.

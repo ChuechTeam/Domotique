@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.data.*;
 import fr.domotique.email.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
@@ -68,6 +69,11 @@ public class MainVerticle extends VerticleBase {
             return Future.failedFuture(e);
         }
 
+        // Create the Database object containing all our tables for easy access.
+        Database db = new Database(
+            new UserTable(client)
+        );
+
         // Create the session store, storing user sessions for logged-in users, currently in-memory.
         LocalSessionStore sessionStore = LocalSessionStore.create(vertx);
 
@@ -78,7 +84,7 @@ public class MainVerticle extends VerticleBase {
         EmailSender email = new ConsoleEmail();
 
         // Create the server object, with our new SqlClient and the configuration
-        var server = new Server(client, sessionStore, templateEngine, email, config, vertx);
+        var server = new Server(client, db, sessionStore, templateEngine, email, config, vertx);
 
         // Set how many instances of RouterVerticle to deploy (one per CPU)
         var options = new DeploymentOptions().setInstances(Runtime.getRuntime().availableProcessors()).setThreadingModel(ThreadingModel.EVENT_LOOP);

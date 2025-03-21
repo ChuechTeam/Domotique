@@ -16,15 +16,9 @@ import java.util.stream.*;
 
 /// All API endpoints to access user data, and do authentication.
 public class UserSection extends Section {
-    // The store to access the User table in the database
-    final UserTable userTable;
-
     /// Creates a new UserSection with the given server.
     public UserSection(Server server) {
         super(server);
-
-        // Create the UserTable to access... the user table of the database easily.
-        this.userTable = new UserTable(server.db());
     }
 
     // All routes of this section will begin by /api/users
@@ -74,7 +68,7 @@ public class UserSection extends Section {
         int userId = readIntPathParam(context, "userId");
 
         // Return the user from the database, and convert it to a UserProfile to not leak passwords!
-        return userTable.get(userId).map(UserProfile::fromUser);
+        return server.db().users().get(userId).map(UserProfile::fromUser);
     }
 
     // POST /api/users
@@ -166,7 +160,7 @@ public class UserSection extends Section {
             0);
 
         // Add the user to the database. Once that's done successfully, log in the user.
-        return userTable.create(user)
+        return server.db().users().create(user)
             .compose(u -> {
                 // Report that registration to the log (-> the console)
                 log.info("User registered with id {} and email {}", u.getId(), u.getEmail());
@@ -229,7 +223,7 @@ public class UserSection extends Section {
         }
 
         // Get a user by mail from the database.
-        return userTable.getByEmail(input.email)
+        return server.db().users().getByEmail(input.email)
             .map(user -> {
                 // Make sure the given password matches the user's password, and that the user exists!
                 if (user == null || !auth.checkPassword(input.password, user.getPassHash())) {
@@ -294,7 +288,7 @@ public class UserSection extends Section {
             throw new RequestException("La recherche est vide.", 400);
         }
 
-        return server.db().preparedQuery("""
+        return server.sql().preparedQuery("""
             SELECT id, first_name, last_name, role, level, gender FROM user
             WHERE INSTR(first_name, ?) > 0 OR INSTR(last_name, ?) > 0
             """)
@@ -341,7 +335,7 @@ public class UserSection extends Section {
                 u.setLastName(lastName);
                 u.setGender(input.gender);
 
-                return userTable.update(u);
+                return server.db().users().update(u);
             })
             .map(UserProfile::fromUser);
     }
@@ -389,7 +383,7 @@ public class UserSection extends Section {
                 user.setPassHash(newPasswordHashed);
 
                 // Update user in database
-                return userTable.update(user);
+                return server.db().users().update(user);
             })
             .map(user -> {
                 log.info("User {} successfully changed their password", user.getId());
@@ -429,7 +423,7 @@ public class UserSection extends Section {
         }
 
         // Query the database for that user
-        userTable.get(userId)
+        server.db().users().get(userId)
             .onSuccess(u -> {
                 // If the token is right, and the user is not already confirmed, confirm the email
                 if (u != null && u.getEmailConfirmationToken() == tokenLong && !u.isEmailConfirmed()) {
@@ -437,7 +431,7 @@ public class UserSection extends Section {
                     u.setEmailConfirmed(true);
 
                     // Update the user in the database
-                    userTable.update(u)
+                    server.db().users().update(u)
                         .onSuccess(v -> {
                             log.info("User {} successfully confirmed their email", u.getId());
 

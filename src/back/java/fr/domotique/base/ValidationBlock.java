@@ -43,11 +43,11 @@ import java.util.function.*;
 ///   block.end();
 ///   ```
 /// - **Automatically**: you can use a block as a resource in a try-with-resources statement.
-///  ```java
-///  try (ValidationBlock block = Validation.start()) {
-///     block.addError("name", "The name is invalid!");
-///  }
-///  ```
+///   ```java
+///   try (ValidationBlock block = Validation.start()) {
+///      block.addError("name", "The name is invalid!");
+///   }
+///   ```
 ///
 /// My recommendation to decide between the two is:
 /// - Use the **automatic** syntax when possible;

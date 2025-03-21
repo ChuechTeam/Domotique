@@ -32,6 +32,9 @@ public record UserProfile(
     }
 
     /// Converts a database row to a PublicUser for client API consumption.
+    ///
+    /// NOTE: When changing the layout of this type, rename this "fromRow2" (without using IDE features)
+    /// to update any outdated SQL statements, then rename it back to fromRow (using your IDE).
     public static UserProfile fromRow(Row u) {
         return new UserProfile(
             u.getInteger(0),
@@ -43,6 +46,7 @@ public record UserProfile(
         );
     }
 
+    /// Example user profile for API documentation.
     public static final UserProfile EXAMPLE = new UserProfile(10, "Juréma", "Deveri",
         Role.RESIDENT, Level.ADVANCED, Gender.FEMALE);
 }
