@@ -1,12 +1,14 @@
 package fr.domotique.api;
 
-import com.fasterxml.jackson.annotation.*;
 import fr.domotique.*;
 import fr.domotique.apidocs.*;
 import fr.domotique.data.*;
 import io.vertx.core.Future;
+import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import org.slf4j.*;
+
+import java.util.*;
 
 /// All API endpoints to access user data, and do authentication.
 public class UserSection extends Section {
@@ -47,6 +49,9 @@ public class UserSection extends Section {
         // Finally, register that router to the main router, prefixed by /api/users
         doc(router.route(PATH_PREFIX).subRouter(userRoutes))
             .tag("Users");
+
+        // Add register the email confirmation on the root
+        router.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
     }
 
     // GET /api/users/:userId
@@ -69,13 +74,25 @@ public class UserSection extends Section {
     static final RouteDoc REGISTER_DOC = new RouteDoc("register")
         .summary("Register")
         .description("Register a new user with an email and a password.")
-        .requestBody(RegisterInput.class, new RegisterInput("mail_de_ouf@gmail.com", Gender.FEMALE, "mot2passe"))
+        .requestBody(RegisterInput.class, new RegisterInput("mail_de_ouf@gmail.com",
+            "Juréma",
+            "Deveri",
+            Gender.FEMALE,
+            Role.RESIDENT,
+            "mot2passe"))
         .response(201, CompleteUser.class, "The user was created.")
-        .response(400, ErrorResponse.class, "You are already logged in.")
-        .response(422, ErrorResponse.class, "Invalid email or password.",
-            new ErrorResponse<>("Mot de passe invalide !", null, null));
+        .response(422, ErrorResponse.class, """
+            Either:
+             - Some values are invalid in the form.
+             - This e-mail is already in use.
+             - You're already logged in.""");
 
-    record RegisterInput(String email, Gender gender, String password) {}
+    record RegisterInput(String email,
+                         String firstName,
+                         String lastName,
+                         Gender gender,
+                         Role role,
+                         String password) {}
 
     Future<CompleteUser> register(RoutingContext context) {
         // Grab the Authenticator
@@ -83,7 +100,7 @@ public class UserSection extends Section {
 
         // Check if the user is already logged in; if so, don't register a user who's already registered!
         if (auth.isLoggedIn()) {
-            throw new RequestException("Vous êtes déjà connecté !", 400, "ALREADY_LOGGED_IN");
+            throw new RequestException("Vous êtes déjà connecté !", 422, "ALREADY_LOGGED_IN");
         }
 
         // Read the JSON from the request:
@@ -94,8 +111,15 @@ public class UserSection extends Section {
         // }
         RegisterInput input = readBody(context, RegisterInput.class);
 
+        // Trim the strings to remove extra spaces
+        String email = input.email.trim();
+        String firstName = input.firstName.trim();
+        String lastName = input.lastName.trim();
+
         // Do a series of validation (including password strength)
-        Validation.email(input.email, "L'e-mail est invalide.");
+        Validation.email(email, "L'e-mail est invalide.");
+        Validation.nonBlank(firstName, "Le prénom est vide.");
+        Validation.nonBlank(lastName, "Le nom est vide.");
         Validation.nonBlank(input.password, "Le mot de passe est vide.");
         if (input.password.length() < 8) {
             throw new RequestException("Le mot de passe doit faire au moins 8 caractères.", 422);
@@ -103,19 +127,47 @@ public class UserSection extends Section {
 
         // Hash the password, and create the User object
         String passwordHashed = auth.hashPassword(input.password);
-        var user = new User(0, input.email, input.gender, passwordHashed);
+
+        // Create a new email confirmation token.
+        // Remove the Most Significant Bit, since we only have 63 bits because no unsigned :(
+        long confirmationToken = VertxContextPRNG.current(context.vertx()).nextLong() & ~(1L << 63);
+
+        var user = new User(0,
+            email,
+            confirmationToken,
+            false,
+            passwordHashed,
+            firstName,
+            lastName,
+            input.gender,
+            input.role,
+            input.role == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
+            0);
 
         // Add the user to the database. Once that's done successfully, log in the user.
         return userTable.create(user)
-            .andThen(whenOk(u -> {
+            .compose(u -> {
                 // Report that registration to the log (-> the console)
                 log.info("User registered with id {} and email {}", u.getId(), u.getEmail());
 
                 // Log the user in, and send a HTTP 201 Created status code.
                 auth.login(u.getId());
+
+                // Send the confirmation e-mail
+                return sendConfirmationEmail(u, context);
+            })
+            .map(u -> {
+                // Success, now register the status code and send the CompleteUser
                 context.response().setStatusCode(201);
-            }))
-            .map(CompleteUser::fromUser); // Make sure to strip the password before sending user data!
+                return CompleteUser.fromUser(u);
+            })
+            .recover(ex -> {
+                if (ex instanceof DuplicateException) {
+                    return Future.failedFuture(new RequestException("Un utilisateur est déjà enregistré avec cet e-mail.", 422));
+                } else {
+                    return Future.failedFuture(ex);
+                }
+            });
     }
 
     // POST /api/users/login
@@ -201,5 +253,73 @@ public class UserSection extends Section {
         // Get the user from the Authenticator, and remove its password from the response.
         return auth.getUserOrFail()
             .map(CompleteUser::fromUser);
+    }
+
+    // --- Email confirmation ---
+
+    // GET /confirmEmail?token=xxx&user=xxx
+    static final RouteDoc CONFIRM_EMAIL_DOC = new RouteDoc("confirmEmail")
+        .tag("Users")
+        .summary("Confirm email")
+        .param(ParamDoc.Location.QUERY, "token", long.class, "The email confirmation token sent by... mail")
+        .param(ParamDoc.Location.QUERY, "user", int.class, "ID of the user whose account is getting confirmed")
+        .response(302, """
+            Redirects to the home page of the website, with the URL being either:
+            - `/?confirmResult=ok` -- when the email has been successfully confirmed
+            - `/?confirmResult=err` -- when the email has NOT been confirmed
+            """);
+
+    void confirmEmail(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
+        String tokenParam = context.queryParams().get("token");
+        String userParam = context.queryParams().get("user");
+
+        Long tokenLong = readUnsignedLongOrNull(tokenParam);
+        Integer userId = readIntOrNull(userParam);
+
+        if (tokenLong == null || userId == null) {
+            context.redirect("/?confirmResult=ok");
+            return;
+        }
+
+        userTable.get(userId)
+            .onSuccess(u -> {
+                if (u != null && u.getEmailConfirmationToken() == tokenLong) {
+                    u.setEmailConfirmed(true);
+
+                    userTable.update(u)
+                        .onSuccess(v -> context.redirect("/?confirmResult=ok"))
+                        .onFailure(ex -> context.redirect("/?confirmResult=err"));
+                } else {
+                    context.redirect("/?confirmResult=err");
+                }
+            })
+            .onFailure(context::fail);
+    }
+
+    /// Sends the confirmation email to User `u`.
+    private Future<User> sendConfirmationEmail(User u, RoutingContext ctx) {
+        // Send the confirmation email
+        // Get base URL (e.g., "http://localhost:7777")
+        String baseUrl = ctx.request().scheme() + "://"
+                         + ctx.request().authority().host()
+                         + ":" + ctx.request().authority().port();
+
+        // Construct the confirmation URL
+        String confirmUrl = baseUrl + "/confirmEmail?token=" + u.getEmailConfirmationToken() + "&user=" + u.getId();
+
+        // Render the template then send it
+        return server.templateEngine().render(Map.of(
+                "firstName", u.getFirstName(),
+                "lastName", u.getLastName(),
+                "url", confirmUrl
+            ), "email.jte")
+            .compose(emailBody ->
+                server.email().send(u.getEmail(), "Confirmation de votre e-mail", emailBody.toString()))
+            .andThen(whenOk(_ -> {
+                log.info("Confirmation e-mail sent to user {}", u.getId());
+            }))
+            .map(u);
     }
 }

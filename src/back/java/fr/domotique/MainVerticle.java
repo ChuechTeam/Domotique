@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.email.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.ext.web.*;
@@ -73,8 +74,11 @@ public class MainVerticle extends VerticleBase {
         // Make the JTE templating engine, so we can render HTML
         JteTemplateEngine templateEngine = JteTemplateEngine.create(vertx, "views");
 
+        // Create the e-mail client to send mails to the console (for now)
+        EmailSender email = new ConsoleEmail();
+
         // Create the server object, with our new SqlClient and the configuration
-        var server = new Server(client, sessionStore, templateEngine, config, vertx);
+        var server = new Server(client, sessionStore, templateEngine, email, config, vertx);
 
         // Set how many instances of RouterVerticle to deploy (one per CPU)
         var options = new DeploymentOptions().setInstances(Runtime.getRuntime().availableProcessors()).setThreadingModel(ThreadingModel.EVENT_LOOP);

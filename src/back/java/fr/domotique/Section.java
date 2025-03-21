@@ -122,6 +122,30 @@ public abstract class Section {
         }
     }
 
+    /// Parses the integer of the given value. Returns `null` if either:
+    /// - the value isn't a valid integer
+    /// - the value is `null`
+    public static Integer readIntOrNull(String value) {
+        try {
+            if (value == null) { return null; }
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /// Parses the unsigned long of the given value. Returns `null` if either:
+    /// - the value isn't a valid unsigned long
+    /// - the value is `null`
+    public static Long readUnsignedLongOrNull(String value) {
+        try {
+            if (value == null) { return null; }
+            return Long.parseUnsignedLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /// Reads the body of the request in JSON format, with the given class.
     ///
     /// Ends the request with a 400 status code if the body is not valid JSON, or when the data is invalid/missing.
@@ -173,6 +197,12 @@ public abstract class Section {
         };
     }
 
+    /// Add API documentation to a route using [RouteDoc]
+    ///
+    /// ## Example
+    /// ```java
+    /// doc(router.get("/api/users/:id")).summary("Get a user");
+    /// ```
     public static RouteDoc doc(Route route) {
         var rd = new RouteDoc();
         route.putMetadata(RouteDoc.KEY, rd);

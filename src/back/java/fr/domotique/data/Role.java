@@ -1,6 +1,8 @@
 package fr.domotique.data;
 
-/// The user's role in the EHPAD
+import fr.domotique.apidocs.*;
+
+@DocDesc("The user's role in the EHPAD")
 public enum Role {
     /// The user is a resident in the EHPAD
     RESIDENT,

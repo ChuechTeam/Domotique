@@ -34,4 +34,5 @@ open module fr.domotique.web {
     requires static org.jetbrains.annotations;
     requires com.fasterxml.jackson.databind;
     requires io.swagger.v3.core;
+    requires io.netty.transport;
 }

@@ -105,12 +105,13 @@ public final class DocsGen {
             RequestBody requestBodyOAI = null;
             if (rd.requestBody != null) {
                 Schema<?> schema = schemaForReflect(rd.requestBody);
+                MediaType media = new MediaType().schema(schema);
                 if (rd.requestBodyExample != null) {
-                    schema.setExample(rd.requestBodyExample);
+                    media.setExample(rd.requestBodyExample);
                 }
                 requestBodyOAI = new RequestBody()
                     .content(new Content().addMediaType("application/json",
-                        new MediaType().schema(schema)))
+                        media))
                     .required(true);
             }
 
@@ -137,6 +138,7 @@ public final class DocsGen {
         }
     }
 
+    // TODO: Make this algorithm less dumb since we recalculate things of the full path.
     private static ParamDoc[] mergeParams(@Nullable RouteDoc rd,
                                           ParamDoc[] activeParameters,
                                           String fullPath,

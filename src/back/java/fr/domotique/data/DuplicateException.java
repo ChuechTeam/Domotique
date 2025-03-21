@@ -1,0 +1,16 @@
+package fr.domotique.data;
+
+/// Thrown when a row couldn't be inserted as it breaks a UNIQUE SQL constraint.
+public class DuplicateException extends Exception {
+    public DuplicateException(String message) {
+        super(message);
+    }
+
+    public DuplicateException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public DuplicateException(Throwable cause) {
+        super(cause);
+    }
+}

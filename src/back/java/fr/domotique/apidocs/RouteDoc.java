@@ -5,15 +5,46 @@ import org.jetbrains.annotations.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-/// Documentation about an API endpoint, for OpenAPI docs.
+/// Documentation for an API endpoint in OpenAPI format.
+///
+/// This class provides handy functions for defining the documentation
+/// of a REST endpoint including operation ID, summary, description, request body,
+/// parameters, responses, and tags.
+///
+/// Just chain setter methods and you're good to go!
+///
+/// Example usage:
+/// ```java
+/// RouteDoc doc = new RouteDoc("login")
+///     .summary("Log in")
+///     .description("Log in a user with email and password")
+///     .requestBody(LoginInput.class, new LoginInput("example@mail.com", "password123"))
+///     .response(200, CompleteUser.class, "Login successful")
+///     .response(401, ErrorResponse.class, "Invalid credentials");
+/// ```
 public class RouteDoc {
+    /// The operation ID for this route's OpenAPI documentation.
     @Nullable String operationId = null;
+
+    /// A brief summary of what this API endpoint does.
     String summary = "";
+
+    /// A longer description of the endpoint functionality.
     String description = "";
+
+    /// The type of the request body this endpoint accepts.
     @Nullable Type requestBody = null; // TODO: More flexibility
+
+    /// An example of the request body for documentation purposes.
     @Nullable Object requestBodyExample = null;
+
+    /// Tags for categorizing this endpoint in documentation.
     final List<String> tags = new ArrayList<>();
+
+    /// The parameters this endpoint accepts (path, query, etc.).
     final List<ParamDoc> params = new ArrayList<>();
+
+    /// The possible responses this endpoint can return.
     final List<ResponseDoc> responses = new ArrayList<>();
 
     public static final String KEY = "Docs";
@@ -95,6 +126,16 @@ public class RouteDoc {
 
     public RouteDoc param(ParamDoc param) {
         params.add(param);
+        return this;
+    }
+
+    public RouteDoc param(ParamDoc.Location loc, String name, String description) {
+        params.add(new ParamDoc().location(loc).name(name).desc(description));
+        return this;
+    }
+
+    public RouteDoc param(ParamDoc.Location loc, String name, Type valType, String description) {
+        params.add(new ParamDoc().location(loc).name(name).desc(description).valueType(valType));
         return this;
     }
 
