@@ -19,6 +19,7 @@ import type {
   CompleteUser,
   ErrorResponse,
   LoginInput,
+  ProfileSearchOutput,
   RegisterInput,
   UpdateProfileInput,
   UserProfile,
@@ -32,6 +33,8 @@ import {
     ErrorResponseToJSON,
     LoginInputFromJSON,
     LoginInputToJSON,
+    ProfileSearchOutputFromJSON,
+    ProfileSearchOutputToJSON,
     RegisterInputFromJSON,
     RegisterInputToJSON,
     UpdateProfileInputFromJSON,
@@ -42,6 +45,11 @@ import {
 
 export interface ChangePasswordRequest {
     changePasswordInput: ChangePasswordInput;
+}
+
+export interface ConfirmEmailRequest {
+    token: number;
+    user: number;
 }
 
 export interface FindUserRequest {
@@ -56,7 +64,12 @@ export interface RegisterRequest {
     registerInput: RegisterInput;
 }
 
+export interface SearchUsersRequest {
+    fullName: string;
+}
+
 export interface UpdateProfileRequest {
+    userId: string;
     updateProfileInput: UpdateProfileInput;
 }
 
@@ -106,8 +119,30 @@ export class UsersApi extends runtime.BaseAPI {
      * 
      * Confirm email
      */
-    async confirmEmailRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async confirmEmailRaw(requestParameters: ConfirmEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['token'] == null) {
+            throw new runtime.RequiredError(
+                'token',
+                'Required parameter "token" was null or undefined when calling confirmEmail().'
+            );
+        }
+
+        if (requestParameters['user'] == null) {
+            throw new runtime.RequiredError(
+                'user',
+                'Required parameter "user" was null or undefined when calling confirmEmail().'
+            );
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters['token'] != null) {
+            queryParameters['token'] = requestParameters['token'];
+        }
+
+        if (requestParameters['user'] != null) {
+            queryParameters['user'] = requestParameters['user'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -125,8 +160,8 @@ export class UsersApi extends runtime.BaseAPI {
      * 
      * Confirm email
      */
-    async confirmEmail(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.confirmEmailRaw(initOverrides);
+    async confirmEmail(requestParameters: ConfirmEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.confirmEmailRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -303,10 +338,56 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Search for users by their first name, last name, or email.
+     * Search users
+     */
+    async searchUsersRaw(requestParameters: SearchUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProfileSearchOutput>> {
+        if (requestParameters['fullName'] == null) {
+            throw new runtime.RequiredError(
+                'fullName',
+                'Required parameter "fullName" was null or undefined when calling searchUsers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['fullName'] != null) {
+            queryParameters['fullName'] = requestParameters['fullName'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/users/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProfileSearchOutputFromJSON(jsonValue));
+    }
+
+    /**
+     * Search for users by their first name, last name, or email.
+     * Search users
+     */
+    async searchUsers(requestParameters: SearchUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProfileSearchOutput> {
+        const response = await this.searchUsersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Update the profile of the currently authenticated user.
      * Update profile
      */
     async updateProfileRaw(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling updateProfile().'
+            );
+        }
+
         if (requestParameters['updateProfileInput'] == null) {
             throw new runtime.RequiredError(
                 'updateProfileInput',
@@ -321,7 +402,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/users/me/profile`,
+            path: `/api/users/me/profile`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

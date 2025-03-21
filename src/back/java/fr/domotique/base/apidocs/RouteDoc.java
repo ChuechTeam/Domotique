@@ -1,4 +1,4 @@
-package fr.domotique.apidocs;
+package fr.domotique.base.apidocs;
 
 import org.jetbrains.annotations.*;
 
@@ -139,13 +139,23 @@ public class RouteDoc {
         return this;
     }
 
-    public RouteDoc param(String name, String description) {
+    public RouteDoc pathParam(String name, String description) {
         params.add(new ParamDoc().name(name).desc(description));
         return this;
     }
 
-    public RouteDoc param(String name, Type valType, String description) {
+    public RouteDoc pathParam(String name, Type valType, String description) {
         params.add(new ParamDoc().name(name).desc(description).valueType(valType));
+        return this;
+    }
+
+    public RouteDoc queryParam(String name, String description) {
+        params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description));
+        return this;
+    }
+
+    public RouteDoc queryParam(String name, Type valType, String description) {
+        params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType));
         return this;
     }
 

@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.base.*;
 import fr.domotique.data.*;
 import io.vertx.core.*;
 import io.vertx.ext.auth.hashing.*;

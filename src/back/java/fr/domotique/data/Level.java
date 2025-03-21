@@ -1,8 +1,8 @@
 package fr.domotique.data;
 
-import fr.domotique.apidocs.*;
+import fr.domotique.base.apidocs.*;
 
-@DocDesc("The level of the user: how advanced they are and what are its permissions in the EHPAD.")
+@ApiDoc("The level of the user: how advanced they are and what are its permissions in the EHPAD.")
 public enum Level {
     /// A fresh new user of the app
     ///

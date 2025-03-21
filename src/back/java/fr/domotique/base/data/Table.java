@@ -1,4 +1,4 @@
-package fr.domotique.data;
+package fr.domotique.base.data;
 
 import io.vertx.core.*;
 import io.vertx.mysqlclient.*;
@@ -6,6 +6,7 @@ import io.vertx.sqlclient.*;
 
 import java.util.function.*;
 
+/// Contains all SQL queries to access a SQL table.
 public abstract class Table {
     public static <T> Function<RowSet<Row>, T> attachId(T entity, Consumer<Integer> idSetter) {
         return rs -> {

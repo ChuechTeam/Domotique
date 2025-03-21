@@ -1,4 +1,4 @@
-package fr.domotique.apidocs;
+package fr.domotique.base.apidocs;
 
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.introspect.*;
@@ -66,12 +66,13 @@ public final class DocsGen {
                             String[] inheritedTags) {
         RouteDoc rd = route.getMetadata(RouteDoc.KEY);
 
+        // Merge parameters and tags.
+        ParamDoc[] params = mergeParams(rd, inheritedParameters);
+        String[] tags = mergeTags(rd, inheritedTags);
+
         Router subRouter = route.getSubRouter();
         if (subRouter != null) {
             String fullPath = normalizePrefix(prefix + route.getPath());
-
-            ParamDoc[] params = mergeParams(rd, inheritedParameters, fullPath, null);
-            String[] tags = mergeTags(rd, inheritedTags);
 
             for (Route r : subRouter.getRoutes()) {
                 visitRoute(fullPath, r, params, tags);
@@ -90,17 +91,8 @@ public final class DocsGen {
             // Convert the Vert.x path (using :param syntax) to OpenAPI which uses {param} syntax.
             String oaPath = fullPath.replaceAll(":([^/]+)", "{$1}");
 
-            // Prepare the lists & arrays for the tags and parameters.
-            List<ParamDoc> newParams = new ArrayList<>();
-            String[] allTags;
-
-            // Merge new and inherited parameters; we're interested ONLY IN NEW PARAMETERS.
-            mergeParams(rd, inheritedParameters, fullPath, newParams);
-            // Merge new and inherited tags; we're interested IN ALL TAGS.
-            allTags = mergeTags(rd, inheritedTags);
-
             // Convert the parameters to OpenAPI format.
-            List<Parameter> newParamsOAI = newParams.stream().map(this::toOpenAPI).toList();
+            List<Parameter> newParamsOAI = Arrays.stream(params).map(this::toOpenAPI).toList();
 
             RequestBody requestBodyOAI = null;
             if (rd.requestBody != null) {
@@ -130,7 +122,7 @@ public final class DocsGen {
                         .operationId(rd.operationId)
                         .summary(rd.summary)
                         .description(rd.description)
-                        .tags(Arrays.asList(allTags))
+                        .tags(Arrays.asList(tags))
                         .parameters(newParamsOAI)
                         .responses(responses)
                         .requestBody(requestBodyOAI));
@@ -138,52 +130,15 @@ public final class DocsGen {
         }
     }
 
-    // TODO: Make this algorithm less dumb since we recalculate things of the full path.
     private static ParamDoc[] mergeParams(@Nullable RouteDoc rd,
-                                          ParamDoc[] activeParameters,
-                                          String fullPath,
-                                          @Nullable List<ParamDoc> outNewParams) {
-        var parts = fullPath.split("/");
-
-        var newActiveParameters = new ArrayList<>(Arrays.asList(activeParameters));
-
-        for (String p : parts) {
-            if (p.startsWith(":")) {
-                String paramName = p.substring(1);
-                boolean isNewParameter = true;
-                for (ParamDoc pd : activeParameters) {
-                    if (pd.name.equals(paramName)) {
-                        isNewParameter = false;
-                        break;
-                    }
-                }
-
-                if (isNewParameter) {
-                    ParamDoc newParam = null;
-                    // First see if the RouteDoc provides one already
-                    if (rd != null) {
-                        newParam = rd.params.stream()
-                            .filter(pd -> pd.location == ParamDoc.Location.PATH && pd.name.equals(paramName))
-                            .findFirst()
-                            .orElse(null);
-                    }
-
-                    // Else, create one with default values.
-                    if (newParam == null) {
-                        newParam = new ParamDoc()
-                            .location(ParamDoc.Location.PATH)
-                            .name(paramName)
-                            .valueType(String.class);
-                    }
-
-                    newActiveParameters.add(newParam);
-                    if (outNewParams != null) {
-                        outNewParams.add(newParam);
-                    }
-                }
-            }
+                                          ParamDoc[] activeParameters) {
+        if (rd == null) {
+            return activeParameters;
         }
 
+        // todo: override existing parameter pair (loc, name)
+        var newActiveParameters = new ArrayList<>(Arrays.asList(activeParameters));
+        newActiveParameters.addAll(rd.params);
         return newActiveParameters.toArray(new ParamDoc[0]);
     }
 
@@ -297,6 +252,8 @@ public final class DocsGen {
             }
         } else if (type instanceof ArrayType at) {
             return new ArraySchema().items(schemaForJackson(at.getContentType()));
+        } else if (type instanceof CollectionType at) {
+            return new ArraySchema().items(schemaForJackson(at.getContentType()));
         } else if (type instanceof MapType mt) {
             return new MapSchema().additionalProperties(schemaForJackson(mt.getContentType()));
         }
@@ -368,7 +325,7 @@ public final class DocsGen {
                 Schema<?> propSchema = schemaForJackson(rc.getPrimaryType());
 
                 // Register the description if we do have one.
-                DocDesc descAnn = rc.getPrimaryMember().getAnnotation(DocDesc.class);
+                ApiDoc descAnn = rc.getPrimaryMember().getAnnotation(ApiDoc.class);
                 if (descAnn != null) {
                     propSchema.description(descAnn.value());
                 }
@@ -386,7 +343,7 @@ public final class DocsGen {
         }
 
         // Register the description of the class if we do have one.
-        DocDesc descAnn = clazz.getAnnotation(DocDesc.class);
+        ApiDoc descAnn = clazz.getAnnotation(ApiDoc.class);
         if (descAnn != null) {
             newSchema.description(descAnn.value());
         }

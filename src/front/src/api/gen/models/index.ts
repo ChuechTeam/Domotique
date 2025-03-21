@@ -6,6 +6,7 @@ export * from './ErrorResponse';
 export * from './Gender';
 export * from './Level';
 export * from './LoginInput';
+export * from './ProfileSearchOutput';
 export * from './RegisterInput';
 export * from './Role';
 export * from './UpdateProfileInput';

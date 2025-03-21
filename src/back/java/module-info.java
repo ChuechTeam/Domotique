@@ -7,8 +7,6 @@ open module fr.domotique.web {
     requires io.vertx.auth.common;
     requires org.slf4j;
     requires io.netty.codec.http;
-//    requires com.ongres.scram.client;
-//    requires com.ongres.scram.common;
     requires io.vertx.sql.client.mysql;
     requires io.vertx.sql.client;
     requires com.fasterxml.jackson.core;
@@ -32,7 +30,13 @@ open module fr.domotique.web {
 
     // Annotations
     requires static org.jetbrains.annotations;
+
+    // Jackson
     requires com.fasterxml.jackson.databind;
+
+    // Swagger
     requires io.swagger.v3.core;
+
+    // No idea (is it necessary?)
     requires io.netty.transport;
 }

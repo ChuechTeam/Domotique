@@ -1,4 +1,4 @@
-package fr.domotique.apidocs;
+package fr.domotique.base.apidocs;
 
 import java.lang.annotation.*;
 
@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.RECORD_COMPONENT, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface DocDesc {
+public @interface ApiDoc {
     String value();
 }

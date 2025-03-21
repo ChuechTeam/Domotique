@@ -1,6 +1,7 @@
-package fr.domotique;
+package fr.domotique.base;
 
-import fr.domotique.apidocs.*;
+import fr.domotique.*;
+import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.*;
 import io.vertx.core.json.*;
@@ -168,7 +169,7 @@ public abstract class Section {
         try {
             return context.body().asPojo(clazz);
         } catch (DecodeException e) {
-            throw new RequestException("Invalid JSON body.", 400);
+            throw new RequestException("Invalid JSON body.", 400, "INVALID_JSON");
         }
     }
 

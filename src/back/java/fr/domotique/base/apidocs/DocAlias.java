@@ -1,4 +1,4 @@
-package fr.domotique.apidocs;
+package fr.domotique.base.apidocs;
 
 import java.lang.annotation.*;
 

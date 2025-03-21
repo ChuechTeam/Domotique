@@ -1,4 +1,4 @@
-package fr.domotique;
+package fr.domotique.base;
 
 /// Thrown when an error occurred during the request, customizing the error response.
 ///

@@ -1,6 +1,6 @@
 package fr.domotique.data;
 
-import fr.domotique.apidocs.*;
+import fr.domotique.base.apidocs.*;
 
 /**
  * The gender of a user.
@@ -9,7 +9,7 @@ import fr.domotique.apidocs.*;
  *
  * @author Dynamic
  */
-@DocDesc("The gender of a user, with a third UNDISCLOSED option for unknown genders.")
+@ApiDoc("The gender of a user, with a third UNDISCLOSED option for unknown genders.")
 public enum Gender {
     /**
      * The male gender.

@@ -1,4 +1,4 @@
-package fr.domotique;
+package fr.domotique.base;
 
 /// Tools to sanitize strings and avoid abuse: stuff like having a lot of spaces
 /// or funny people going crazy on emojis and invisible characters.

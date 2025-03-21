@@ -1,7 +1,8 @@
 package fr.domotique;
 
 import fr.domotique.api.*;
-import fr.domotique.apidocs.*;
+import fr.domotique.base.*;
+import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.core.json.*;

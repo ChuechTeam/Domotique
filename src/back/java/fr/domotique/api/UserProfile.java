@@ -1,26 +1,27 @@
 package fr.domotique.api;
 
-import fr.domotique.apidocs.*;
+import fr.domotique.base.apidocs.*;
 import fr.domotique.data.*;
+import io.vertx.sqlclient.*;
 
-@DocDesc("Public information about a user.")
+@ApiDoc("Public information about a user.")
 public record UserProfile(
-    @DocDesc("The unique identifier of the user. A value of 0 is invalid.")
+    @ApiDoc("The unique identifier of the user. A value of 0 is invalid.")
     int id,
 
-    @DocDesc("The first name of the user.")
+    @ApiDoc("The first name of the user.")
     String firstName,
 
-    @DocDesc("The last name of the user.")
+    @ApiDoc("The last name of the user.")
     String lastName,
 
-    @DocDesc("The role of the user in the EHPAD.")
+    @ApiDoc("The role of the user in the EHPAD.")
     Role role,
 
-    @DocDesc("The level of the user.")
+    @ApiDoc("The level of the user.")
     Level level,
 
-    @DocDesc("The gender of the user.")
+    @ApiDoc("The gender of the user.")
     Gender gender
 ) {
     /// Converts a database User to a PublicUser for client API consumption.
@@ -28,6 +29,18 @@ public record UserProfile(
     public static UserProfile fromUser(User u) {
         if (u == null) {return null;}
         return new UserProfile(u.getId(), u.getFirstName(), u.getLastName(), u.getRole(), u.getLevel(), u.getGender());
+    }
+
+    /// Converts a database row to a PublicUser for client API consumption.
+    public static UserProfile fromRow(Row u) {
+        return new UserProfile(
+            u.getInteger(0),
+            u.getString(1),
+            u.getString(2),
+            Role.fromByte(u.get(Byte.class, 3)),
+            Level.fromByte(u.get(Byte.class, 4)),
+            Gender.fromByte(u.get(Byte.class, 5))
+        );
     }
 
     public static final UserProfile EXAMPLE = new UserProfile(10, "Juréma", "Deveri",

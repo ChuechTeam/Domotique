@@ -1,17 +1,17 @@
 package fr.domotique.api;
 
-import fr.domotique.apidocs.*;
+import fr.domotique.base.apidocs.*;
 import fr.domotique.data.*;
 
-@DocDesc("All confidential information only the user account's owner can see, or an admin.")
+@ApiDoc("All confidential information only the user account's owner can see, or an admin.")
 public record UserSecrets(
-    @DocDesc("The email address of the user. Must be unique. Is used to log in.")
+    @ApiDoc("The email address of the user. Must be unique. Is used to log in.")
     String email,
 
-    @DocDesc("The amount of points the user has accumulated. Never negative.")
+    @ApiDoc("The amount of points the user has accumulated. Never negative.")
     int points,
 
-    @DocDesc("True when this user's email has been confirmed.")
+    @ApiDoc("True when this user's email has been confirmed.")
     boolean emailConfirmed
 ) {
     /// Converts a database User to a UserSecrets for client API consumption.

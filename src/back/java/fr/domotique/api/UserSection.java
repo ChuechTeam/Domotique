@@ -1,14 +1,18 @@
 package fr.domotique.api;
 
 import fr.domotique.*;
-import fr.domotique.apidocs.*;
+import fr.domotique.base.*;
+import fr.domotique.base.apidocs.*;
+import fr.domotique.base.data.*;
 import fr.domotique.data.*;
 import io.vertx.core.Future;
 import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
+import io.vertx.sqlclient.*;
 import org.slf4j.*;
 
 import java.util.*;
+import java.util.stream.*;
 
 /// All API endpoints to access user data, and do authentication.
 public class UserSection extends Section {
@@ -41,6 +45,7 @@ public class UserSection extends Section {
         //
         // The "this::func" syntax is equivalent to x -> this.func(x)
         userRoutes.get("/me").respond(this::me).putMetadata(RouteDoc.KEY, ME_DOC);
+        userRoutes.get("/").respond(this::searchUsers).putMetadata(RouteDoc.KEY, SEARCH_USERS_DOC);
         userRoutes.post("/").respond(this::register).putMetadata(RouteDoc.KEY, REGISTER_DOC);
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
         userRoutes.post("/login").respond(this::login).putMetadata(RouteDoc.KEY, LOGIN_DOC);
@@ -60,7 +65,7 @@ public class UserSection extends Section {
     static final RouteDoc GET_USER_DOC = new RouteDoc("findUser")
         .summary("Get user profile by ID")
         .description("Gets a user by their ID, and return their public data.")
-        .param("userId", int.class, "The ID of the user.")
+        .pathParam("userId", int.class, "The ID of the user.")
         .response(200, UserProfile.class, "The user's data.")
         .response(204, "User not found.");
 
@@ -84,10 +89,14 @@ public class UserSection extends Section {
             "mot2passe"))
         .response(201, CompleteUser.class, "The user was created.")
         .response(422, ErrorResponse.class, """
-            Either:
-             - Some values are invalid in the form.
-             - This e-mail is already in use.
-             - You're already logged in.""");
+                Either:
+                 - Some values are invalid in the form. (code: VALIDATION_ERROR)
+                 - This e-mail is already in use. (code: EMAIL_IN_USE)
+                 - You're already logged in. (code: ALREADY_LOGGED_IN)""",
+            ErrorResponse.validationError(Map.of(
+                "email", new String[]{"L'e-mail est invalide."},
+                "firstName", new String[]{"Le prénom est trop long."}
+            )));
 
     record RegisterInput(String email,
                          String firstName,
@@ -113,18 +122,27 @@ public class UserSection extends Section {
         // }
         RegisterInput input = readBody(context, RegisterInput.class);
 
-        // Trim the strings to remove extra spaces
+        // Remove extra spaces and just remove anything unwanted overall.
         String email = Sanitize.string(input.email);
         String firstName = Sanitize.string(input.firstName);
         String lastName = Sanitize.string(input.lastName);
 
         // Do a series of validation (including password strength)
-        Validation.email(email, "L'e-mail est invalide.");
-        validateFirstName(firstName);
-        validateLastName(lastName);
-        Validation.nonBlank(input.password, "Le mot de passe est vide.");
-        if (input.password.length() < 8) {
-            throw new RequestException("Le mot de passe doit faire au moins 8 caractères.", 422);
+        try (var block = Validation.start()) {
+            // Validate the email
+            Validation.email(block, "email", input.email);
+
+            // Validate first and last names
+            UserValidation.firstName(block, input.firstName);
+            UserValidation.lastName(block, input.lastName);
+
+            // Validate the password (for registration; login requirements are different)
+            Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
+            if (input.password.length() < 8) {
+                block.addError("password", "Le mot de passe doit faire au moins 8 caractères.");
+            } else if (input.password.length() > 128) {
+                block.addError("password", "Le mot de passe est trop long.");
+            }
         }
 
         // Hash the password, and create the User object
@@ -134,6 +152,7 @@ public class UserSection extends Section {
         // Remove the Most Significant Bit, since we only have 63 bits because no unsigned :(
         long confirmationToken = VertxContextPRNG.current(context.vertx()).nextLong() & ~(1L << 63);
 
+        // Now, create the user!
         var user = new User(0,
             email,
             confirmationToken,
@@ -164,7 +183,7 @@ public class UserSection extends Section {
                 return CompleteUser.fromUser(u);
             })
             .recover(errMap(DuplicateException.class,
-                _ -> new RequestException("Un utilisateur est déjà enregistré avec cet e-mail.", 422))
+                _ -> new RequestException("Un utilisateur est déjà inscrit avec cet e-mail.", 422, "EMAIL_IN_USE"))
             );
     }
 
@@ -180,7 +199,10 @@ public class UserSection extends Section {
             new ErrorResponse<>("E-mail ou mot de passe incorrect."))
         .response(422, ErrorResponse.class,
             "Some fields are invalid (empty/too short).",
-            new ErrorResponse<>("L'e-mail est invalide."));
+            ErrorResponse.validationError(Map.of(
+                "email", new String[]{"L'e-mail est invalide."},
+                "password", new String[]{"Le mot de passe est vide."}
+            )));
 
     // The input JSON taken by this endpoint.
     record LoginInput(String email, String password) {}
@@ -201,8 +223,10 @@ public class UserSection extends Section {
         LoginInput input = readBody(context, LoginInput.class);
 
         // Validate stuff
-        Validation.email(input.email, "L'e-mail est invalide.");
-        Validation.nonBlank(input.password, "Le mot de passe est vide.");
+        try (var block = Validation.start()) {
+            Validation.email(block, "email", input.email, "L'e-mail est invalide.");
+            Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
+        }
 
         // Get a user by mail from the database.
         return userTable.getByEmail(input.email)
@@ -253,13 +277,40 @@ public class UserSection extends Section {
             .map(CompleteUser::fromUser);
     }
 
+    static final RouteDoc SEARCH_USERS_DOC = new RouteDoc("searchUsers")
+        .summary("Search users")
+        .description("Search for users by their first name, last name, or email.")
+        .queryParam("fullName", String.class, "The full name to search for.")
+        .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
+        .response(400, ErrorResponse.class, "The full name query parameter is missing.");
+
+    record ProfileSearchOutput(List<UserProfile> profiles) {}
+
+    Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
+        // todo: add auth
+
+        var fullName = context.queryParams().get("fullName");
+        if (fullName == null || fullName.isBlank()) {
+            throw new RequestException("La recherche est vide.", 400);
+        }
+
+        return server.db().preparedQuery("""
+            SELECT id, first_name, last_name, role, level, gender FROM user
+            WHERE INSTR(first_name, ?) > 0 OR INSTR(last_name, ?) > 0
+            """)
+            .mapping(UserProfile::fromRow)
+            .execute(Tuple.of(fullName, fullName))
+            .map(x -> StreamSupport.stream(x.spliterator(), false).toList())
+            .map(ProfileSearchOutput::new);
+    }
+
     // --- Updates ---
 
     // POST /api/users/me/profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")
         .description("Update the profile of the currently authenticated user.")
-        .param("userId", "The ID of the user.")
+        .pathParam("userId", "The ID of the user.")
         .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE))
         .response(200, UserProfile.class, "The new updated profile.");
 
@@ -279,8 +330,10 @@ public class UserSection extends Section {
         String firstName = Sanitize.string(input.firstName);
         String lastName = Sanitize.string(input.lastName);
 
-        validateFirstName(firstName);
-        validateLastName(lastName);
+        try (var block = Validation.start()) {
+            UserValidation.firstName(block, firstName);
+            UserValidation.lastName(block, lastName);
+        }
 
         return auth.getUserOrFail()
             .compose(u -> {
@@ -317,9 +370,11 @@ public class UserSection extends Section {
         ChangePasswordInput input = readBody(context, ChangePasswordInput.class);
 
         // Validate new password
-        Validation.nonBlank(input.newPassword, "Le nouveau mot de passe est vide.");
-        if (input.newPassword.length() < 8) {
-            throw new RequestException("Le nouveau mot de passe doit faire au moins 8 caractères.", 422);
+        try (var block = Validation.start()) {
+            Validation.nonBlank(block, "newPassword", input.newPassword, "Le nouveau mot de passe est vide.");
+            if (input.newPassword.length() < 8) {
+                throw new RequestException("Le nouveau mot de passe doit faire au moins 8 caractères.", 422);
+            }
         }
 
         return auth.getUserOrFail()
@@ -348,8 +403,8 @@ public class UserSection extends Section {
     static final RouteDoc CONFIRM_EMAIL_DOC = new RouteDoc("confirmEmail")
         .tag("Users")
         .summary("Confirm email")
-        .param(ParamDoc.Location.QUERY, "token", long.class, "The email confirmation token sent by... mail")
-        .param(ParamDoc.Location.QUERY, "user", int.class, "ID of the user whose account is getting confirmed")
+        .queryParam("token", long.class, "The email confirmation token sent by... mail")
+        .queryParam("user", int.class, "ID of the user whose account is getting confirmed")
         .response(302, """
             Redirects to the home page of the website, with the URL being either:
             - `/?confirmResult=ok` -- when the email has been successfully confirmed
@@ -430,13 +485,5 @@ public class UserSection extends Section {
                 log.info("Confirmation e-mail sent to user {}", u.getId());
             }))
             .map(u);
-    }
-
-    private void validateFirstName(String s) {
-        Validation.nonBlank(s, "Le prénom est vide.");
-    }
-
-    private void validateLastName(String s) {
-        Validation.nonBlank(s, "Le nom est vide.");
     }
 }

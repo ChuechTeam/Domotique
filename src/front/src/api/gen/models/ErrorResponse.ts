@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A response given by the API when something goes wrong.
  * @export
  * @interface ErrorResponse
  */

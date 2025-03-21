@@ -1,5 +1,6 @@
 package fr.domotique.data;
 
+import fr.domotique.base.data.*;
 import io.vertx.core.*;
 import io.vertx.sqlclient.*;
 import org.jetbrains.annotations.*;
