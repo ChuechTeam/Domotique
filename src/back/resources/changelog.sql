@@ -19,8 +19,15 @@
 CREATE TABLE user(
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) NOT NULL,
-    gender TINYINT NOT NULL,
+    email_confirmation_token BIGINT NOT NULL,
+    email_confirmed BOOL NOT NULL,
     pass_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    gender TINYINT NOT NULL,
+    role TINYINT NOT NULL,
+    level TINYINT NOT NULL,
+    points INT NOT NULL,
 
     UNIQUE INDEX idx_mail(email)
 );

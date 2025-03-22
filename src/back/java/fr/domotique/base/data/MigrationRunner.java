@@ -1,8 +1,7 @@
-package fr.domotique.data;
+package fr.domotique.base.data;
 
 import fr.domotique.*;
 import liquibase.command.*;
-import liquibase.exception.*;
 import liquibase.exception.CommandExecutionException;
 import liquibase.integration.commandline.*;
 import liquibase.resource.*;

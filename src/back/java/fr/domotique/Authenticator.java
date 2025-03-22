@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.base.*;
 import fr.domotique.data.*;
 import io.vertx.core.*;
 import io.vertx.ext.auth.hashing.*;
@@ -41,7 +42,6 @@ public class Authenticator {
     // Various utilities we use
     private final RoutingContext ctx; // To get info about the request
     private final Server server;
-    private final UserTable userTable; // To access the User table in the database
 
     // Id of the logged-in user; 0 means no user logged in
     private int userId = 0;
@@ -66,7 +66,6 @@ public class Authenticator {
         // Initialize boring dependencies
         this.ctx = ctx;
         this.server = server;
-        this.userTable = new UserTable(server.db());
 
         // Get the user id from the session, or 0 if not logged in.
         Integer sesUid = ctx.session().get(SESSION_UID_KEY);
@@ -179,7 +178,7 @@ public class Authenticator {
         }
 
         // Query the database for the user, then store it in the Authenticator.
-        return userTable.get(userId).andThen(x -> user = x.result());
+        return server.db().users().get(userId).andThen(x -> user = x.result());
     }
 
     /// Returns the currently logged-in user from the database.

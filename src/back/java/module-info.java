@@ -1,5 +1,5 @@
 /**
- * The main module for our amazing hospital IoT app!
+ * The main module for our amazing EHPAD IoT app!
  */
 open module fr.domotique.web {
     requires io.vertx.launcher.application;
@@ -7,11 +7,14 @@ open module fr.domotique.web {
     requires io.vertx.auth.common;
     requires org.slf4j;
     requires io.netty.codec.http;
-//    requires com.ongres.scram.client;
-//    requires com.ongres.scram.common;
     requires io.vertx.sql.client.mysql;
     requires io.vertx.sql.client;
     requires com.fasterxml.jackson.core;
+
+    requires io.vertx.httpproxy;
+    requires io.vertx.web.proxy;
+
+    requires io.swagger.v3.oas.models;
 
     // Templating
     requires io.vertx.web.template.jte;
@@ -27,6 +30,13 @@ open module fr.domotique.web {
 
     // Annotations
     requires static org.jetbrains.annotations;
-    requires io.vertx.httpproxy;
-    requires io.vertx.web.proxy;
+
+    // Jackson
+    requires com.fasterxml.jackson.databind;
+
+    // Swagger
+    requires io.swagger.v3.core;
+
+    // No idea (is it necessary?)
+    requires io.netty.transport;
 }

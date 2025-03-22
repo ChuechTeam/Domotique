@@ -1,9 +1,9 @@
 package fr.domotique;
 
 import fr.domotique.api.*;
-import fr.domotique.site.*;
+import fr.domotique.base.*;
+import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
-import io.vertx.core.buffer.*;
 import io.vertx.core.http.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
@@ -11,8 +11,6 @@ import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.proxy.handler.*;
 import io.vertx.httpproxy.*;
 import org.slf4j.*;
-
-import java.io.*;
 
 /**
  * A RouterVerticle handles incoming HTTP requests by directing them to the right place.
@@ -61,9 +59,8 @@ public class RouterVerticle extends VerticleBase {
 
     /// The array with all [sections][Section] we should activate.
     Section[] allSections() {
-        return new Section[] {
-            new UserSection(server),
-            new HomeSection(server)
+        return new Section[]{
+            new UserSection(server)
         };
     }
 
@@ -107,6 +104,12 @@ public class RouterVerticle extends VerticleBase {
         // Could also be used later on to add support for file uploads.
         r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
 
+        // Make sure the client does NOT cache requests to the API.
+        r.route("/api/*").handler(ctx -> {
+            ctx.response().putHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
+            ctx.next();
+        });
+
         // Register all sections.
         for (Section section : allSections()) {
             section.register(r);
@@ -125,21 +128,13 @@ public class RouterVerticle extends VerticleBase {
 
         // Create and start the HTTP server
         return vertx.createHttpServer()
-                .requestHandler(r)
-                .listen(server.config().port());
+            .requestHandler(r)
+            .listen(server.config().port());
     }
 
     /// This function is called when an exception is thrown during a request,
     /// and will adapt the response accordingly.
     private static void handleRequestProblems(RoutingContext ctx) {
-        // Declare a little record so we can send JSON with these properties:
-        // {
-        //    "message": "Exception's message",
-        //    "code": "EXCEPTION_ERR_CODE", // or null if errorCode is null
-        //    "details": {...} // or null if details is null
-        // }
-        record ErrorResponse(String message, String code, Object data) {}
-
         // Is this exception one of those special RequestExceptions?
         if (ctx.failure() instanceof RequestException pb) {
             // Yes! Now make sure we can write to the response.
@@ -149,41 +144,30 @@ public class RouterVerticle extends VerticleBase {
             }
 
             // And now, write a JSON response with information about the error
-            var responseToSend = new ErrorResponse(pb.getMessage(), pb.getErrorCode(), pb.getDetails());
+            var responseToSend = new ErrorResponse<>(pb.getMessage(), pb.getErrorCode(), pb.getDetails());
             ctx.response()
-                    .setStatusCode(pb.getStatusCode())
-                    .putHeader(HttpHeaders.CONTENT_TYPE, "text/json; charset=utf-8")
-                    .end(Json.encode(responseToSend));
+                .setStatusCode(pb.getStatusCode())
+                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                .end(Json.encode(responseToSend));
         } else {
             // Nope, give it to the other error handler
             ctx.next();
         }
     }
 
-    /// Serves the openapi.yml file in development mode at the /api-docs/openapi.yml URL,
+    /// Serves the generated openapi.yml file in development mode at the /api-docs/openapi.yml URL,
     /// and serves the Swagger UI page as well.
-    private void serveApiDocumentation(Router r) throws IOException {
-        // First read the entirety of the openapi.yml file in a "yml" buffer.
-        final Buffer yml;
-        try (InputStream stream = RouterVerticle.class.getResourceAsStream("/openapi.yml")) {
-            if (stream != null) {
-                yml = Buffer.buffer(stream.readAllBytes());
-            } else {
-                yml = null;
-            }
-        }
+    private void serveApiDocumentation(Router r) {
+        // First serve the files for the Scalar API Docs
+        r.route("/api-docs*").handler(StaticHandler.create("scalar"));
 
-        // The serve it! (if possible...)
-        if (yml != null) {
-            // First serve the files for the Scalar API Docs
-            r.route("/api-docs*").handler(StaticHandler.create("scalar"));
+        // Generate the docs in background. It's a bit inefficient for every core to calculate it,
+        // but it's so insignifiant that we don't care.
+        Future<String> ymlTask = vertx.executeBlocking(() -> DocsGen.generate(r));
 
-            // Then serve the openapi.yml file from the buffer
-            r.route("/api-docs/openapi.yml").handler(ctx -> {
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/yaml").end(yml);
-            });
-        } else {
-            log.warn("No openapi.yml file found, openapi.yml will not be available.");
-        }
+        // Then serve it when ready
+        r.route("/api-docs/openapi.yml").handler(ctx -> ymlTask
+            .onSuccess(yml -> ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/yaml").end(yml))
+            .onFailure(ctx::fail));
     }
 }

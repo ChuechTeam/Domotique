@@ -13,15 +13,15 @@ public class User {
      */
     private int id;
 
-    /**
-     * The email address of the user. Must be unique. Is used to log in.
-     */
+    /// The email address of the user. Must be unique. Is used to log in.
     private String email;
 
-    /**
-     * The gender of the user.
-     */
-    private Gender gender;
+    /// The confirmation token given by mail to confirm a user's email.
+    /// Should be generated randomly by using PRNGs.
+    private long emailConfirmationToken;
+
+    /// True when the user has confirmed their email address.
+    private boolean emailConfirmed;
 
     /**
      * The hashed password of the user. Uses PBKDF2 algorithm.
@@ -30,28 +30,61 @@ public class User {
      */
     private String passHash;
 
+    /// The first name of the user. Not null!
+    private String firstName;
+    /// The last name of the user. Not null!
+    private String lastName;
+
     /**
-     * Make a new user with all their necessary information
-     *
-     * @param id the identifier of this user; 0 -> automatically generated
-     * @param email the email address of the user
-     * @param gender the gender of the user
-     * @param passHash the HASHED password of the user
+     * The gender of the user.
      */
-    public User(int id, String email, Gender gender, String passHash) {
+    private Gender gender;
+
+    /// The role of the user in the EHPAD
+    private Role role;
+
+    /// The current level of the user.
+    private Level level;
+
+    /// The number of points this user has accumulated.
+    private int points;
+
+    public User(int id,
+                String email,
+                long emailConfirmationToken,
+                boolean emailConfirmed,
+                String passHash, String firstName,
+                String lastName,
+                Gender gender,
+                Role role,
+                Level level,
+                int points) {
         this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
-        this.gender = gender;
+        this.emailConfirmationToken = emailConfirmationToken;
+        this.emailConfirmed = emailConfirmed;
         this.passHash = passHash;
+        this.gender = gender;
+        this.role = role;
+        this.level = level;
+        this.points = points;
     }
 
     /// Maps an SQL [Row] to a [User], considering all of its fields are in order, starting from `startIdx`.
     public static User map(Row row, int startIdx) {
         return new User(
-                row.getInteger(startIdx),
-                row.getString(startIdx + 1),
-                Gender.fromByte(row.get(Byte.class, startIdx + 2)),
-                row.getString(startIdx + 3)
+            row.getInteger(startIdx++),
+            row.getString(startIdx++),
+            row.getNumeric(startIdx++).longValue(),
+            row.getBoolean(startIdx++),
+            row.getString(startIdx++), row.getString(startIdx++),
+            row.getString(startIdx++),
+            Gender.fromByte(row.get(Byte.class, startIdx++)),
+            Role.fromByte(row.get(Byte.class, startIdx++)),
+            Level.fromByte(row.get(Byte.class, startIdx++)),
+            row.getInteger(startIdx)
         );
     }
 
@@ -62,12 +95,29 @@ public class User {
 
     // Boring getters and setters
 
+
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -78,12 +128,20 @@ public class User {
         this.email = email;
     }
 
-    public Gender getGender() {
-        return gender;
+    public long getEmailConfirmationToken() {
+        return emailConfirmationToken;
     }
 
-    public void setGender(Gender gender) {
-        this.gender = gender;
+    public void setEmailConfirmationToken(long emailConfirmationToken) {
+        this.emailConfirmationToken = emailConfirmationToken;
+    }
+
+    public boolean isEmailConfirmed() {
+        return emailConfirmed;
+    }
+
+    public void setEmailConfirmed(boolean emailConfirmed) {
+        this.emailConfirmed = emailConfirmed;
     }
 
     public String getPassHash() {
@@ -92,5 +150,37 @@ public class User {
 
     public void setPassHash(String passHash) {
         this.passHash = passHash;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
     }
 }

@@ -1,11 +1,14 @@
-package fr.domotique;
+package fr.domotique.base;
 
+import fr.domotique.*;
+import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
 
 import java.util.*;
+import java.util.function.*;
 
 /// A section contains many Web endpoints (API or Views), all grouped under the same URL prefix (usually).
 ///
@@ -68,8 +71,8 @@ import java.util.*;
 ///         return Future.succeededFuture(products[productId]);
 ///}
 ///
-///     @Override
-///     public void register(Router router) {
+///@Override
+///publicvoid register(Router router){
 ///                   // Create a sub-router for product endpoints
 ///                   Router productRoutes = Router.router(server.vertx());
 ///
@@ -79,7 +82,7 @@ import java.util.*;
 ///
 ///                   // Register the sub-router under /api/products
 ///                   router.route("/api/products*").subRouter(productRoutes);
-///     }
+///}
 ///}
 ///```
 ///
@@ -121,6 +124,30 @@ public abstract class Section {
         }
     }
 
+    /// Parses the integer of the given value. Returns `null` if either:
+    /// - the value isn't a valid integer
+    /// - the value is `null`
+    public static Integer readIntOrNull(String value) {
+        try {
+            if (value == null) {return null;}
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /// Parses the unsigned long of the given value. Returns `null` if either:
+    /// - the value isn't a valid unsigned long
+    /// - the value is `null`
+    public static Long readUnsignedLongOrNull(String value) {
+        try {
+            if (value == null) {return null;}
+            return Long.parseUnsignedLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /// Reads the body of the request in JSON format, with the given class.
     ///
     /// Ends the request with a 400 status code if the body is not valid JSON, or when the data is invalid/missing.
@@ -142,7 +169,7 @@ public abstract class Section {
         try {
             return context.body().asPojo(clazz);
         } catch (DecodeException e) {
-            throw new RequestException("Invalid JSON body.", 400);
+            throw new RequestException("Invalid JSON body.", 400, "INVALID_JSON");
         }
     }
 
@@ -154,7 +181,7 @@ public abstract class Section {
     /// someFuture.andThen(x -> {
     ///     if (x.succeeded()){
     ///         doThing(x.result());
-    ///     }
+    ///}
     ///})
     ///```
     ///
@@ -162,7 +189,7 @@ public abstract class Section {
     /// ```java
     /// someFuture.andThen(whenOk(x -> {
     ///     doThing(x);
-    /// }));
+    ///}));
     ///```
     public static <T> Handler<AsyncResult<T>> whenOk(Handler<T> handler) {
         return x -> {
@@ -170,6 +197,48 @@ public abstract class Section {
                 handler.handle(x.result());
             }
         };
+    }
+
+    /// When encountering a particular type of exception, transforms it into another one.
+    ///
+    /// Made to be used in conjunction with [Future#recover(java.util.function.Function)]
+    ///
+    /// ## Example
+    ///
+    /// ```java
+    /// someFuture.recover(errMap(IllegalArgumentException.class, e -> new RequestException("Invalid input", 400)));
+    /// ```
+    public static <E extends Throwable, T> Function<Throwable, Future<T>> errMap(Class<E> exceptionClass,
+                                                                                 Function<E, ? extends Throwable> action) {
+        return ex -> {
+            if (exceptionClass.isInstance(ex)) {
+                return Future.failedFuture(action.apply(exceptionClass.cast(ex)));
+            } else {
+                return Future.failedFuture(ex);
+            }
+        };
+    }
+
+    /// Add API documentation to a route using [RouteDoc]
+    ///
+    /// ## Example
+    /// ```java
+    /// doc(router.get("/api/users/:id")).summary("Get a user");
+    ///```
+    public static RouteDoc doc(Route route) {
+        var rd = new RouteDoc();
+        route.putMetadata(RouteDoc.KEY, rd);
+        return rd;
+    }
+
+    /// Creates a new router (using the server's vertx instance).
+    ///
+    /// This is equivalent to
+    /// ```java
+    /// Router.router(server.vertx());
+    ///```
+    protected Router newRouter() {
+        return Router.router(server.vertx());
     }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`.
@@ -184,7 +253,7 @@ public abstract class Section {
     ///```
     protected final Future<Buffer> view(RoutingContext context, String name) {
         return server.templateEngine().render(Map.of(), name)
-                .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
+            .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
     }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`, with arguments.
@@ -212,19 +281,19 @@ public abstract class Section {
     ///
     /// **JTE Template** at `views/dashboard.jte`
     /// ```html
-    /// @param String user
-    /// @param Integer money
+    ///@paramStringuser
+    ///@paramIntegermoney
     ///
     /// <h1>Welcome, ${user}!</h1>
     /// <p>You have ${money} euros in your account.</p>
-    /// @if(money<0)
+    ///@if(money<0)
     /// <p>You have a negative balance.</p>
     /// <p><b>TIP:</b> Consider getting a job.</p>
-    /// @endif
+    ///@endif
     /// ```
     protected final Future<Buffer> view(RoutingContext context, String name, Map<String, Object> argumentMap) {
         return server.templateEngine().render(argumentMap, name)
-                .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
+            .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
     }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`, with arguments.
@@ -240,15 +309,15 @@ public abstract class Section {
     ///        viewArg("user", "Alice"),
     ///        viewArg("money", -300),
     ///        viewArg("isAdmin", false)
-    ///    );
+    ///);
     ///}
     ///```
     ///
     /// **JTE Template** at `views/dashboard.jte`
     /// ```html
-    ///@param String user
-    ///@param Integer money
-    ///@param Boolean isAdmin
+    ///@paramStringuser
+    ///@paramIntegermoney
+    ///@paramBooleanisAdmin
     ///
     /// <h1>Welcome, ${user}!</h1>
     /// <p>You have ${money} euros in your account.</p>
@@ -262,7 +331,7 @@ public abstract class Section {
     @SafeVarargs
     protected final Future<Buffer> view(RoutingContext context, String name, Map.Entry<String, Object>... argumentList) {
         return server.templateEngine().render(Map.ofEntries(argumentList), name)
-                .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
+            .andThen(_ -> context.response().putHeader("Content-Type", "text/html"));
     }
 
     /// Create a view argument to be used with
