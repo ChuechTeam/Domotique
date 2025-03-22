@@ -135,7 +135,7 @@ tasks.withType<Test> {
 tasks.register<JavaExec>("updateDatabase") {
     group = "application"
 
-    mainClass = "fr.domotique.data.MigrationRunner"
+    mainClass = "fr.domotique.base.data.MigrationRunner"
 
     // I have no clue why that's not done by default...
     javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
