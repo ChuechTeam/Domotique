@@ -6,6 +6,7 @@ import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.core.json.*;
+import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.proxy.handler.*;
@@ -85,7 +86,6 @@ public class RouterVerticle extends VerticleBase {
         }
 
         // Register the session handler, which is going to manage our user session in the cookie for us.
-        // NOTE: This is registered *before* /assets/* so don't check the session when loading frontend data.
         r.route("/api/*").handler(SessionHandler.create(server.sessionStore()));
 
         // Register the Authenticator to do user authentication.

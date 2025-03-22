@@ -2,7 +2,7 @@ package fr.domotique.base;
 
 /// Contains functions to validate user values in a [ValidationBlock].
 ///
-/// ## Example
+/// ## Example (simple)
 ///
 /// ```java
 /// ValidationBlock block = Validation.start();
@@ -12,7 +12,73 @@ package fr.domotique.base;
 ///
 /// // Will stop the request if there's at least one error
 /// block.end();
-///```
+/// ```
+///
+/// ## Example (auto-end)
+///
+/// ```java
+/// try (ValidationBlock block = Validation.start()) {
+///     Validation.email(block, "email", user.email);
+///     Validation.nonBlank(block, "password", user.password, "Password cannot be empty");
+///
+///     // Custom validation logic
+///     if (user.age < 18) {
+///         block.addError("age", "User must be at least 18 years old");
+///     }
+///
+///     // Will automatically call block.end() when exiting the try block
+/// }
+/// ```
+///
+/// ## Example (child block)
+///
+/// ```java
+/// try (ValidationBlock parentBlock = Validation.start()) {
+///     // Validate user basic info
+///     Validation.nonBlank(parentBlock, "username", user.username);
+///
+///     // Create a child block for address validation
+///     ValidationBlock addressBlock = parentBlock.createChild("address");
+///     Validation.nonBlank(addressBlock, "street", user.address.street);
+///     Validation.nonBlank(addressBlock, "city", user.address.city);
+///
+///     // Parent block's end() will be called automatically
+/// }
+/// ```
+///
+/// ## Example (child array)
+///
+/// ```java
+/// ValidationBlock block = Validation.start();
+///
+/// List<User> users = getUserList();
+/// block.childArray("users", users, (user, b) -> {
+///     Validation.nonBlank(b, "name", user.getName(), "Name is required");
+///     Validation.email(b, "email", user.getEmail(), "Valid email is required");
+///     if (user.getAge() < 18) {
+///         b.addError("age", "Must be at least 18 years old");
+///     }
+/// });
+///
+/// block.end();
+/// ```
+///
+/// The output will contain validation errors for each user in the array:
+///
+/// ```json
+/// {
+///     "users": [
+///         {
+///             "name": ["Name is required"]
+///         },
+///         {
+///             "email": ["Valid email is required"],
+///             "age": ["Must be at least 18 years old"]
+///         }
+///     ]
+/// }
+/// ```
+///
 public final class Validation {
     // Forbid new Validation(), it's useless!
     private Validation() {

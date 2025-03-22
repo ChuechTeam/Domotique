@@ -3,11 +3,13 @@ package fr.domotique.base;
 import fr.domotique.*;
 import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
+import io.vertx.core.Future;
 import io.vertx.core.buffer.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.*;
 
 /// A section contains many Web endpoints (API or Views), all grouped under the same URL prefix (usually).
@@ -241,6 +243,40 @@ public abstract class Section {
         return Router.router(server.vertx());
     }
 
+    /// \[Experimental!] Executor for virtual threads to do async/await
+    public static final ExecutorService vtExecutor = Executors.newVirtualThreadPerTaskExecutor();
+
+    /// Allows you to create a routing function using async/await thanks to virtual threads.
+    protected <T> Function<RoutingContext, Future<T>> vt(Function<RoutingContext, T> func) {
+        return ctx -> {
+            Promise<T> promise = Promise.promise();
+            // A bit hacky... We can't easily transfer variables of the context to a custom thread.
+            var prng = ctx.vertx().getOrCreateContext().get("__vertx.VertxContextPRNG");
+            vtExecutor.execute(() -> {
+                if (prng != null) {
+                    ctx.vertx().getOrCreateContext().put("__vertx.VertxContextPRNG", prng);
+                }
+                try {
+                    promise.complete(func.apply(ctx));
+                } catch (Throwable e) {
+                    promise.fail(e);
+                }
+            });
+            return promise.future();
+        };
+    }
+
+    /// Allows you to create a routing function using async/await thanks to virtual threads.
+    ///
+    /// This always returns 204 No Content on success.
+    protected <T> Function<RoutingContext, Future<T>> vt(Consumer<RoutingContext> func) {
+        return vt(ctx -> {
+            func.accept(ctx);
+            return null;
+        });
+    }
+
+
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`.
     ///
     /// ## Example
@@ -315,9 +351,9 @@ public abstract class Section {
     ///
     /// **JTE Template** at `views/dashboard.jte`
     /// ```html
-    ///@paramStringuser
-    ///@paramIntegermoney
-    ///@paramBooleanisAdmin
+    ///@param String user
+    ///@param Integer money
+    ///@param Boolean isAdmin
     ///
     /// <h1>Welcome, ${user}!</h1>
     /// <p>You have ${money} euros in your account.</p>

@@ -2,6 +2,7 @@ package fr.domotique.api;
 
 import fr.domotique.*;
 import fr.domotique.base.*;
+import fr.domotique.base.Validation;
 import fr.domotique.base.apidocs.*;
 import fr.domotique.base.data.*;
 import fr.domotique.data.*;
@@ -12,7 +13,6 @@ import io.vertx.sqlclient.*;
 import org.slf4j.*;
 
 import java.util.*;
-import java.util.stream.*;
 
 /// All API endpoints to access user data, and do authentication.
 public class UserSection extends Section {
@@ -40,22 +40,24 @@ public class UserSection extends Section {
         // The "this::func" syntax is equivalent to x -> this.func(x)
         userRoutes.get("/me").respond(this::me).putMetadata(RouteDoc.KEY, ME_DOC);
         userRoutes.get("/").respond(this::searchUsers).putMetadata(RouteDoc.KEY, SEARCH_USERS_DOC);
-        userRoutes.post("/").respond(this::register).putMetadata(RouteDoc.KEY, REGISTER_DOC);
+        userRoutes.post("/").respond(vt(this::registerUser)).putMetadata(RouteDoc.KEY, REGISTER_DOC);
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
-        userRoutes.post("/login").respond(this::login).putMetadata(RouteDoc.KEY, LOGIN_DOC);
+        userRoutes.post("/login").respond(vt(this::login)).putMetadata(RouteDoc.KEY, LOGIN_DOC);
+        userRoutes.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
+        userRoutes.post("/me/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
+        userRoutes.post("/me/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
+
+        // Paths with parameters come last.
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
-        userRoutes.post("/me/profile").respond(this::updateProfile).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
-        userRoutes.post("/me/password").respond(this::changePassword).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
+
 
         // Finally, register that router to the main router, prefixed by /api/users
         doc(router.route(PATH_PREFIX).subRouter(userRoutes))
             .tag("Users");
 
-        // Add register the email confirmation on the root
-        router.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
     }
 
-    // GET /api/users/:userId
+    // region GET /api/users/:userId
     static final RouteDoc GET_USER_DOC = new RouteDoc("findUser")
         .summary("Get user profile by ID")
         .description("Gets a user by their ID, and return their public data.")
@@ -70,8 +72,9 @@ public class UserSection extends Section {
         // Return the user from the database, and convert it to a UserProfile to not leak passwords!
         return server.db().users().get(userId).map(UserProfile::fromUser);
     }
+    // endregion
 
-    // POST /api/users
+    // region POST /api/users | Register
     static final RouteDoc REGISTER_DOC = new RouteDoc("register")
         .summary("Register")
         .description("Register a new user with an email and a password.")
@@ -106,7 +109,8 @@ public class UserSection extends Section {
         }
     }
 
-    Future<CompleteUser> register(RoutingContext context) {
+    // Uses virtual threads; we can use .await()!
+    CompleteUser registerUser(RoutingContext context) {
         // Grab the Authenticator
         Authenticator auth = Authenticator.get(context);
 
@@ -115,12 +119,7 @@ public class UserSection extends Section {
             throw new RequestException("Vous êtes déjà connecté !", 422, "ALREADY_LOGGED_IN");
         }
 
-        // Read the JSON from the request:
-        // {
-        //     "email": "hello@abc.fr"
-        //     "gender": "FEMALE"
-        //     "password": "password123"
-        // }
+        // Read the JSON from the request
         RegisterInput input = readBody(context, RegisterInput.class);
 
         // Do a series of validation (including password strength)
@@ -133,12 +132,7 @@ public class UserSection extends Section {
             UserValidation.lastName(block, input.lastName);
 
             // Validate the password (for registration; login requirements are different)
-            Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
-            if (input.password.length() < 8) {
-                block.addError("password", "Le mot de passe doit faire au moins 8 caractères.");
-            } else if (input.password.length() > 128) {
-                block.addError("password", "Le mot de passe est trop long.");
-            }
+            UserValidation.password(block, "password", input.password);
         }
 
         // Hash the password, and create the User object
@@ -161,29 +155,29 @@ public class UserSection extends Section {
             input.role == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
             0);
 
-        // Add the user to the database. Once that's done successfully, log in the user.
-        return server.db().users().create(user)
-            .compose(u -> {
-                // Report that registration to the log (-> the console)
-                log.info("User registered with id {} and email {}", u.getId(), u.getEmail());
+        try {
+            // Add the user to the database.
+            server.db().users().create(user).await();
 
-                // Log the user in, and send a HTTP 201 Created status code.
-                auth.login(u.getId());
+            // Report that registration to the log (-> the console)
+            log.info("User registered with id {} and email {}", user.getId(), user.getEmail());
 
-                // Send the confirmation e-mail
-                return sendConfirmationEmail(u, context);
-            })
-            .map(u -> {
-                // Success, now register the status code and send the CompleteUser
-                context.response().setStatusCode(201);
-                return CompleteUser.fromUser(u);
-            })
-            .recover(errMap(DuplicateException.class,
-                _ -> new RequestException("Un utilisateur est déjà inscrit avec cet e-mail.", 422, "EMAIL_IN_USE"))
-            );
+            // Log the user in, and send a HTTP 201 Created status code.
+            auth.login(user.getId());
+
+            // Send the confirmation e-mail, and wait for it to be sent.
+            sendConfirmationEmail(user, context).await();
+
+            // Success, now register the status code and send the CompleteUser
+            context.response().setStatusCode(201);
+            return CompleteUser.fromUser(user);
+        } catch (DuplicateException ex) {
+            throw new RequestException("Un utilisateur est déjà inscrit avec cet e-mail.", 422, "EMAIL_IN_USE");
+        }
     }
+    // endregion
 
-    // POST /api/users/login
+    // region POST /api/users/login | Log in
     static final RouteDoc LOGIN_DOC = new RouteDoc("login")
         .summary("Log in")
         .description("Log in a user with an email and a password.")
@@ -191,8 +185,8 @@ public class UserSection extends Section {
         .response(200, CompleteUser.class,
             "The user was logged in. Is also a success when the user's already logged, even when the credentials are invalid.")
         .response(401, ErrorResponse.class,
-            "Credentials are incorrect: the password doesn't match the one found on the server.",
-            new ErrorResponse<>("E-mail ou mot de passe incorrect."))
+            "Credentials are incorrect: the password doesn't match the one found on the server. Error code: INVALID_CREDENTIALS.",
+            new ErrorResponse<>("E-mail ou mot de passe incorrect.", "INVALID_CREDENTIALS"))
         .response(422, ErrorResponse.class,
             "Some fields are invalid (empty/too short).",
             ErrorResponse.validationError(Map.of(
@@ -207,19 +201,17 @@ public class UserSection extends Section {
         }
     }
 
-    Future<CompleteUser> login(RoutingContext context) {
+    // Uses virtual threads; we can use .await()!
+    CompleteUser login(RoutingContext context) {
         // Get the Authenticator, and check if the user is already logged in.
         Authenticator auth = Authenticator.get(context);
         if (auth.isLoggedIn()) {
             // Already logged in! Just send the user back.
-            return auth.getUserOrFail().map(CompleteUser::fromUser);
+            User user = auth.getUserOrFail().await();
+            return CompleteUser.fromUser(user);
         }
 
         // Read the JSON from the request
-        // {
-        //     "email": "hello@def.fr"
-        //     "password": "password123"
-        // }
         LoginInput input = readBody(context, LoginInput.class);
 
         // Validate stuff
@@ -229,22 +221,22 @@ public class UserSection extends Section {
         }
 
         // Get a user by mail from the database.
-        return server.db().users().getByEmail(input.email)
-            .map(user -> {
-                // Make sure the given password matches the user's password, and that the user exists!
-                if (user == null || !auth.checkPassword(input.password, user.getPassHash())) {
-                    throw new RequestException("E-mail ou mot de passe incorrect.", 401);
-                }
+        var user = server.db().users().getByEmail(input.email).await();
 
-                // Log in the user to the current session.
-                auth.login(user.getId());
+        // Make sure the given password matches the user's password, and that the user exists!
+        if (user == null || !auth.checkPassword(input.password, user.getPassHash())) {
+            throw new RequestException("E-mail ou mot de passe incorrect.", 401, "INVALID_CREDENTIALS");
+        }
 
-                // Return the user, using CompleteUser to avoid leaking the password.
-                return CompleteUser.fromUser(user);
-            });
+        // Log in the user to the current session.
+        auth.login(user.getId());
+
+        // Return the user, using CompleteUser to avoid leaking the password.
+        return CompleteUser.fromUser(user);
     }
+    // endregion
 
-    // POST /api/users/logout
+    // region POST /api/users/logout | Log out
     static final RouteDoc LOGOUT_DOC = new RouteDoc("logout")
         .summary("Log out")
         .description("Log out the current user from the app.")
@@ -260,8 +252,9 @@ public class UserSection extends Section {
         // Return nothing, so it's always a 204 No Content status code (which is a success code).
         return Future.succeededFuture(null);
     }
+    // endregion
 
-    // GET /api/users/me
+    // region GET /api/users/me | Get my user profile
     static final RouteDoc ME_DOC = new RouteDoc("me")
         .summary("Get my user profile")
         .description("Gets the currently authenticated user's complete data.")
@@ -276,7 +269,9 @@ public class UserSection extends Section {
         return auth.getUserOrFail()
             .map(CompleteUser::fromUser);
     }
+    // endregion
 
+    // region GET /api/users | Search users
     static final RouteDoc SEARCH_USERS_DOC = new RouteDoc("searchUsers")
         .summary("Search users")
         .description("Search for users by their first name, last name, or email.")
@@ -288,29 +283,28 @@ public class UserSection extends Section {
 
     Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
         // todo: add auth
-
         var fullName = context.queryParams().get("fullName");
         if (fullName == null || fullName.isBlank()) {
             throw new RequestException("La recherche est vide.", 400);
         }
 
         return server.sql().preparedQuery("""
-            SELECT id, first_name, last_name, role, level, gender FROM user
-            WHERE INSTR(first_name, ?) > 0 OR INSTR(last_name, ?) > 0
-            """)
-            .mapping(UserProfile::fromRow)
-            .execute(Tuple.of(fullName, fullName))
-            .map(x -> StreamSupport.stream(x.spliterator(), false).toList())
-            .map(ProfileSearchOutput::new);
+                SELECT id, first_name, last_name, role, level, gender FROM user
+                WHERE INSTR(first_name, ?) > 0 OR INSTR(last_name, ?) > 0
+                """)
+            .mapping(UserProfile::fromRow) // Convert the SQL rows into UserProfiles
+            .execute(Tuple.of(fullName, fullName)) // Execute the query with both '?' replaced by the full name
+            .map(Table::toList) // Convert the RowSet into a List of rows
+            .map(ProfileSearchOutput::new); // Wrap the list into a ProfileSearchOutput object
     }
+    // endregion
 
     // --- Updates ---
 
-    // POST /api/users/me/profile
+    // region POST /api/users/me/profile | Update profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")
         .description("Update the profile of the currently authenticated user.")
-        .pathParam("userId", "The ID of the user.")
         .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE))
         .response(200, UserProfile.class, "The new updated profile.");
 
@@ -326,30 +320,38 @@ public class UserSection extends Section {
         }
     }
 
-    Future<UserProfile> updateProfile(RoutingContext context) {
+    UserProfile updateProfile(RoutingContext context) {
         Authenticator auth = Authenticator.get(context);
 
+        // Make sure we're logged in!
         auth.requireAuth();
 
+        // Read the JSON from the request
         UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
 
+        // Validate incoming values
         try (var block = Validation.start()) {
             UserValidation.firstName(block, input.firstName);
             UserValidation.lastName(block, input.lastName);
         }
 
-        return auth.getUserOrFail()
-            .compose(u -> {
-                u.setFirstName(input.firstName);
-                u.setLastName(input.lastName);
-                u.setGender(input.gender);
+        // Get the user from the database.
+        var user = auth.getUserOrFail().await();
 
-                return server.db().users().update(u);
-            })
-            .map(UserProfile::fromUser);
+        // Set all the values
+        user.setFirstName(input.firstName);
+        user.setLastName(input.lastName);
+        user.setGender(input.gender);
+
+        // Update the user in the database.
+        server.db().users().update(user).await();
+
+        // Done! Return the public data of the user.
+        return UserProfile.fromUser(user);
     }
+    // endregion
 
-    // POST /api/users/me/password
+    // region POST /api/users/me/password | Change password
     static final RouteDoc CHANGE_PASSWORD_DOC = new RouteDoc("changePassword")
         .summary("Change password")
         .description("Change the password of the currently authenticated user.")
@@ -364,45 +366,43 @@ public class UserSection extends Section {
         String newPassword
     ) {}
 
-    Future<Void> changePassword(RoutingContext context) {
+    void changePassword(RoutingContext context) {
         Authenticator auth = Authenticator.get(context);
 
-        // Require authentication
+        // Make sure the user is logged in
         auth.requireAuth();
 
+        // Read the JSON from the request
         ChangePasswordInput input = readBody(context, ChangePasswordInput.class);
 
         // Validate new password
         try (var block = Validation.start()) {
-            Validation.nonBlank(block, "newPassword", input.newPassword, "Le nouveau mot de passe est vide.");
-            if (input.newPassword.length() < 8) {
-                throw new RequestException("Le nouveau mot de passe doit faire au moins 8 caractères.", 422);
-            }
+            UserValidation.password(block, "newPassword", input.newPassword);
         }
 
-        return auth.getUserOrFail()
-            .compose(user -> {
-                // Verify old password
-                if (!auth.checkPassword(input.oldPassword, user.getPassHash())) {
-                    throw new RequestException("L'ancien mot de passe est incorrect.", 403);
-                }
+        // Get the logged-in user
+        User user = auth.getUserOrFail().await();
 
-                // Hash the new password
-                String newPasswordHashed = auth.hashPassword(input.newPassword);
-                user.setPassHash(newPasswordHashed);
+        // Verify old password
+        if (!auth.checkPassword(input.oldPassword, user.getPassHash())) {
+            throw new RequestException("L'ancien mot de passe est incorrect.", 403);
+        }
 
-                // Update user in database
-                return server.db().users().update(user);
-            })
-            .map(user -> {
-                log.info("User {} successfully changed their password", user.getId());
-                return null; // Return null to get a 204 No Content response
-            });
+        // Hash the new password, and update it.
+        String newPasswordHashed = auth.hashPassword(input.newPassword);
+        user.setPassHash(newPasswordHashed);
+
+        // Update user in database (synchronously using await)
+        server.db().users().update(user).await();
+
+        // Finally, log it to the console!
+        log.info("User {} successfully changed their password", user.getId());
     }
+    // endregion
 
     // --- Email confirmation ---
 
-    // GET /confirmEmail?token=xxx&user=xxx
+    // region GET /api/users/confirmEmail?token=xxx&user=xxx | Confirm email
     static final RouteDoc CONFIRM_EMAIL_DOC = new RouteDoc("confirmEmail")
         .tag("Users")
         .summary("Confirm email")
@@ -460,6 +460,7 @@ public class UserSection extends Section {
             })
             .onFailure(context::fail);
     }
+    // endregion
 
     /// Sends the confirmation email to User `u`.
     private Future<User> sendConfirmationEmail(User u, RoutingContext ctx) {
@@ -470,7 +471,7 @@ public class UserSection extends Section {
             + ":" + ctx.request().authority().port();
 
         // Construct the confirmation URL
-        String confirmUrl = baseUrl + "/confirmEmail?token=" + u.getEmailConfirmationToken() + "&user=" + u.getId();
+        String confirmUrl = baseUrl + "/api/users/confirmEmail?token=" + u.getEmailConfirmationToken() + "&user=" + u.getId();
 
         // Prepare template data for the email
         Map<String, Object> htmlArguments = Map.of(

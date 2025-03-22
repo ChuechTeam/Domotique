@@ -344,6 +344,7 @@ public final class ValidationBlock implements AutoCloseable {
         return errors;
     }
 
+    /// Same as [#end()], but is used to be compatible with try-with-resources.
     @Override
     public void close() {
         end();

@@ -39,4 +39,5 @@ open module fr.domotique.web {
 
     // No idea (is it necessary?)
     requires io.netty.transport;
+    requires java.validation;
 }

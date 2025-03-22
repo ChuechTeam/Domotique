@@ -11,6 +11,7 @@ public class ResponseDoc {
     int status = 200;
     String description = "";
     @Nullable Type content = null; // TODO: Change this to give more flexibility (i.e. submitting files)
+    String contentType = "application/json";
     @Nullable Object example = null;
 
     public int getStatus() {
@@ -43,6 +44,15 @@ public class ResponseDoc {
     public ResponseDoc content(@Nullable Type content, @Nullable Object example) {
         this.content = content;
         this.example = example;
+        return this;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public ResponseDoc contentType(String contentType) {
+        this.contentType = contentType;
         return this;
     }
 

@@ -69,6 +69,8 @@ api.users.login("utilisateur@exemple.com", "motdepasse")
 
 Les erreurs de l'API contiennent des informations utiles dans l'objet `ErrorResponse`.
 
+Les fonctions `findResponse` et `findErrData` peuvent aider à extraire ces informations.
+
 ```javascript
 // Approche complète pour gérer les erreurs
 async function registerUser(userData) {
@@ -77,20 +79,21 @@ async function registerUser(userData) {
     return user;
   } catch (error) {
     // Vérifier s'il y a une réponse d'erreur structurée
-    if (error.response && error.response.errData) {
-      const errorResponse = error.response.errData;
+    const response = findResponse(error);
+    if (response != null && response.errData != null) {
+      const errData = response.errData;
       
       // Accéder aux propriétés de l'ErrorResponse
-      console.error("Code d'erreur:", errorResponse.code);
-      console.error("Message:", errorResponse.message);
+      console.error("Code d'erreur:", errData.code);
+      console.error("Message:", errData.message);
       
       // Utilisation des données supplémentaires (utiles pour les erreurs de validation)
-      if (errorResponse.data) {
-        console.error("Détails:", errorResponse.data);
+      if (errData.data) {
+        console.error("Détails:", errData.data);
       }
       
       // Vous pouvez adapter votre gestion selon le code d'erreur
-      if (errorResponse.code === "EMAIL_ALREADY_EXISTS") {
+      if (errData.code === "EMAIL_ALREADY_EXISTS") {
         return { status: "error", message: "Cette adresse email est déjà utilisée" };
       }
     }
@@ -106,6 +109,8 @@ async function registerUser(userData) {
 ### Récupérer les informations de l'utilisateur connecté
 
 ```javascript
+import api, {findResponse} from "@/api";
+
 async function getCurrentUser() {
   try {
     const user = await api.users.me();
@@ -119,8 +124,9 @@ async function getCurrentUser() {
     };
   } catch (error) {
     // Si l'erreur est 401, l'utilisateur n'est pas connecté
-    // Si l'erreur est 401, l'utilisateur n'est pas connecté
-    if (error.response && error.response.status === 401) {
+    const response = findResponse(error);
+    if (response != null && response.status === 401) {
+        // Faire des trucs
     }
     throw error;
   }
@@ -131,30 +137,31 @@ async function getCurrentUser() {
 
 ```javascript
 async function signUp(firstName, lastName, email, password, gender, role) {
-  const registerInput = {
-    firstName,
-    lastName,
-    email,
-    password,
-    gender, // MALE, FEMALE ou UNDISCLOSED
-    role    // RESIDENT, CAREGIVER ou ADMIN
-  };
-  
-  try {
-    const newUser = await api.users.register({ registerInput });
-    return newUser;
-  } catch (error) {
-    // Gérer spécifiquement les erreurs de validation (422)
-    if (error.response && error.response.status === 422) {
-      const errorResponse = error.response.errData;
-      return {
-        success: false,
-        message: errorResponse.message,
-        validationErrors: errorResponse.data
-      };
+    const registerInput = {
+        firstName,
+        lastName,
+        email,
+        password,
+        gender, // MALE, FEMALE ou UNDISCLOSED
+        role    // RESIDENT, CAREGIVER ou ADMIN
+    };
+
+    try {
+        const newUser = await api.users.register({ registerInput });
+        return newUser;
+    } catch (error) {
+        // Gérer spécifiquement les erreurs de validation (422)
+        const response = findResponse(error);
+        if (response != null && response.status === 422) {
+            const errData = response.errData;
+            return {
+                success: false,
+                message: errData.message,
+                validationErrors: errData.data
+            };
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 ```
 
@@ -162,23 +169,24 @@ async function signUp(firstName, lastName, email, password, gender, role) {
 
 ```javascript
 async function login(email, password) {
-  const loginInput = { email, password };
-  
-  try {
-    const user = await api.users.login({ loginInput });
-    return {
-      success: true,
-      user: user
-    };
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      return {
-        success: false,
-        message: "Email ou mot de passe incorrect"
-      };
+    const loginInput = { email, password };
+
+    try {
+        const user = await api.users.login({ loginInput });
+        return {
+            success: true,
+            user: user
+        };
+    } catch (error) {
+        const response = findResponse(error);
+        if (response && response.status === 401) {
+            return {
+                success: false,
+                message: "Email ou mot de passe incorrect"
+            };
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 ```
 
@@ -266,63 +274,64 @@ Utiliser les `middleware` dans `api/index.ts`
 
 ```javascript
 // userService.js
-import { Configuration, UsersApi } from "@/api";
+import api, { findResponse } from "@/api";
 
 class UserService {
-  constructor() {
-    this.api = new UsersApi(new Configuration({ basePath: "" }));
-  }
-  
-  async getCurrentUser() {
-    try {
-      return await this.api.me();
-    } catch (error) {
-      this.handleError(error);
-      return null;
+    constructor() {
+        this.api = api.users;
     }
-  }
-  
-  async login(email, password) {
-    try {
-      return await this.api.login({ loginInput: { email, password } });
-    } catch (error) {
-      this.handleError(error);
-      throw error;
+
+    async getCurrentUser() {
+        try {
+            return await this.api.me();
+        } catch (error) {
+            this.handleError(error);
+            return null;
+        }
     }
-  }
-  
-  async register(userData) {
-    try {
-      return await this.api.register({ registerInput: userData });
-    } catch (error) {
-      this.handleError(error);
-      throw error;
+
+    async login(email, password) {
+        try {
+            return await this.api.login({ loginInput: { email, password } });
+        } catch (error) {
+            this.handleError(error);
+            throw error;
+        }
     }
-  }
-  
-  async logout() {
-    try {
-      await this.api.logout();
-      return true;
-    } catch (error) {
-      this.handleError(error);
-      return false;
+
+    async register(userData) {
+        try {
+            return await this.api.register({ registerInput: userData });
+        } catch (error) {
+            this.handleError(error);
+            throw error;
+        }
     }
-  }
-  
-  handleError(error) {
-    if (error.response) {
-      const errorData = error.response.data;
-      console.error(`[API Error ${error.response.status}]`, errorData?.message || 'Unknown error');
-      
-      // Vous pouvez implémenter une logique spécifique ici
-      if (error.response.status === 401) {
-        // Gérer l'expiration de session
-      }
-    } else {
-      console.error('[API Error]', error.message);
+
+    async logout() {
+        try {
+            await this.api.logout();
+            return true;
+        } catch (error) {
+            this.handleError(error);
+            return false;
+        }
     }
-  }
+
+    handleError(error) {
+        const response = findResponse(error);
+        if (response) {
+            const errData = response.errData;
+            console.error(`[API Error ${response.status}]`, errData?.message || 'Unknown error');
+
+            // Vous pouvez implémenter une logique spécifique ici
+            if (response.status === 401) {
+                // Gérer l'expiration de session
+            }
+        } else {
+            console.error('[API Error]', error.message);
+        }
+    }
 }
 
 export default new UserService();

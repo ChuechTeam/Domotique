@@ -31,15 +31,16 @@ public class MonServeurDePhoto extends AbstractVerticle {
             String finalPath = "uploads/" + file.fileName();
 
             // On déplace le fichier du dossier temporaire vers le dossier final
-            vertx.fileSystem().move(tempPath, finalPath, result -> {
-                // Si le déplacement fonctionne, on renvoie un message indiquant que tout s'est bien passé
-                if (result.succeeded()) {
-                    ctx.response().end("Photo uploadée: " + file.fileName());
-                } else {
-                    // Sinon, on renvoie une erreur
-                    ctx.response().setStatusCode(500).end("Erreur lors de l'upload");
-                }
-            });
+            // ça compile pas
+//            vertx.fileSystem().move(tempPath, finalPath, result -> {
+//                // Si le déplacement fonctionne, on renvoie un message indiquant que tout s'est bien passé
+//                if (result.succeeded()) {
+//                    ctx.response().end("Photo uploadée: " + file.fileName());
+//                } else {
+//                    // Sinon, on renvoie une erreur
+//                    ctx.response().setStatusCode(500).end("Erreur lors de l'upload");
+//                }
+//            });
         });
 
         // On crée et démarre le serveur HTTP en utilisant le router pour traiter les requêtes

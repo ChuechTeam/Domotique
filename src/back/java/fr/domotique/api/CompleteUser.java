@@ -11,10 +11,12 @@ public record CompleteUser(
     @ApiDoc("The confidential data of the user.")
     UserSecrets secret
 ) {
+    /// Convert a database user to a [CompleteUser]
     public static CompleteUser fromUser(User u) {
         if (u == null) {return null;}
         return new CompleteUser(UserProfile.fromUser(u), UserSecrets.fromUser(u));
     }
 
+    /// An example of a complete user for API documentation
     public static final CompleteUser EXAMPLE = new CompleteUser(UserProfile.EXAMPLE, UserSecrets.EXAMPLE);
 }

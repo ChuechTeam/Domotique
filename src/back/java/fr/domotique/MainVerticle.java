@@ -1,9 +1,11 @@
 package fr.domotique;
 
+import fr.domotique.base.*;
 import fr.domotique.data.*;
 import fr.domotique.email.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
+import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import io.vertx.ext.web.sstore.*;
 import io.vertx.ext.web.templ.jte.*;
@@ -94,6 +96,9 @@ public class MainVerticle extends VerticleBase {
             launchVueDevServer();
         }
 
+        // Initialize the PRNG [experimental]
+        VertxContextPRNG.current(context);
+
         // Deploy RouterVerticles and log the server address when ready
         return vertx.deployVerticle(() -> new RouterVerticle(server), options).andThen(x -> {
             log.info("Server ready at http://localhost:{} ({} instances)", config.port(), options.getInstances());
@@ -101,6 +106,13 @@ public class MainVerticle extends VerticleBase {
                 log.info("API documentation is available at http://localhost:{}/api-docs", config.port());
             }
         });
+    }
+
+    @Override
+    public Future<?> stop() {
+        // Close the [experimental!] Virtual Thread Executor
+        Section.vtExecutor.close();
+        return Future.succeededFuture();
     }
 
     private void launchVueDevServer() {

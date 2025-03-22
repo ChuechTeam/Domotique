@@ -7,5 +7,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ApiDoc {
-    String value();
+    String value() default "";
+
+    String fileType() default "";
 }

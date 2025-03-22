@@ -18,6 +18,7 @@ import org.jetbrains.annotations.*;
 import java.lang.reflect.*;
 import java.time.*;
 import java.util.*;
+import java.util.function.*;
 
 /// Generates OpenAPI documentation based on Vert.x routes metadata.
 public final class DocsGen {
@@ -28,7 +29,7 @@ public final class DocsGen {
             .description("API documentation for the Domotique website.")
             .version("0.1.0"))
         .servers(List.of(new Server()
-            .url("/") // TODO: Adapt to port settings
+            .url("/")
             .description("Local server")))
         .components(new Components().schemas(new HashMap<>()))
         .paths(new Paths());
@@ -94,16 +95,21 @@ public final class DocsGen {
             // Convert the parameters to OpenAPI format.
             List<Parameter> newParamsOAI = Arrays.stream(params).map(this::toOpenAPI).toList();
 
+            // Create the request body if there's one
             RequestBody requestBodyOAI = null;
             if (rd.requestBody != null) {
+                // Find the schema, and create a media type for it.
                 Schema<?> schema = schemaForReflect(rd.requestBody);
                 MediaType media = new MediaType().schema(schema);
+
+                // Add an example if there is one.
                 if (rd.requestBodyExample != null) {
                     media.setExample(rd.requestBodyExample);
                 }
+
+                // Make it! (it's required by default)
                 requestBodyOAI = new RequestBody()
-                    .content(new Content().addMediaType("application/json",
-                        media))
+                    .content(new Content().addMediaType(rd.requestBodyType, media))
                     .required(true);
             }
 
@@ -194,7 +200,7 @@ public final class DocsGen {
             if (rd.example != null) {
                 media.addExamples("main", new Example().value(rd.example).summary(rd.description));
             }
-            content = new Content().addMediaType("application/json", media);
+            content = new Content().addMediaType(rd.contentType, media);
         }
 
         return new ApiResponse()
@@ -205,6 +211,40 @@ public final class DocsGen {
     /*
      ---- Schema generation ----
      */
+
+     /// Map of Java types to their corresponding OpenAPI schemas
+     private static final Map<Class<?>, Supplier<Schema<?>>> SIMPLE_TYPE_SCHEMAS = Map.ofEntries(
+         // Object
+         Map.entry(Object.class, ObjectSchema::new),
+
+         // Integer types
+         Map.entry(Integer.class, IntegerSchema::new),
+         Map.entry(int.class, IntegerSchema::new),
+         Map.entry(Long.class, IntegerSchema::new),
+         Map.entry(long.class, IntegerSchema::new),
+         Map.entry(Short.class, IntegerSchema::new),
+         Map.entry(short.class, IntegerSchema::new),
+         Map.entry(Byte.class, IntegerSchema::new),
+         Map.entry(byte.class, IntegerSchema::new),
+
+         // Floating point types
+         Map.entry(Float.class, NumberSchema::new),
+         Map.entry(float.class, NumberSchema::new),
+         Map.entry(Double.class, NumberSchema::new),
+         Map.entry(double.class, NumberSchema::new),
+
+         // Other basic types
+         Map.entry(String.class, StringSchema::new),
+         Map.entry(Boolean.class, BooleanSchema::new),
+         Map.entry(boolean.class, BooleanSchema::new),
+
+         // Date/time types
+         Map.entry(Instant.class, () -> new StringSchema().format("date-time")),
+         Map.entry(LocalDate.class, () -> new StringSchema().format("date")),
+
+         // File types
+         Map.entry(FileUpload.class, FileSchema::new)
+     );
 
     private Schema<?> schemaForReflect(Type type) {
         if (type instanceof JavaType t) {
@@ -218,34 +258,14 @@ public final class DocsGen {
         if (type instanceof SimpleType st) {
             var clazz = st.getRawClass();
 
+            // If we've already defined a schema for this class, create a $ref schema.
             if (classToSchemaRef.containsKey(clazz)) {
                 return new Schema<>().$ref(classToSchemaRef.get(clazz));
             }
 
-            if (clazz.equals(Integer.class)
-                || clazz.equals(int.class)
-                || clazz.equals(Long.class)
-                || clazz.equals(long.class)
-                || clazz.equals(Short.class)
-                || clazz.equals(short.class)
-                || clazz.equals(Byte.class)
-                || clazz.equals(byte.class)) {
-                return new IntegerSchema();
-            } else if (clazz.equals(Float.class)
-                || clazz.equals(float.class)
-                || clazz.equals(Double.class)
-                || clazz.equals(double.class)) {
-                return new NumberSchema();
-            } else if (clazz.equals(String.class)) {
-                return new StringSchema();
-            } else if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
-                return new BooleanSchema();
-            } else if (clazz.equals(Instant.class)) {
-                return new StringSchema().format("date-time");
-            } else if (clazz.equals(LocalDate.class)) {
-                return new StringSchema().format("date");
-            } else if (clazz.equals(Object.class)) {
-                return new ObjectSchema();
+            // Use the schema mapper to find the appropriate schema
+            if (SIMPLE_TYPE_SCHEMAS.containsKey(clazz)) {
+                return SIMPLE_TYPE_SCHEMAS.get(clazz).get();
             } else {
                 String schemaRef = registerNewSchema(clazz);
                 return new Schema<>().$ref(schemaRef);
@@ -369,4 +389,6 @@ public final class DocsGen {
             return clazz.getSimpleName();
         }
     }
+
+    record RegisteredSchema(String ref, Schema<?> schema) {}
 }

@@ -2,12 +2,13 @@ import {Configuration, ResponseError, UsersApi} from "./gen";
 import type {ErrorResponse} from "./gen";
 
 // A classic fetch Response, with a bonus attribute: "errData", containing the error JSON if any.
-export type JSErrResponse = Response & { errData: (ErrorResponse & { [k: string]: any }) | null };
+export type JSErrResponse = Response & { errData: ErrorResponse | null };
 
 // Our customized ResponseError; cast to it to get bonus attributes!
 export type DomoResponseError = ResponseError & { response: JSErrResponse };
 
-const config = new Configuration({
+// You can add middlewares through this "config" variable: config.middleware.push(...)
+export const config = new Configuration({
     // Make sure the base path is just the origin (i.e. http://domain.name:port part)
     basePath: location.origin,
     middleware: [{
@@ -32,6 +33,32 @@ const config = new Configuration({
     }]
 });
 
+/**
+ * Finds API error data in the given JavaScript error.
+ *
+ * If there's no API error data in this error, returns `null`.
+ *
+ * @param error The error to look into.
+ */
+export function findErrData(error: Error): ErrorResponse | null {
+    return findResponse(error)?.errData;
+}
+
+/**
+ * Finds response information in the given error, if any.
+ *
+ * If there's no response information in this error, returns `null`.
+ *
+ * @param error the error which may be a ResponseError
+ */
+export function findResponse(error: Error): JSErrResponse | null {
+    if (error instanceof ResponseError) {
+        return (error as DomoResponseError).response;
+    }
+    return null;
+}
+
+// All available API modules are there.
 export default {
     /**
      * The users API (/api/users)
@@ -39,4 +66,5 @@ export default {
     users: new UsersApi(config)
 };
 
+// Export everything from the generated API (types, mainly)
 export * from "./gen";

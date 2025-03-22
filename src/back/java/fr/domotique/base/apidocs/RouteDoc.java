@@ -21,7 +21,7 @@ import java.util.*;
 ///     .requestBody(LoginInput.class, new LoginInput("example@mail.com", "password123"))
 ///     .response(200, CompleteUser.class, "Login successful")
 ///     .response(401, ErrorResponse.class, "Invalid credentials");
-/// ```
+///```
 public class RouteDoc {
     /// The operation ID for this route's OpenAPI documentation.
     @Nullable String operationId = null;
@@ -38,6 +38,9 @@ public class RouteDoc {
     /// An example of the request body for documentation purposes.
     @Nullable Object requestBodyExample = null;
 
+    /// The content type of the request body.
+    String requestBodyType = "application/json";
+
     /// Tags for categorizing this endpoint in documentation.
     final List<String> tags = new ArrayList<>();
 
@@ -47,6 +50,7 @@ public class RouteDoc {
     /// The possible responses this endpoint can return.
     final List<ResponseDoc> responses = new ArrayList<>();
 
+    /// Key used to add documentation in route metadata
     public static final String KEY = "Docs";
 
     public RouteDoc() {
@@ -89,12 +93,34 @@ public class RouteDoc {
         return this;
     }
 
+    public RouteDoc requestBody(@Nullable Type requestBody, String requestBodyType) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        return this;
+    }
+
+    public RouteDoc requestBody(@Nullable Type requestBody, String requestBodyType, @Nullable Object requestBodyExample) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        this.requestBodyExample = requestBodyExample;
+        return this;
+    }
+
     public @Nullable Object getRequestBodyExample() {
         return requestBodyExample;
     }
 
     public RouteDoc requestBodyExample(@Nullable Object requestBodyExample) {
         this.requestBodyExample = requestBodyExample;
+        return this;
+    }
+
+    public String getRequestBodyType() {
+        return requestBodyType;
+    }
+
+    public RouteDoc requestBodyType(String requestBodyType) {
+        this.requestBodyType = requestBodyType;
         return this;
     }
 
@@ -174,8 +200,18 @@ public class RouteDoc {
         return this;
     }
 
+    public RouteDoc response(int status, Type content, String contentType, String description) {
+        responses.add(new ResponseDoc().status(status).description(description).content(content).contentType(contentType));
+        return this;
+    }
+
     public RouteDoc response(int status, Type content, String description, Object example) {
         responses.add(new ResponseDoc().status(status).description(description).content(content).example(example));
+        return this;
+    }
+
+    public RouteDoc response(int status, Type content, String contentType, String description, Object example) {
+        responses.add(new ResponseDoc().status(status).description(description).content(content).contentType(contentType).example(example));
         return this;
     }
 }
