@@ -5,6 +5,7 @@ import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.*;
+import io.vertx.core.internal.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
 
@@ -250,18 +251,20 @@ public abstract class Section {
     protected <T> Function<RoutingContext, Future<T>> vt(Function<RoutingContext, T> func) {
         return ctx -> {
             Promise<T> promise = Promise.promise();
-            // A bit hacky... We can't easily transfer variables of the context to a custom thread.
-            var prng = ctx.vertx().getOrCreateContext().get("__vertx.VertxContextPRNG");
-            vtExecutor.execute(() -> {
-                if (prng != null) {
-                    ctx.vertx().getOrCreateContext().put("__vertx.VertxContextPRNG", prng);
-                }
+
+            // HUGE HACK: Use our current Event Loop Vert.X context, and dispatch the task
+            //            while in the virtual thread.
+            //
+            //            This will copy the Event Loop context to the virtual thread (as a ThreadLocal),
+            //            and this thread will behave *as if* it came from the event loop.
+            var loopCtx = ctx.vertx().getOrCreateContext();
+            vtExecutor.execute(() -> ((ContextInternal) loopCtx).dispatch(() -> {
                 try {
                     promise.complete(func.apply(ctx));
                 } catch (Throwable e) {
                     promise.fail(e);
                 }
-            });
+            }));
             return promise.future();
         };
     }

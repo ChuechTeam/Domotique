@@ -96,9 +96,6 @@ public class MainVerticle extends VerticleBase {
             launchVueDevServer();
         }
 
-        // Initialize the PRNG [experimental]
-        VertxContextPRNG.current(context);
-
         // Deploy RouterVerticles and log the server address when ready
         return vertx.deployVerticle(() -> new RouterVerticle(server), options).andThen(x -> {
             log.info("Server ready at http://localhost:{} ({} instances)", config.port(), options.getInstances());
