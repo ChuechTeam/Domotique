@@ -18,12 +18,12 @@
 -- changeset dynamic:init
 CREATE TABLE user(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(128) NOT NULL,
     email_confirmation_token BIGINT NOT NULL,
     email_confirmed BOOL NOT NULL,
-    pass_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
+    pass_hash VARCHAR(128) NOT NULL,
+    first_name VARCHAR(128) NOT NULL,
+    last_name VARCHAR(128) NOT NULL,
     gender TINYINT NOT NULL,
     role TINYINT NOT NULL,
     level TINYINT NOT NULL,
@@ -33,3 +33,16 @@ CREATE TABLE user(
 );
 
 -- rollback drop table user;
+-- changeset dynamic:add_rooms
+CREATE TABLE room(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    color INT NOT NULL,
+    owner_id INT,
+
+    FOREIGN KEY (owner_id) REFERENCES user(id) ON DELETE SET NULL,
+    UNIQUE INDEX idx_room_name(name),
+    INDEX idx_room_owner(owner_id)
+);
+
+-- rollback drop table room;

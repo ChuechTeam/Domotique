@@ -61,7 +61,8 @@ public class RouterVerticle extends VerticleBase {
     /// The array with all [sections][Section] we should activate.
     Section[] allSections() {
         return new Section[]{
-            new UserSection(server)
+            new UserSection(server),
+            new RoomSection(server)
         };
     }
 
@@ -90,8 +91,12 @@ public class RouterVerticle extends VerticleBase {
 
         // Register the Authenticator to do user authentication.
         r.route("/api/*").handler(ctx -> {
-            ctx.put(Authenticator.KEY, new Authenticator(ctx, server));
-            ctx.next();
+            Authenticator.create(ctx, server)
+                .onSuccess(a -> {
+                    ctx.put(Authenticator.KEY, a);
+                    ctx.next();
+                })
+                .onFailure(ctx::fail);
         });
 
         // Add an error handler that sends correct responses when we throw a RequestException.

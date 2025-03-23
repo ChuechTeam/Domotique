@@ -50,11 +50,9 @@ public class UserSection extends Section {
         // Paths with parameters come last.
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
 
-
         // Finally, register that router to the main router, prefixed by /api/users
         doc(router.route(PATH_PREFIX).subRouter(userRoutes))
             .tag("Users");
-
     }
 
     // region GET /api/users/:userId
@@ -163,7 +161,7 @@ public class UserSection extends Section {
             log.info("User registered with id {} and email {}", user.getId(), user.getEmail());
 
             // Log the user in, and send a HTTP 201 Created status code.
-            auth.login(user.getId());
+            auth.login(user);
 
             // Send the confirmation e-mail, and wait for it to be sent.
             sendConfirmationEmail(user, context).await();
@@ -229,7 +227,7 @@ public class UserSection extends Section {
         }
 
         // Log in the user to the current session.
-        auth.login(user.getId());
+        auth.login(user);
 
         // Return the user, using CompleteUser to avoid leaking the password.
         return CompleteUser.fromUser(user);
@@ -446,7 +444,7 @@ public class UserSection extends Section {
 
                             // Now also authenticate the user if not done already
                             if (!auth.isLoggedIn()) {
-                                auth.login(userId);
+                                auth.login(u);
                             }
 
                             // Redirect to the home page with a success message

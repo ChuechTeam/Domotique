@@ -50,7 +50,7 @@ public final class DocsGen {
     /// Generates the OpenAPI documentation. Must be only run once.
     private String run() {
         for (var r : router.getRoutes()) {
-            visitRoute("", r, new ParamDoc[0], new String[0]);
+            visitRoute("", r, new ResponseDoc[0], new ParamDoc[0], new String[0]);
         }
         return Yaml.pretty(result);
     }
@@ -63,11 +63,13 @@ public final class DocsGen {
     /// @param inheritedTags the tags inherited from the parent routes. (-> [RouteDoc#getTags()])
     private void visitRoute(String prefix,
                             Route route,
+                            ResponseDoc[] inheritedResponses,
                             ParamDoc[] inheritedParameters,
                             String[] inheritedTags) {
         RouteDoc rd = route.getMetadata(RouteDoc.KEY);
 
-        // Merge parameters and tags.
+        // Merge responses, parameters and tags.
+        ResponseDoc[] responses = mergeResponses(rd, inheritedResponses);
         ParamDoc[] params = mergeParams(rd, inheritedParameters);
         String[] tags = mergeTags(rd, inheritedTags);
 
@@ -76,7 +78,7 @@ public final class DocsGen {
             String fullPath = normalizePrefix(prefix + route.getPath());
 
             for (Route r : subRouter.getRoutes()) {
-                visitRoute(fullPath, r, params, tags);
+                visitRoute(fullPath, r, responses, params, tags);
             }
         } else {
             // Make sure that leaf route has some route documentation added.
@@ -114,9 +116,9 @@ public final class DocsGen {
             }
 
             // Create the response object, with all responses from the RouteDoc.
-            ApiResponses responses = new ApiResponses();
+            ApiResponses apiResponses = new ApiResponses();
             for (ResponseDoc response : rd.responses) {
-                responses.put(Integer.toString(response.getStatus()), toOpenAPI(response));
+                apiResponses.put(Integer.toString(response.getStatus()), toOpenAPI(response));
             }
 
             // Register the route to all possible methods. In practice, it's just one so this for loop is misleading.
@@ -130,10 +132,33 @@ public final class DocsGen {
                         .description(rd.description)
                         .tags(Arrays.asList(tags))
                         .parameters(newParamsOAI)
-                        .responses(responses)
+                        .responses(apiResponses)
                         .requestBody(requestBodyOAI));
             }
         }
+    }
+
+    private static ResponseDoc[] mergeResponses(@Nullable RouteDoc rd,
+                                               ResponseDoc[] activeResponses) {
+        if (rd == null) {
+            return activeResponses;
+        }
+
+        // Create a map of responses by status code to allow overriding
+        Map<Integer, ResponseDoc> responseMap = new TreeMap<>();
+
+        // Add existing responses to the map
+        for (ResponseDoc response : activeResponses) {
+            responseMap.put(response.getStatus(), response);
+        }
+
+        // Override with new responses that have the same status code
+        for (ResponseDoc response : rd.responses) {
+            responseMap.put(response.getStatus(), response);
+        }
+
+        // Convert back to array
+        return responseMap.values().toArray(new ResponseDoc[0]);
     }
 
     private static ParamDoc[] mergeParams(@Nullable RouteDoc rd,
@@ -142,10 +167,23 @@ public final class DocsGen {
             return activeParameters;
         }
 
-        // todo: override existing parameter pair (loc, name)
-        var newActiveParameters = new ArrayList<>(Arrays.asList(activeParameters));
-        newActiveParameters.addAll(rd.params);
-        return newActiveParameters.toArray(new ParamDoc[0]);
+        // Create a map of parameters by location and name to allow overriding
+        Map<String, ParamDoc> paramMap = new HashMap<>();
+
+        // Add existing parameters to the map with a composite key of "location:name"
+        for (ParamDoc param : activeParameters) {
+            String key = param.location + ":" + param.name;
+            paramMap.put(key, param);
+        }
+
+        // Override with new parameters that have the same location and name
+        for (ParamDoc param : rd.params) {
+            String key = param.location + ":" + param.name;
+            paramMap.put(key, param);
+        }
+
+        // Convert back to array
+        return paramMap.values().toArray(new ParamDoc[0]);
     }
 
     private static String[] mergeTags(@Nullable RouteDoc rd, String[] inherited) {

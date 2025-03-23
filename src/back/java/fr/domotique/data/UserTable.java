@@ -14,14 +14,11 @@ import org.jetbrains.annotations.*;
 /// server.db().users().get(5).onSuccess(user -> { ... });
 ///```
 public class UserTable extends Table {
-    /// The SQL client allowing us to run SQL queries on the MySQL database.
-    private final SqlClient client;
-
     /// Creates a new user table using the SQL client.
     ///
     /// @param client the SQL client to use
     public UserTable(SqlClient client) {
-        this.client = client;
+        super(client);
     }
 
     /// Gets the user with the given ID. Can return `null`.
@@ -96,7 +93,7 @@ public class UserTable extends Table {
                 user.getPoints()
             ))
             .map(attachId(user, user::setId))
-            .recover(handleDuplicates("The user has already been registered with this e-mail"));
+            .recover(Table::handleSqlErrors);
     }
 
     public Future<User> update(User user) {
@@ -132,6 +129,6 @@ public class UserTable extends Table {
                 user.getId()
             ))
             .map(user)
-            .recover(handleDuplicates("A user already has that e-mail"));
+            .recover(Table::handleSqlErrors);
     }
 }

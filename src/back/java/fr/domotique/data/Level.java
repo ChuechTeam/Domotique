@@ -23,7 +23,7 @@ public enum Level {
 
     /// A user who is very experienced with the app
     ///
-    /// **ACCESS TO**: "Managment" module
+    /// **ACCESS TO**: "Managment"/"Gestion" module
     ///
     /// > Avancé : Vous pouvez effectuer les actions associées à cette compétence sans assistance. Vous êtes certainement reconnu au sein de votre organisation
     /// immédiate comme "la personne à qui demander" lorsque des questions difficiles se posent au sujet de cette compétence.
@@ -31,7 +31,7 @@ public enum Level {
 
     /// The ultimatest user of the app.
     ///
-    /// **ACCESS TO**: "Admin" module
+    /// **ACCESS TO**: "Admin"/"Administration" module
     ///
     /// > Expert : Vous êtes reconnu comme un expert dans ce domaine.
     /// Vous pouvez fournir des conseils, résoudre des problèmes et répondre à des questions liées

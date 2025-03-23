@@ -73,7 +73,8 @@ public class MainVerticle extends VerticleBase {
 
         // Create the Database object containing all our tables for easy access.
         Database db = new Database(
-            new UserTable(client)
+            new UserTable(client),
+            new RoomTable(client)
         );
 
         // Create the session store, storing user sessions for logged-in users, currently in-memory.
