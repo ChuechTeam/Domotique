@@ -48,8 +48,8 @@ export interface ChangePasswordRequest {
 }
 
 export interface ConfirmEmailRequest {
-    token: number;
     user: number;
+    token: number;
 }
 
 export interface FindUserRequest {
@@ -69,7 +69,6 @@ export interface SearchUsersRequest {
 }
 
 export interface UpdateProfileRequest {
-    userId: string;
     updateProfileInput: UpdateProfileInput;
 }
 
@@ -120,13 +119,6 @@ export class UsersApi extends runtime.BaseAPI {
      * Confirm email
      */
     async confirmEmailRaw(requestParameters: ConfirmEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError(
-                'token',
-                'Required parameter "token" was null or undefined when calling confirmEmail().'
-            );
-        }
-
         if (requestParameters['user'] == null) {
             throw new runtime.RequiredError(
                 'user',
@@ -134,20 +126,27 @@ export class UsersApi extends runtime.BaseAPI {
             );
         }
 
-        const queryParameters: any = {};
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
+        if (requestParameters['token'] == null) {
+            throw new runtime.RequiredError(
+                'token',
+                'Required parameter "token" was null or undefined when calling confirmEmail().'
+            );
         }
+
+        const queryParameters: any = {};
 
         if (requestParameters['user'] != null) {
             queryParameters['user'] = requestParameters['user'];
         }
 
+        if (requestParameters['token'] != null) {
+            queryParameters['token'] = requestParameters['token'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/confirmEmail`,
+            path: `/api/users/confirmEmail`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -381,13 +380,6 @@ export class UsersApi extends runtime.BaseAPI {
      * Update profile
      */
     async updateProfileRaw(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
-        if (requestParameters['userId'] == null) {
-            throw new runtime.RequiredError(
-                'userId',
-                'Required parameter "userId" was null or undefined when calling updateProfile().'
-            );
-        }
-
         if (requestParameters['updateProfileInput'] == null) {
             throw new runtime.RequiredError(
                 'updateProfileInput',
@@ -402,7 +394,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/users/me/profile`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            path: `/api/users/me/profile`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

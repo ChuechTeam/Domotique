@@ -1,4 +1,4 @@
-package fr.domotique.api;
+package fr.domotique.api.users;
 
 import fr.domotique.base.apidocs.*;
 import fr.domotique.data.*;

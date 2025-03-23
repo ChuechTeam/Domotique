@@ -1,8 +1,8 @@
-package fr.domotique.api;
+package fr.domotique.api.users;
 
 import fr.domotique.base.apidocs.*;
+import fr.domotique.base.data.*;
 import fr.domotique.data.*;
-import io.vertx.sqlclient.*;
 
 @ApiDoc("Public information about a user.")
 public record UserProfile(
@@ -31,19 +31,18 @@ public record UserProfile(
         return new UserProfile(u.getId(), u.getFirstName(), u.getLastName(), u.getRole(), u.getLevel(), u.getGender());
     }
 
-    /// Converts a database row to a PublicUser for client API consumption.
-    ///
-    /// NOTE: When changing the layout of this type, rename this "fromRow2" (without using IDE features)
-    /// to update any outdated SQL statements, then rename it back to fromRow (using your IDE).
-    public static UserProfile fromRow(Row u) {
-        return new UserProfile(
-            u.getInteger(0),
-            u.getString(1),
-            u.getString(2),
-            Role.fromByte(u.get(Byte.class, 3)),
-            Level.fromByte(u.get(Byte.class, 4)),
-            Gender.fromByte(u.get(Byte.class, 5))
-        );
+    /// Transforms a SQL row into a UserProfile.
+    public static Mapper<UserProfile> MAP = Mapper.of(6, (r, s) -> new UserProfile(
+        r.getInteger(s.next()),
+        r.getString(s.next()),
+        r.getString(s.next()),
+        Role.fromByte(r.get(Byte.class, s.next())),
+        Level.fromByte(r.get(Byte.class, s.next())),
+        Gender.fromByte(r.get(Byte.class, s.next()))
+    ));
+
+    public static String columnList(String tableName) {
+        return QueryUtils.columnList(tableName, "id", "firstName", "lastName", "role", "level", "gender");
     }
 
     /// Example user profile for API documentation.

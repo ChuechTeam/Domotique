@@ -24,25 +24,28 @@ export interface UserSecrets {
      * @type {boolean}
      * @memberof UserSecrets
      */
-    emailConfirmed?: boolean;
+    emailConfirmed: boolean;
     /**
      * The email address of the user. Must be unique. Is used to log in.
      * @type {string}
      * @memberof UserSecrets
      */
-    email?: string;
+    email: string;
     /**
      * The amount of points the user has accumulated. Never negative.
      * @type {number}
      * @memberof UserSecrets
      */
-    points?: number;
+    points: number;
 }
 
 /**
  * Check if a given object implements the UserSecrets interface.
  */
 export function instanceOfUserSecrets(value: object): value is UserSecrets {
+    if (!('emailConfirmed' in value) || value['emailConfirmed'] === undefined) return false;
+    if (!('email' in value) || value['email'] === undefined) return false;
+    if (!('points' in value) || value['points'] === undefined) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function UserSecretsFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'emailConfirmed': json['emailConfirmed'] == null ? undefined : json['emailConfirmed'],
-        'email': json['email'] == null ? undefined : json['email'],
-        'points': json['points'] == null ? undefined : json['points'],
+        'emailConfirmed': json['emailConfirmed'],
+        'email': json['email'],
+        'points': json['points'],
     };
 }
 

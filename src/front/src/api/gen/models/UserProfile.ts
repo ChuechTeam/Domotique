@@ -46,37 +46,37 @@ export interface UserProfile {
      * @type {string}
      * @memberof UserProfile
      */
-    firstName?: string;
+    firstName: string;
     /**
      * The last name of the user.
      * @type {string}
      * @memberof UserProfile
      */
-    lastName?: string;
+    lastName: string;
     /**
      * 
      * @type {Role}
      * @memberof UserProfile
      */
-    role?: Role;
+    role: Role;
     /**
      * 
      * @type {Gender}
      * @memberof UserProfile
      */
-    gender?: Gender;
+    gender: Gender;
     /**
      * 
      * @type {Level}
      * @memberof UserProfile
      */
-    level?: Level;
+    level: Level;
     /**
      * The unique identifier of the user. A value of 0 is invalid.
      * @type {number}
      * @memberof UserProfile
      */
-    id?: number;
+    id: number;
 }
 
 
@@ -85,6 +85,12 @@ export interface UserProfile {
  * Check if a given object implements the UserProfile interface.
  */
 export function instanceOfUserProfile(value: object): value is UserProfile {
+    if (!('firstName' in value) || value['firstName'] === undefined) return false;
+    if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('role' in value) || value['role'] === undefined) return false;
+    if (!('gender' in value) || value['gender'] === undefined) return false;
+    if (!('level' in value) || value['level'] === undefined) return false;
+    if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
@@ -98,12 +104,12 @@ export function UserProfileFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'role': json['role'] == null ? undefined : RoleFromJSON(json['role']),
-        'gender': json['gender'] == null ? undefined : GenderFromJSON(json['gender']),
-        'level': json['level'] == null ? undefined : LevelFromJSON(json['level']),
-        'id': json['id'] == null ? undefined : json['id'],
+        'firstName': json['firstName'],
+        'lastName': json['lastName'],
+        'role': RoleFromJSON(json['role']),
+        'gender': GenderFromJSON(json['gender']),
+        'level': LevelFromJSON(json['level']),
+        'id': json['id'],
     };
 }
 

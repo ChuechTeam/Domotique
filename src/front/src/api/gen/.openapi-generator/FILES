@@ -1,7 +1,9 @@
+apis/RoomsApi.ts
 apis/UsersApi.ts
 apis/index.ts
 index.ts
 models/ChangePasswordInput.ts
+models/CompleteRoom.ts
 models/CompleteUser.ts
 models/ErrorResponse.ts
 models/Gender.ts
@@ -10,6 +12,8 @@ models/LoginInput.ts
 models/ProfileSearchOutput.ts
 models/RegisterInput.ts
 models/Role.ts
+models/RoomInput.ts
+models/RoomsResponse.ts
 models/UpdateProfileInput.ts
 models/UserProfile.ts
 models/UserSecrets.ts

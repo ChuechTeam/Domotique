@@ -10,4 +10,6 @@ public @interface ApiDoc {
     String value() default "";
 
     String fileType() default "";
+
+    boolean optional() default false;
 }

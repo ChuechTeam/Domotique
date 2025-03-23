@@ -32,19 +32,19 @@ export interface UpdateProfileInput {
      * @type {string}
      * @memberof UpdateProfileInput
      */
-    firstName?: string;
+    firstName: string;
     /**
      * 
      * @type {string}
      * @memberof UpdateProfileInput
      */
-    lastName?: string;
+    lastName: string;
     /**
      * 
      * @type {Gender}
      * @memberof UpdateProfileInput
      */
-    gender?: Gender;
+    gender: Gender;
 }
 
 
@@ -53,6 +53,9 @@ export interface UpdateProfileInput {
  * Check if a given object implements the UpdateProfileInput interface.
  */
 export function instanceOfUpdateProfileInput(value: object): value is UpdateProfileInput {
+    if (!('firstName' in value) || value['firstName'] === undefined) return false;
+    if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('gender' in value) || value['gender'] === undefined) return false;
     return true;
 }
 
@@ -66,9 +69,9 @@ export function UpdateProfileInputFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'gender': json['gender'] == null ? undefined : GenderFromJSON(json['gender']),
+        'firstName': json['firstName'],
+        'lastName': json['lastName'],
+        'gender': GenderFromJSON(json['gender']),
     };
 }
 

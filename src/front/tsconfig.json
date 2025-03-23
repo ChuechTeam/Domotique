@@ -10,12 +10,13 @@
     "noImplicitAny": false,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "verbatimModuleSyntax": false,
     "paths": {
-      "@/*": ["./src/front/src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["vite/client"],
     "noEmit": true
   },
-  "include": ["src/front/src/**/*.ts", "src/front/src/**/*.d.ts", "src/front/src/**/*.tsx", "src/front/src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
   "exclude": ["node_modules", "dist"]
 }

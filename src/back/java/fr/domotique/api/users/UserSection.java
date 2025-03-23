@@ -1,4 +1,4 @@
-package fr.domotique.api;
+package fr.domotique.api.users;
 
 import fr.domotique.*;
 import fr.domotique.base.*;
@@ -9,7 +9,6 @@ import fr.domotique.data.*;
 import io.vertx.core.Future;
 import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
-import io.vertx.sqlclient.*;
 import org.slf4j.*;
 
 import java.util.*;
@@ -286,19 +285,13 @@ public class UserSection extends Section {
             throw new RequestException("La recherche est vide.", 400);
         }
 
-        return server.sql().preparedQuery("""
-                SELECT id, first_name, last_name, role, level, gender FROM user
-                WHERE INSTR(first_name, ?) > 0 OR INSTR(last_name, ?) > 0
-                """)
-            .mapping(UserProfile::fromRow) // Convert the SQL rows into UserProfiles
-            .execute(Tuple.of(fullName, fullName)) // Execute the query with both '?' replaced by the full name
-            .map(Table::toList) // Convert the RowSet into a List of rows
-            .map(ProfileSearchOutput::new); // Wrap the list into a ProfileSearchOutput object
+        return server.db().users().getProfilesByFullName(fullName).map(ProfileSearchOutput::new);
     }
     // endregion
 
     // --- Updates ---
 
+    // TODO: Change "me" to a path arg and handle the "me" string
     // region POST /api/users/me/profile | Update profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")

@@ -16,12 +16,28 @@ public abstract class Table {
         this.client = client;
     }
 
+    /// Replaces each '`%s`' in the SQL with the given parameters.
+    ///
+    /// This allows us, for example, to reuse repeated lists of columns in `SELECT` queries.
+    ///
+    /// **WARNING**: this function should NOT BE USED FOR SQL PARAMETERS; rather, it's for reusing parts
+    /// of SQL queries we trust.
+    ///
+    /// ## Example
+    protected static String makeModularSQL(String sql, Object... params) {
+        return String.format(sql, params);
+    }
+
+    /// Executes an SQL query with the given parameters. Returns a [RowSet].
     protected Future<RowSet<Row>> query(String sql, Object... params) {
         return client.preparedQuery(sql)
             .execute(Tuple.wrap(params))
             .recover(Table::handleSqlErrors);
     }
 
+    /// Executes an SQL query and returns the first row, or `null` if there's no row.
+    ///
+    /// The row is transformed into a Java object by using the `mapper` function.
     protected <T> Future<T> querySingle(Function<Row, T> mapper, String sql, Object... params) {
         return client.preparedQuery(sql)
             .execute(Tuple.wrap(params))
@@ -29,6 +45,9 @@ public abstract class Table {
             .recover(Table::handleSqlErrors);
     }
 
+    /// Executes an SQL query and returns all rows.
+    ///
+    /// The rows are transformed into Java objects by using the `mapper` function.
     protected <T> Future<List<T>> queryMany(Function<Row, T> mapper, String sql, Object... params) {
         return client.preparedQuery(sql)
             .execute(Tuple.wrap(params))
@@ -36,6 +55,8 @@ public abstract class Table {
             .recover(Table::handleSqlErrors);
     }
 
+    /// Executes an SQL INSERT query with the given parameters. Sets `value`'s id to the last inserted id, by using
+    /// the `idSetter` function.
     protected <T> Future<T> insert(T value, Consumer<Integer> idSetter, String sql, Object... params) {
         return client.preparedQuery(sql)
             .execute(Tuple.wrap(params))
@@ -44,6 +65,44 @@ public abstract class Table {
                 idSetter.accept(id);
                 return value;
             })
+            .recover(Table::handleSqlErrors);
+    }
+
+    protected <T> Future<T> insert(EntityInfo<T> info, T value,
+                                   Function<T, Integer> idGetter,
+                                   BiConsumer<T, Integer> idSetter) {
+        if (idGetter.apply(value) != 0) {
+            throw new IllegalArgumentException("The entity must have a zero id");
+        }
+
+        return client.preparedQuery(info.insertSQL())
+            .execute(Tuple.wrap(info.genInsertArguments(value)))
+            .map(rs -> {
+                idSetter.accept(value, rs.property(MySQLClient.LAST_INSERTED_ID).intValue());
+                return value;
+            })
+            .recover(Table::handleSqlErrors);
+    }
+
+    protected <T> Future<T> update(EntityInfo<T> info, T value) {
+        if (info.keyColumns().length == 0) {
+            throw new IllegalArgumentException("The entity must have at least one key column");
+        }
+
+        return client.preparedQuery(info.updateSQL())
+            .execute(Tuple.wrap(info.genUpdateArguments(value)))
+            .map(value)
+            .recover(Table::handleSqlErrors);
+    }
+
+    protected <T> Future<Boolean> delete(EntityInfo<T> info, Object... idColumns) {
+        if (info.keyColumns().length == 0) {
+            throw new IllegalArgumentException("The entity must have at least one key column");
+        }
+
+        return client.preparedQuery(info.deleteSQL())
+            .execute(Tuple.wrap(idColumns))
+            .map(rs -> rs.rowCount() > 0)
             .recover(Table::handleSqlErrors);
     }
 

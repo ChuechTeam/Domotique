@@ -1,5 +1,6 @@
 package fr.domotique.data;
 
+import fr.domotique.base.data.*;
 import io.vertx.sqlclient.*;
 
 /**
@@ -72,29 +73,38 @@ public class User {
         this.points = points;
     }
 
-    /// Maps an SQL [Row] to a [User], considering all of its fields are in order, starting from `startIdx`.
-    public static User map(Row row, int startIdx) {
-        return new User(
-            row.getInteger(startIdx++),
-            row.getString(startIdx++),
-            row.getNumeric(startIdx++).longValue(),
-            row.getBoolean(startIdx++),
-            row.getString(startIdx++), row.getString(startIdx++),
-            row.getString(startIdx++),
-            Gender.fromByte(row.get(Byte.class, startIdx++)),
-            Role.fromByte(row.get(Byte.class, startIdx++)),
-            Level.fromByte(row.get(Byte.class, startIdx++)),
-            row.getInteger(startIdx)
-        );
-    }
-
-    /// Maps an SQL [Row] to a [User], considering all of its fields are in order.
-    public static User map(Row row) {
-        return map(row, 0);
-    }
+    /**
+     * Entity information for the User class, used for database operations.
+     */
+    public static final EntityInfo<User> ENTITY = new EntityInfo<>(
+        User.class,
+        (r, s) -> new User(
+            r.getInteger(s.next()),
+            r.getString(s.next()),
+            r.getLong(s.next()),
+            r.getBoolean(s.next()),
+            r.getString(s.next()),
+            r.getString(s.next()),
+            r.getString(s.next()),
+            Gender.fromByte(r.get(Byte.class, s.next())),
+            Role.fromByte(r.get(Byte.class, s.next())),
+            Level.fromByte(r.get(Byte.class, s.next())),
+            r.getInteger(s.next())
+        ),
+        new EntityColumn<>("id", User::getId, ColumnType.GENERATED_KEY),
+        new EntityColumn<>("email", User::getEmail),
+        new EntityColumn<>("emailConfirmationToken", User::getEmailConfirmationToken),
+        new EntityColumn<>("emailConfirmed", User::isEmailConfirmed),
+        new EntityColumn<>("passHash", User::getPassHash),
+        new EntityColumn<>("firstName", User::getFirstName),
+        new EntityColumn<>("lastName", User::getLastName),
+        new EntityColumn<>("gender", User::getGender),
+        new EntityColumn<>("role", User::getRole),
+        new EntityColumn<>("level", User::getLevel),
+        new EntityColumn<>("points", User::getPoints)
+    );
 
     // Boring getters and setters
-
 
     public int getId() {
         return id;

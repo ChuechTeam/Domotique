@@ -39,19 +39,21 @@ export interface CompleteUser {
      * @type {UserProfile}
      * @memberof CompleteUser
      */
-    profile?: UserProfile;
+    profile: UserProfile;
     /**
      * 
      * @type {UserSecrets}
      * @memberof CompleteUser
      */
-    secret?: UserSecrets;
+    secret: UserSecrets;
 }
 
 /**
  * Check if a given object implements the CompleteUser interface.
  */
 export function instanceOfCompleteUser(value: object): value is CompleteUser {
+    if (!('profile' in value) || value['profile'] === undefined) return false;
+    if (!('secret' in value) || value['secret'] === undefined) return false;
     return true;
 }
 
@@ -65,8 +67,8 @@ export function CompleteUserFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'profile': json['profile'] == null ? undefined : UserProfileFromJSON(json['profile']),
-        'secret': json['secret'] == null ? undefined : UserSecretsFromJSON(json['secret']),
+        'profile': UserProfileFromJSON(json['profile']),
+        'secret': UserSecretsFromJSON(json['secret']),
     };
 }
 

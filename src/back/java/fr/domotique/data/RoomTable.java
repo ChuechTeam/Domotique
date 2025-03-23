@@ -1,11 +1,16 @@
 package fr.domotique.data;
 
+import fr.domotique.api.rooms.*;
+import fr.domotique.api.users.*;
 import fr.domotique.base.data.*;
 import io.vertx.core.*;
 import io.vertx.sqlclient.*;
 import org.jetbrains.annotations.*;
+import org.slf4j.*;
 
 import java.util.List;
+
+import static fr.domotique.data.Room.ENTITY;
 
 /// Contains functions to interact with the [Room] table in the database.
 ///
@@ -16,23 +21,46 @@ import java.util.List;
 /// server.db().rooms().get(5).onSuccess(room -> { ... });
 ///```
 public class RoomTable extends Table {
+    private static final Logger log = LoggerFactory.getLogger(RoomTable.class);
+
     public RoomTable(SqlClient client) {
         super(client);
     }
 
     /// Gets the room with the given ID. Can return `null`.
     public Future<@Nullable Room> get(int id) {
-        return querySingle(Room::map, "SELECT * FROM room WHERE id = ?", id);
+        return querySingle(ENTITY.mapper(), "SELECT * FROM room WHERE id = ?", id);
     }
 
     /// Gets all rooms in the database.
     public Future<List<Room>> getAll() {
-        return queryMany(Room::map, "SELECT * FROM room");
+        return queryMany(ENTITY.mapper(), "SELECT * FROM room");
     }
 
-    /// Gets all rooms owned by a specific user. Returns an empty list if none found.
-    public Future<List<Room>> getByOwner(int ownerId) {
-        return queryMany(Room::map, "SELECT * FROM room WHERE owner_id = ?", ownerId);
+    static String COMPLETE_SINGLE_SQL = makeModularSQL("""
+            SELECT %s, %s
+            FROM room r
+            LEFT JOIN domo.user u on u.id = r.ownerId
+            WHERE r.id = ?
+            """,
+        CompleteRoom.columnList("r"),   // -> "r.id, r.name, r.color"
+        UserProfile.columnList("u")); // -> "u.id, u.firstName, u.lastName, ..."
+
+    public Future<@Nullable CompleteRoom> getComplete(int id) {
+        return querySingle(CompleteRoom.MAP, COMPLETE_SINGLE_SQL, id);
+    }
+
+    static String COMPLETE_MANY_SQL = makeModularSQL("""
+            SELECT %s, %s
+            FROM room r
+            LEFT JOIN domo.user u on u.id = r.ownerId
+            """,
+        CompleteRoom.columnList("r"),   // -> "r.id, r.name, r.color"
+        UserProfile.columnList("u")); // -> "u.id, u.firstName, u.lastName, ..."
+
+    /// Gets all [CompleteRoom] in the database.
+    public Future<List<CompleteRoom>> getAllComplete() {
+        return queryMany(CompleteRoom.MAP, COMPLETE_MANY_SQL);
     }
 
     /// Creates a room in the database.
@@ -41,24 +69,12 @@ public class RoomTable extends Table {
     /// @throws IllegalArgumentException if the room has a non-zero id
     /// @return the same room, with its new ID
     public Future<Room> create(Room room) {
-        if (room.getId() != 0) {
-            return Future.failedFuture(new IllegalArgumentException("Room has a non-zero id!"));
-        }
-
-        return insert(room, room::setId, "INSERT INTO room (name, color, owner_id) VALUES (?, ?, ?)",
-            room.getName(),
-            room.getColor(),
-            room.getOwnerId());
+        return insert(ENTITY, room, Room::getId, Room::setId);
     }
 
     /// Updates an existing room in the database.
     public Future<Room> update(Room room) {
-        return query("UPDATE room SET name = ?, color = ?, owner_id = ? WHERE id = ?",
-            room.getName(),
-            room.getColor(),
-            room.getOwnerId(),
-            room.getId())
-            .map(room);
+        return update(ENTITY, room);
     }
 
     /// Deletes a room from the database.
@@ -66,6 +82,6 @@ public class RoomTable extends Table {
     /// @param id the id of the room to delete
     /// @return a Future that completes when the room is deleted
     public Future<Boolean> delete(int id) {
-        return query("DELETE FROM room WHERE id = ?", id).map(x -> x.rowCount() != 0);
+        return delete(ENTITY, id);
     }
 }

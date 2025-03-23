@@ -24,19 +24,21 @@ export interface ChangePasswordInput {
      * @type {string}
      * @memberof ChangePasswordInput
      */
-    oldPassword?: string;
+    oldPassword: string;
     /**
      * 
      * @type {string}
      * @memberof ChangePasswordInput
      */
-    newPassword?: string;
+    newPassword: string;
 }
 
 /**
  * Check if a given object implements the ChangePasswordInput interface.
  */
 export function instanceOfChangePasswordInput(value: object): value is ChangePasswordInput {
+    if (!('oldPassword' in value) || value['oldPassword'] === undefined) return false;
+    if (!('newPassword' in value) || value['newPassword'] === undefined) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function ChangePasswordInputFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'oldPassword': json['oldPassword'] == null ? undefined : json['oldPassword'],
-        'newPassword': json['newPassword'] == null ? undefined : json['newPassword'],
+        'oldPassword': json['oldPassword'],
+        'newPassword': json['newPassword'],
     };
 }
 

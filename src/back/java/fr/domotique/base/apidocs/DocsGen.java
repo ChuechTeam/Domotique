@@ -357,6 +357,7 @@ public final class DocsGen {
             // Create a new schema with the properties of the class
             @SuppressWarnings("rawtypes")
             Map<String, Schema> props = new HashMap<>();
+            List<String> requiredProps = new ArrayList<>();
             newSchema = new ObjectSchema().properties(props);
 
             // Register the example object from the EXAMPLE static field, if any.
@@ -379,7 +380,8 @@ public final class DocsGen {
             // Register all properties
             for (BeanPropertyDefinition rc : beanProps) {
                 // TODO: Fix possible cycles with self referencing classes
-                // Find the Schema for the property's type
+                // Find the name & Schema for the property's type
+                String propName = rc.getName();
                 Schema<?> propSchema = schemaForJackson(rc.getPrimaryType());
 
                 // Register the description if we do have one.
@@ -388,9 +390,16 @@ public final class DocsGen {
                     propSchema.description(descAnn.value());
                 }
 
+                if (descAnn == null || !descAnn.optional()) {
+                    requiredProps.add(propName);
+                }
+
                 // Register the property
-                props.put(rc.getName(), propSchema);
+                props.put(propName, propSchema);
             }
+
+            // Set all required properties
+            newSchema.setRequired(requiredProps);
 
             // Register the schema
             existingSchema = schemas.putIfAbsent(docsName, newSchema);

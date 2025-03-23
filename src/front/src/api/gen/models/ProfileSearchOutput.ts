@@ -32,13 +32,14 @@ export interface ProfileSearchOutput {
      * @type {Array<UserProfile>}
      * @memberof ProfileSearchOutput
      */
-    profiles?: Array<UserProfile>;
+    profiles: Array<UserProfile>;
 }
 
 /**
  * Check if a given object implements the ProfileSearchOutput interface.
  */
 export function instanceOfProfileSearchOutput(value: object): value is ProfileSearchOutput {
+    if (!('profiles' in value) || value['profiles'] === undefined) return false;
     return true;
 }
 
@@ -52,7 +53,7 @@ export function ProfileSearchOutputFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'profiles': json['profiles'] == null ? undefined : ((json['profiles'] as Array<any>).map(UserProfileFromJSON)),
+        'profiles': ((json['profiles'] as Array<any>).map(UserProfileFromJSON)),
     };
 }
 
@@ -67,7 +68,7 @@ export function ProfileSearchOutputToJSONTyped(value?: ProfileSearchOutput | nul
 
     return {
         
-        'profiles': value['profiles'] == null ? undefined : ((value['profiles'] as Array<any>).map(UserProfileToJSON)),
+        'profiles': ((value['profiles'] as Array<any>).map(UserProfileToJSON)),
     };
 }
 

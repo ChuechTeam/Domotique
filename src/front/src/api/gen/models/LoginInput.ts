@@ -24,19 +24,21 @@ export interface LoginInput {
      * @type {string}
      * @memberof LoginInput
      */
-    password?: string;
+    password: string;
     /**
      * 
      * @type {string}
      * @memberof LoginInput
      */
-    email?: string;
+    email: string;
 }
 
 /**
  * Check if a given object implements the LoginInput interface.
  */
 export function instanceOfLoginInput(value: object): value is LoginInput {
+    if (!('password' in value) || value['password'] === undefined) return false;
+    if (!('email' in value) || value['email'] === undefined) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function LoginInputFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'password': json['password'] == null ? undefined : json['password'],
-        'email': json['email'] == null ? undefined : json['email'],
+        'password': json['password'],
+        'email': json['email'],
     };
 }
 

@@ -24,25 +24,28 @@ export interface ErrorResponse {
      * @type {string}
      * @memberof ErrorResponse
      */
-    code?: string;
+    code: string;
     /**
      * Additional details about the error. Can be really useful for validation errors most of the time.
      * @type {object}
      * @memberof ErrorResponse
      */
-    data?: object;
+    data: object;
     /**
      * The error message. Is localized (in French) and can be shown to the client for all errors except 400.
      * @type {string}
      * @memberof ErrorResponse
      */
-    message?: string;
+    message: string;
 }
 
 /**
  * Check if a given object implements the ErrorResponse interface.
  */
 export function instanceOfErrorResponse(value: object): value is ErrorResponse {
+    if (!('code' in value) || value['code'] === undefined) return false;
+    if (!('data' in value) || value['data'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function ErrorResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'code': json['code'] == null ? undefined : json['code'],
-        'data': json['data'] == null ? undefined : json['data'],
-        'message': json['message'] == null ? undefined : json['message'],
+        'code': json['code'],
+        'data': json['data'],
+        'message': json['message'],
     };
 }
 

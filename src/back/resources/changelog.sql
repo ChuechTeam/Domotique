@@ -16,14 +16,14 @@
 -- liquibase formatted sql
 
 -- changeset dynamic:init
-CREATE TABLE user(
+CREATE TABLE User(
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(128) NOT NULL,
-    email_confirmation_token BIGINT NOT NULL,
-    email_confirmed BOOL NOT NULL,
-    pass_hash VARCHAR(128) NOT NULL,
-    first_name VARCHAR(128) NOT NULL,
-    last_name VARCHAR(128) NOT NULL,
+    emailConfirmationToken BIGINT NOT NULL,
+    emailConfirmed BOOL NOT NULL,
+    passHash VARCHAR(128) NOT NULL,
+    firstName VARCHAR(128) NOT NULL,
+    lastName VARCHAR(128) NOT NULL,
     gender TINYINT NOT NULL,
     role TINYINT NOT NULL,
     level TINYINT NOT NULL,
@@ -32,17 +32,16 @@ CREATE TABLE user(
     UNIQUE INDEX idx_mail(email)
 );
 
--- rollback drop table user;
+-- rollback drop table User;
 -- changeset dynamic:add_rooms
-CREATE TABLE room(
+CREATE TABLE Room(
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(128) NOT NULL,
     color INT NOT NULL,
-    owner_id INT,
+    ownerId INT,
 
-    FOREIGN KEY (owner_id) REFERENCES user(id) ON DELETE SET NULL,
-    UNIQUE INDEX idx_room_name(name),
-    INDEX idx_room_owner(owner_id)
+    FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL,
+    INDEX idx_room_owner(ownerId)
 );
 
 -- rollback drop table room;

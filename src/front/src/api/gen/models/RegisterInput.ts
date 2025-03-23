@@ -39,37 +39,37 @@ export interface RegisterInput {
      * @type {string}
      * @memberof RegisterInput
      */
-    firstName?: string;
+    firstName: string;
     /**
      * 
      * @type {string}
      * @memberof RegisterInput
      */
-    lastName?: string;
+    lastName: string;
     /**
      * 
      * @type {string}
      * @memberof RegisterInput
      */
-    password?: string;
+    password: string;
     /**
      * 
      * @type {Role}
      * @memberof RegisterInput
      */
-    role?: Role;
+    role: Role;
     /**
      * 
      * @type {Gender}
      * @memberof RegisterInput
      */
-    gender?: Gender;
+    gender: Gender;
     /**
      * 
      * @type {string}
      * @memberof RegisterInput
      */
-    email?: string;
+    email: string;
 }
 
 
@@ -78,6 +78,12 @@ export interface RegisterInput {
  * Check if a given object implements the RegisterInput interface.
  */
 export function instanceOfRegisterInput(value: object): value is RegisterInput {
+    if (!('firstName' in value) || value['firstName'] === undefined) return false;
+    if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('password' in value) || value['password'] === undefined) return false;
+    if (!('role' in value) || value['role'] === undefined) return false;
+    if (!('gender' in value) || value['gender'] === undefined) return false;
+    if (!('email' in value) || value['email'] === undefined) return false;
     return true;
 }
 
@@ -91,12 +97,12 @@ export function RegisterInputFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'password': json['password'] == null ? undefined : json['password'],
-        'role': json['role'] == null ? undefined : RoleFromJSON(json['role']),
-        'gender': json['gender'] == null ? undefined : GenderFromJSON(json['gender']),
-        'email': json['email'] == null ? undefined : json['email'],
+        'firstName': json['firstName'],
+        'lastName': json['lastName'],
+        'password': json['password'],
+        'role': RoleFromJSON(json['role']),
+        'gender': GenderFromJSON(json['gender']),
+        'email': json['email'],
     };
 }
 

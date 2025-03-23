@@ -1,12 +1,12 @@
 package fr.domotique;
 
-import fr.domotique.api.*;
+import fr.domotique.api.rooms.*;
+import fr.domotique.api.users.*;
 import fr.domotique.base.*;
 import fr.domotique.base.apidocs.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.core.json.*;
-import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.proxy.handler.*;
@@ -86,6 +86,10 @@ public class RouterVerticle extends VerticleBase {
             serveApiDocumentation(r);
         }
 
+        // Limit the incoming requests to 128KB of data, for better security.
+        // Could also be used later on to add support for file uploads.
+        r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
+
         // Register the session handler, which is going to manage our user session in the cookie for us.
         r.route("/api/*").handler(SessionHandler.create(server.sessionStore()));
 
@@ -104,10 +108,6 @@ public class RouterVerticle extends VerticleBase {
 
         // Add an error handler to show a nice error page when something UNEXPECTED goes wrong
         r.route("/api/*").failureHandler(ErrorHandler.create(vertx));
-
-        // Limit the incoming requests to 128KB of data, for better security.
-        // Could also be used later on to add support for file uploads.
-        r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
 
         // Make sure the client does NOT cache requests to the API.
         r.route("/api/*").handler(ctx -> {

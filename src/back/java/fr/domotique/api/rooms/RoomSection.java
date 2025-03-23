@@ -1,4 +1,4 @@
-package fr.domotique.api;
+package fr.domotique.api.rooms;
 
 import fr.domotique.*;
 import fr.domotique.base.*;
@@ -7,6 +7,7 @@ import fr.domotique.base.apidocs.*;
 import fr.domotique.base.data.*;
 import fr.domotique.data.*;
 import io.vertx.core.Future;
+import io.vertx.core.http.*;
 import io.vertx.ext.web.*;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.*;
@@ -33,9 +34,28 @@ public class RoomSection extends Section {
         // Create a sub-router for all room routes
         var roomRoutes = newRouter();
 
+        roomRoutes.post("/test")
+            .respond(ctx -> {
+                return server.db().rooms().create(new Room(0,
+                    "Test Room",
+                    0x2E86C1,
+                    null
+                ));
+            });
+
+        // When:
+        // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
+        // - A user modifies data, they must be AT LEAST an ADVANCED user
         roomRoutes.route().handler(ctx -> {
             Authenticator auth = Authenticator.get(ctx);
-            auth.requireAuth(Level.BEGINNER);
+
+            if (ctx.request().method() == HttpMethod.GET) {
+                auth.requireAuth(Level.BEGINNER);
+            } else {
+                auth.requireAuth(Level.ADVANCED);
+            }
+
+            // Don't stop there! Continue the request.
             ctx.next();
         });
 
@@ -49,6 +69,7 @@ public class RoomSection extends Section {
         roomRoutes.delete("/:roomId").respond(vt(this::deleteRoom)).putMetadata(RouteDoc.KEY, DELETE_ROOM_DOC);
 
         // Register the sub-router with the main router
+        // And add common authorization responses to the documentation.
         doc(router.route(PATH_PREFIX).subRouter(roomRoutes))
             .tag("Rooms")
             .response(401, ErrorResponse.class, "You are not logged in.")
@@ -61,11 +82,10 @@ public class RoomSection extends Section {
         .description("Gets all rooms from the database.")
         .response(200, RoomsResponse.class, "The list of all rooms.");
 
-    record RoomsResponse(List<Room> rooms) {}
+    record RoomsResponse(List<CompleteRoom> rooms) {}
 
     Future<RoomsResponse> getAll(RoutingContext context) {
-        return server.db().rooms().getAll()
-            .map(RoomsResponse::new);
+        return server.db().rooms().getAllComplete().map(RoomsResponse::new);
     }
     // endregion
 
@@ -74,61 +94,56 @@ public class RoomSection extends Section {
         .summary("Get room by ID")
         .description("Gets a room by its ID.")
         .pathParam("roomId", int.class, "The ID of the room.")
-        .response(200, Room.class, "The room data.")
+        .response(200, CompleteRoom.class, "The room data.")
         .response(204, "Room not found.");
 
-    Future<Room> getRoomById(RoutingContext context) {
+    Future<CompleteRoom> getRoomById(RoutingContext context) {
         int roomId = readIntPathParam(context, "roomId");
-        return server.db().rooms().get(roomId);
+        return server.db().rooms().getComplete(roomId);
     }
     // endregion
+
+    @ApiDoc("Data for both INSERT and UPDATE operations on a room.")
+    record RoomInput(String name, int color, @Nullable @ApiDoc(optional = true) Integer ownerId) {
+        public RoomInput {
+            name = Sanitize.string(name);
+        }
+
+        /// Runs validation for this input.
+        public void validate() {
+            try (var block = Validation.start()) {
+                Validation.lengthIn(block, "name", name, 0, 128,
+                    "Le nom est vide.",
+                    "Le nom est trop long.");
+            }
+        }
+    }
 
     // region POST /api/rooms | Create room
     static final RouteDoc CREATE_ROOM_DOC = new RouteDoc("createRoom")
         .summary("Create room")
-        .description("Creates a new room. The room will be owned by the current user unless specified otherwise.")
-        .requestBody(CreateRoomInput.class, new CreateRoomInput("Living Room", 0x2E86C1, null))
-        .response(201, Room.class, "The room was created successfully.")
+        .description("Creates a new room.")
+        .requestBody(RoomInput.class, new RoomInput("Toilettes", 0x2E86C1, null))
+        .response(201, CompleteRoom.class, "The room was created successfully.")
         .response(422, ErrorResponse.class, "Some fields are invalid or the room name already exists.");
 
-    record CreateRoomInput(String name, int color, @Nullable Integer ownerId) {
-        public CreateRoomInput {
-            name = Sanitize.string(name);
-        }
-    }
+    CompleteRoom createRoom(RoutingContext context) {
+        RoomInput input = readBody(context, RoomInput.class);
 
-    Room createRoom(RoutingContext context) {
-        Authenticator auth = Authenticator.get(context);
-
-        CreateRoomInput input = readBody(context, CreateRoomInput.class);
-
-        // Validate room input
-        try (var block = Validation.start()) {
-            Validation.nonBlank(block, "name", input.name, "Le nom de la pièce ne peut pas être vide.");
-            Validation.lengthIn(block, "name", input.name, 0, 128, "Le nom de la pièce est trop long.");
-        }
-
-        // Determine room ownership
-        Integer ownerId = input.ownerId;
-        if (ownerId == null) {
-            // If no owner specified, set to current user
-            ownerId = auth.getUserId();
-        } else {
-            // Only users with sufficient privileges can create rooms for others
-            auth.requireAuth(Level.EXPERT);
-        }
+        // Validate data
+        input.validate();
 
         // Create the room
-        Room room = new Room(0, input.name, input.color, ownerId);
+        Room room = new Room(0, input.name, input.color, input.ownerId);
 
         try {
             server.db().rooms().create(room).await();
             log.info("Room created with id {} and name {}", room.getId(), room.getName());
 
             context.response().setStatusCode(201);
-            return room;
-        } catch (DuplicateException ex) {
-            throw new RequestException("Une pièce avec ce nom existe déjà.", 422, "ROOM_NAME_EXISTS");
+            return server.db().rooms().getComplete(room.getId()).await();
+        } catch (ForeignException ex) {
+            throw new RequestException("Le propriétaire de la salle n'existe pas.", 422, "OWNER_NOT_FOUND");
         }
     }
     // endregion
@@ -136,56 +151,37 @@ public class RoomSection extends Section {
     // region POST /api/rooms/:roomId | Update room
     static final RouteDoc UPDATE_ROOM_DOC = new RouteDoc("updateRoom")
         .summary("Update room")
-        .description("Updates an existing room. Users can only update rooms they own, unless they have expert privileges.")
+        .description("Updates an existing room.")
         .pathParam("roomId", int.class, "The ID of the room to update.")
-        .requestBody(UpdateRoomInput.class, new UpdateRoomInput("Updated Room", 0x8E44AD, null))
-        .response(200, Room.class, "The room was updated successfully.")
+        .requestBody(RoomInput.class, new RoomInput("Updated Room", 0x8E44AD, null))
+        .response(200, CompleteRoom.class, "The room was updated successfully.")
         .response(404, ErrorResponse.class, "Room not found.")
-        .response(422, ErrorResponse.class, "Some fields are invalid or the room name already exists.");
+        .response(422, ErrorResponse.class, "Some fields are invalid.");
 
-    record UpdateRoomInput(String name, int color, @Nullable Integer ownerId) {
-        public UpdateRoomInput {
-            name = Sanitize.string(name);
-        }
-    }
-
-    Room updateRoom(RoutingContext context) {
-        Authenticator auth = Authenticator.get(context);
-        auth.requireAuth(Level.ADVANCED);
-
+    CompleteRoom updateRoom(RoutingContext context) {
         int roomId = readIntPathParam(context, "roomId");
-        UpdateRoomInput input = readBody(context, UpdateRoomInput.class);
+        RoomInput input = readBody(context, RoomInput.class);
 
         // Validate room input
-        try (var block = Validation.start()) {
-            Validation.nonBlank(block, "name", input.name, "Le nom de la pièce ne peut pas être vide.");
-            Validation.lengthIn(block, "name", input.name, 0, 128, "Le nom de la pièce est trop long.");
-        }
+        input.validate();
 
         // Get the room
         Room room = server.db().rooms().get(roomId).await();
         if (room == null) {
-            throw new RequestException("Pièce introuvable.", 404, "ROOM_NOT_FOUND");
-        }
-
-        // Check permissions - only room owner or experts can modify rooms
-        int userId = auth.getUserId();
-        Integer roomOwnerId = room.getOwnerId();
-
-        if (roomOwnerId != null) {
-            throw new RequestException("Vous n'avez pas la permission de modifier cette pièce.", 403, "INSUFFICIENT_PERMISSIONS");
+            throw new RequestException("Salle introuvable.", 404, "ROOM_NOT_FOUND");
         }
 
         // Update room properties
         room.setName(input.name);
         room.setColor(input.color);
+        room.setOwnerId(input.ownerId);
 
         try {
             server.db().rooms().update(room).await();
             log.info("Room updated with id {} and name {}", room.getId(), room.getName());
-            return room;
-        } catch (DuplicateException ex) {
-            throw new RequestException("Une pièce avec ce nom existe déjà.", 422, "ROOM_NAME_EXISTS");
+            return server.db().rooms().getComplete(roomId).await();
+        } catch (ForeignException ex) {
+            throw new RequestException("Le propriétaire de la salle n'existe pas.", 422, "OWNER_NOT_FOUND");
         }
     }
     // endregion
@@ -199,9 +195,6 @@ public class RoomSection extends Section {
         .response(404, ErrorResponse.class, "Room not found.");
 
     void deleteRoom(RoutingContext context) {
-        Authenticator auth = Authenticator.get(context);
-        auth.requireAuth(Level.ADVANCED);
-
         int roomId = readIntPathParam(context, "roomId");
 
         // Get the room
@@ -211,6 +204,7 @@ public class RoomSection extends Section {
         }
 
         // Delete room
+        // TODO: What happens for devices with this room?
         server.db().rooms().delete(roomId).await();
         log.info("Room deleted with id {}", roomId);
     }

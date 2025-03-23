@@ -1,6 +1,6 @@
 package fr.domotique.data;
 
-import io.vertx.sqlclient.Row;
+import fr.domotique.base.data.*;
 import org.jetbrains.annotations.*;
 
 /// A room that can host multiple devices.
@@ -21,20 +21,19 @@ public class Room {
         this.ownerId = ownerId;
     }
 
-    /// Maps an SQL [Row] to a [Room], considering all of its fields are in order, starting from `startIdx`.
-    public static Room map(Row row, int startIdx) {
-        return new Room(
-            row.getInteger(startIdx++),
-            row.getString(startIdx++),
-            row.getInteger(startIdx++),
-            row.getInteger(startIdx)
-        );
-    }
-
-    /// Maps an SQL [Row] to a [Room], considering all of its fields are in order.
-    public static Room map(Row row) {
-        return map(row, 0);
-    }
+    public static final EntityInfo<Room> ENTITY = new EntityInfo<>(
+        Room.class,
+        (r, s) -> new Room(
+            r.getInteger(s.next()),
+            r.getString(s.next()),
+            r.getInteger(s.next()),
+            r.getInteger(s.next())
+        ),
+        new EntityColumn<>("id", Room::getId, ColumnType.GENERATED_KEY),
+        new EntityColumn<>("name", Room::getName),
+        new EntityColumn<>("color", Room::getColor),
+        new EntityColumn<>("ownerId", Room::getOwnerId)
+    );
 
     // Getters and setters
 
