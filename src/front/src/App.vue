@@ -20,7 +20,7 @@ watch(isLoggedIn, () => {
         && router.currentRoute.value.matched.some(x => x.name === "app")) {
         router.push({name: "home"})
     } else if (isLoggedIn.value === true
-        && router.currentRoute.value.matched.some(x => x.name === "home")) {
+        && router.currentRoute.value.matched.some(x => x.name === "tour")) {
         router.push({name: "dashboard"})
     }
 })

@@ -41,7 +41,14 @@ public abstract class Table {
     protected <T> Future<T> querySingle(Function<Row, T> mapper, String sql, Object... params) {
         return client.preparedQuery(sql)
             .execute(Tuple.wrap(params))
-            .map(x -> mapper.apply(firstRow(x)))
+            .map(x -> {
+                Row row = firstRow(x);
+                if (row != null) {
+                    return mapper.apply(row);
+                } else {
+                    return null;
+                }
+            })
             .recover(Table::handleSqlErrors);
     }
 

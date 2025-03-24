@@ -1,9 +1,9 @@
-import {createRouter, createWebHistory} from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import TourTemplate from "@/views/tour/TourTemplate.vue";
 import AppTemplate from "@/views/app/AppTemplate.vue";
 import TourHome from "@/views/tour/TourHome.vue";
 import DashboardView from "@/views/app/DashboardView.vue";
-import {useAuthStore} from "@/stores/auth.js";
+import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileView from "@/views/app/ProfileView.vue";
 
@@ -22,14 +22,6 @@ const router = createRouter({
                     component: TourHome,
                 }
             ],
-
-            beforeEnter: async (to, from) => {
-                // We don't want to show the tour to users who are already logged in.
-                const auth = useAuthStore();
-                if (auth.isLoggedIn) {
-                    return "/dashboard";
-                }
-            }
         },
         // --- LOGGED-IN ROUTES ---
         {
@@ -47,7 +39,7 @@ const router = createRouter({
                     name: 'email-confirm',
                     component: EmailConfirmView,
 
-                    beforeEnter: async (to, from) => {
+                    async beforeEnter(to, from) {
                         const auth = useAuthStore();
 
                         // If our email is already confirmed, then go back to the dashboard.
@@ -61,43 +53,26 @@ const router = createRouter({
                     name: "profile",
                     component: ProfileView
                 }
-            ],
-            beforeEnter: async (to, from) => {
-                const auth = useAuthStore();
-
-                // Check that the user is logged in before accessing the dashboard
-                if (!auth.isLoggedIn) {
-                    // The user is not logged in! Double check for sure...
-                    const err = await auth.fetchUser()
-                    if (err != null) {
-                        // Yup. Not authenticated. Redirect to '/'
-                        return "/";
-                    } else {
-                        // Now that we have the user, we must make sure that they have confirmed their email.
-                        // If it's not the case, redirect them to the email confirmation page.
-                        if (!auth.user.secret.emailConfirmed && to.name !== "email-confirm") {
-                            return "/email-confirm";
-                        }
-
-                        // Else, we're all good! Continue!
-                    }
-                }
-            }
+            ]
         },
     ],
 })
 
+function inArea(route, area) {
+    return route.matched.some(x => x.name === area);
+}
+
 // When the user is probably logged in (meaning they logged in to the website, then closed the tab, then opened it again)
 // redirect them to the dashboard instead of the tour page.
 let firstPage = true;
-router.beforeEach((to, from) => {
-    if (firstPage) {
-        const auth = useAuthStore();
+router.beforeEach(async (to, from) => {
+    const auth = useAuthStore();
 
+    if (firstPage) {
         // Is the user:
         // - probably logged in, and
         // - trying to access a page in the "tour" category?
-        if (auth.isProbablyLoggedIn && to.matched.some(x => x.name === "tour")) {
+        if (auth.isProbablyLoggedIn && inArea(to, "tour")) {
             // Then redirect them to the dashboard instead.
             // Note that this will also trigger app's beforeEnter guard, so even if the user hasn't confirmed their email
             // it will redirect them to the email confirmation page.
@@ -107,6 +82,29 @@ router.beforeEach((to, from) => {
         // TODO: Handle ?confirmEmail=ok and ?confirmEmail=err
 
         firstPage = false;
+    }
+
+    // Check that the user is logged in before accessing the dashboard
+    if (inArea(to, "app")) {
+        if (!auth.isLoggedIn) {
+            // The user is not logged in! Double check for sure...
+            const err = await auth.fetchUser()
+            if (err != null) {
+                // Yup. Not authenticated. Redirect to '/'
+                return "/";
+            }
+        }
+
+        // Now that we have the user, we must make sure that they have confirmed their email.
+        // If it's not the case, redirect them to the email confirmation page.
+        if (!auth.user.secret.emailConfirmed && to.name !== "email-confirm") {
+            return "/email-confirm";
+        }
+
+        // Else, we're all good! Continue!
+    } else if (inArea(to, "tour") && auth.isLoggedIn) {
+        // If the user is logged in, redirect them to the dashboard instead.
+        return "/dashboard";
     }
 })
 
