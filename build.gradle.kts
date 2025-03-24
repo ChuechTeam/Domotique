@@ -6,7 +6,7 @@ plugins {
     application
     id("com.gradleup.shadow") version "9.0.0-beta10"
     // see if we'll use lombok later
-//    id("io.freefair.lombok") version "8.13"
+  id("io.freefair.lombok") version "8.13"
 }
 
 group = "fr.domotique"
