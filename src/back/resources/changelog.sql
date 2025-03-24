@@ -1,3 +1,4 @@
+-- liquibase formatted sql
 -- Guide:
 -- https://docs.liquibase.com/concepts/changelogs/changeset.html
 -- https://docs.liquibase.com/concepts/changelogs/sql-format.html
@@ -12,8 +13,6 @@
 -- Want to NUKE the database? Do this!!
 --   -> gradle updateDatabase --args="drop-all"
 --   -> ./liquibase drop-all
-
--- liquibase formatted sql
 
 -- changeset dynamic:init
 CREATE TABLE User(
@@ -32,7 +31,8 @@ CREATE TABLE User(
     UNIQUE INDEX idx_mail(email)
 );
 
--- rollback drop table User;
+-- rollback drop table `User`;
+
 -- changeset dynamic:add_rooms
 CREATE TABLE Room(
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -44,4 +44,4 @@ CREATE TABLE Room(
     INDEX idx_room_owner(ownerId)
 );
 
--- rollback drop table room;
+-- rollback drop table `Room`;

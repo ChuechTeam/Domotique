@@ -156,6 +156,7 @@ public class RouterVerticle extends VerticleBase {
                 .end(Json.encode(responseToSend));
         } else {
             // Nope, give it to the other error handler
+            log.error("Unexpected request error at {}", ctx.request().uri(), ctx.failure());
             ctx.next();
         }
     }

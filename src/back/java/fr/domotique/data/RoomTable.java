@@ -29,18 +29,18 @@ public class RoomTable extends Table {
 
     /// Gets the room with the given ID. Can return `null`.
     public Future<@Nullable Room> get(int id) {
-        return querySingle(ENTITY.mapper(), "SELECT * FROM room WHERE id = ?", id);
+        return querySingle(ENTITY.mapper(), "SELECT * FROM Room WHERE id = ?", id);
     }
 
     /// Gets all rooms in the database.
     public Future<List<Room>> getAll() {
-        return queryMany(ENTITY.mapper(), "SELECT * FROM room");
+        return queryMany(ENTITY.mapper(), "SELECT * FROM Room");
     }
 
     static String COMPLETE_SINGLE_SQL = makeModularSQL("""
             SELECT %s, %s
-            FROM room r
-            LEFT JOIN domo.user u on u.id = r.ownerId
+            FROM Room r
+            LEFT JOIN User u on u.id = r.ownerId
             WHERE r.id = ?
             """,
         CompleteRoom.columnList("r"),   // -> "r.id, r.name, r.color"
@@ -52,8 +52,8 @@ public class RoomTable extends Table {
 
     static String COMPLETE_MANY_SQL = makeModularSQL("""
             SELECT %s, %s
-            FROM room r
-            LEFT JOIN domo.user u on u.id = r.ownerId
+            FROM Room r
+            LEFT JOIN User u on u.id = r.ownerId
             """,
         CompleteRoom.columnList("r"),   // -> "r.id, r.name, r.color"
         UserProfile.columnList("u")); // -> "u.id, u.firstName, u.lastName, ..."

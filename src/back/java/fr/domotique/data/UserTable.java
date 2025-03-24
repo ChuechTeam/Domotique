@@ -28,7 +28,7 @@ public class UserTable extends Table {
 
     /// Gets the user with the given ID. Can return `null`.
     public Future<@Nullable User> get(int id) {
-        return querySingle(ENTITY.mapper(), "SELECT * FROM user WHERE id = ?", id);
+        return querySingle(ENTITY.mapper(), "SELECT * FROM User WHERE id = ?", id);
     }
 
     /// Gets the user with the given email
@@ -36,11 +36,11 @@ public class UserTable extends Table {
     /// @param email the email of the user
     /// @return the user, or `null` if not found
     public Future<@Nullable User> getByEmail(String email) {
-        return querySingle(ENTITY.mapper(), "SELECT * FROM user WHERE email = ?", email);
+        return querySingle(ENTITY.mapper(), "SELECT * FROM User WHERE email = ?", email);
     }
 
     static final String PROFILE_FN_SQL = makeModularSQL("""
-        SELECT :cols FROM user
+        SELECT :cols FROM User
         WHERE INSTR(firstName, ?) > 0 OR INSTR(lastName, ?) > 0
         """, UserProfile.columnList(null)); // -> "id, firstName, lastName, role, level, etc."
 
