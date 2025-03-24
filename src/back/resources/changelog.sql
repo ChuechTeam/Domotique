@@ -45,3 +45,30 @@ CREATE TABLE Room(
 );
 
 -- rollback drop table `Room`;
+
+-- changeset dynamic:add_devices
+
+CREATE TABLE DeviceType(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    attributes JSON NOT NULL
+);
+
+CREATE TABLE Device(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    description TEXT NOT NULL,
+    typeId INT NOT NULL,
+    roomId INT NOT NULL,
+    attributes JSON NOT NULL,
+    powered BOOL NOT NULL,
+    energyConsumption FLOAT NOT NULL,
+
+    constraint fk_device_type FOREIGN KEY (typeId) REFERENCES DeviceType(id) ON DELETE RESTRICT,
+    constraint fk_device_room FOREIGN KEY (roomId) REFERENCES Room(id) ON DELETE RESTRICT,
+    INDEX idx_device_type(typeId),
+    INDEX idx_device_room(roomId)
+);
+
+-- rollback drop table `Device`;
+-- rollback drop table `DeviceType`;

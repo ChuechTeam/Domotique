@@ -1,5 +1,7 @@
 package fr.domotique;
 
+import fr.domotique.api.devices.*;
+import fr.domotique.api.devicetypes.*;
 import fr.domotique.api.rooms.*;
 import fr.domotique.api.users.*;
 import fr.domotique.base.*;
@@ -62,7 +64,9 @@ public class RouterVerticle extends VerticleBase {
     Section[] allSections() {
         return new Section[]{
             new UserSection(server),
-            new RoomSection(server)
+            new RoomSection(server),
+            new DeviceTypeSection(server),
+            new DeviceSection(server)
         };
     }
 

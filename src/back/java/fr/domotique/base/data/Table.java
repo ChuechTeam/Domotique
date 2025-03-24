@@ -155,8 +155,8 @@ public abstract class Table {
     public static <T> Future<T> handleSqlErrors(Throwable ex) {
         if (ex instanceof DatabaseException my) {
             return switch (my.getErrorCode()) {
-                case 1062 -> Future.failedFuture(new DuplicateException(my));
-                case 1452 -> Future.failedFuture(new ForeignException(my));
+                case 1062 -> Future.failedFuture(new DuplicateException(my.getMessage(), my));
+                case 1452 -> Future.failedFuture(new ForeignException(my.getMessage(), my));
                 default -> Future.failedFuture(my);
             };
         } else {

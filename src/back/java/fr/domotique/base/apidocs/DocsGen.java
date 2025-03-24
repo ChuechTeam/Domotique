@@ -329,7 +329,6 @@ public final class DocsGen {
         String docsName = getDocsName(clazz);
         Schema<?> existingSchema;
         Schema<?> newSchema;
-
         if (clazz.isEnum()) {
             // Enum case -> Make a string schema with the enum values
             @SuppressWarnings("unchecked")
@@ -412,7 +411,21 @@ public final class DocsGen {
         // Register the description of the class if we do have one.
         ApiDoc descAnn = clazz.getAnnotation(ApiDoc.class);
         if (descAnn != null) {
-            newSchema.description(descAnn.value());
+            // Put it in a stringbuilder for later if it's an enum.
+            StringBuilder doc = new StringBuilder(descAnn.value());
+
+            // OpenAPI doesn't support documentation on enums so we'll glue them to the documentation instead.
+            if (clazz.isEnum()) {
+                for (Field f : clazz.getFields()) {
+                    ApiDoc enumDoc = f.getAnnotation(ApiDoc.class);
+                    if (enumDoc != null) {
+                        doc.append("\n- `").append(f.getName()).append("`: ").append(enumDoc.value());
+                    }
+                }
+            }
+
+            // Register the description now
+            newSchema.description(doc.toString());
         }
 
         String reference = "#/components/schemas/" + docsName;
@@ -436,6 +449,4 @@ public final class DocsGen {
             return clazz.getSimpleName();
         }
     }
-
-    record RegisteredSchema(String ref, Schema<?> schema) {}
 }

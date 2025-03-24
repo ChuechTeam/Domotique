@@ -34,15 +34,6 @@ public class RoomSection extends Section {
         // Create a sub-router for all room routes
         var roomRoutes = newRouter();
 
-        roomRoutes.post("/test")
-            .respond(ctx -> {
-                return server.db().rooms().create(new Room(0,
-                    "Test Room",
-                    0x2E86C1,
-                    null
-                ));
-            });
-
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
         // - A user modifies data, they must be AT LEAST an ADVANCED user
