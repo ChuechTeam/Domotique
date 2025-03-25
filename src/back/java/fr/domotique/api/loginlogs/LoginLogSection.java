@@ -15,7 +15,7 @@ public class LoginLogSection extends Section {
 
     @Override
     public void register(Router router) {
-        var subRouter = newRouter();
+        var subRouter = newSubRouter(router, "/api/login-logs*", new RouteDoc().tag("Login Logs"));
 
         // All routes need an EXPERT level to be used.
         subRouter.route().handler(ctx -> {
@@ -33,10 +33,6 @@ public class LoginLogSection extends Section {
                 .response(200, LoginLogsResponse.class, "The list of login logs")
                 .response(401, ErrorResponse.class, "You aren't logged in.")
                 .response(403, ErrorResponse.class, "You don't have enough permissions."));
-
-        router.route("/api/login-logs*")
-            .subRouter(subRouter)
-            .putMetadata(RouteDoc.KEY, new RouteDoc().tag("Login Logs"));
     }
 
     record LoginLogsResponse(List<LoginLog> logs) {}

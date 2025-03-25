@@ -244,6 +244,14 @@ public abstract class Section {
         return Router.router(server.vertx());
     }
 
+
+    /// Creates a sub router with `prefix`, and with additional documentation using `docs`.
+    protected Router newSubRouter(Router parent, String prefix, RouteDoc docs) {
+        var router = newRouter();
+        parent.route(prefix).subRouter(router).putMetadata(RouteDoc.KEY, docs);
+        return router;
+    }
+
     /// \[Experimental!] Executor for virtual threads to do async/await
     public static final ExecutorService vtExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
