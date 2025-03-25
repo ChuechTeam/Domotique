@@ -76,7 +76,8 @@ public class MainVerticle extends VerticleBase {
             new UserTable(client),
             new RoomTable(client),
             new DeviceTypeTable(client),
-            new DeviceTable(client)
+            new DeviceTable(client),
+            new LoginLogTable(client)
         );
 
         // Create the session store, storing user sessions for logged-in users, currently in-memory.

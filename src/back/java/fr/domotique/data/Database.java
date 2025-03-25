@@ -9,7 +9,8 @@ public record Database(
     UserTable users,
     RoomTable rooms,
     DeviceTypeTable deviceTypes,
-    DeviceTable devices
+    DeviceTable devices,
+    LoginLogTable loginLogs
 ) {
 
 }

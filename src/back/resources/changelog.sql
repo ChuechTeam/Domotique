@@ -72,3 +72,15 @@ CREATE TABLE Device(
 
 -- rollback drop table `Device`;
 -- rollback drop table `DeviceType`;
+
+-- changeset dynamic:add_login_logs
+
+CREATE TABLE LoginLog(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    userId INT NOT NULL,
+    time DATETIME NOT NULL,
+
+    FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE,
+    INDEX idx_login_user(userId),
+    index idx_time(time)
+);

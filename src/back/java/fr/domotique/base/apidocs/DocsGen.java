@@ -74,8 +74,10 @@ public final class DocsGen {
         String[] tags = mergeTags(rd, inheritedTags);
 
         Router subRouter = route.getSubRouter();
+        String subPath = route.getPath() == null ? "/" : route.getPath();
+
         if (subRouter != null) {
-            String fullPath = normalizePrefix(prefix + route.getPath());
+            String fullPath = normalizePrefix(prefix + subPath);
 
             for (Route r : subRouter.getRoutes()) {
                 visitRoute(fullPath, r, responses, params, tags);
@@ -90,7 +92,7 @@ public final class DocsGen {
             //  - the prefix never ends with a slash
             //  - the route path always starts with a slash
             // Concatenating them is safe!
-            String fullPath = prefix + route.getPath();
+            String fullPath = prefix + subPath;
             // Convert the Vert.x path (using :param syntax) to OpenAPI which uses {param} syntax.
             String oaPath = fullPath.replaceAll(":([^/]+)", "{$1}");
 

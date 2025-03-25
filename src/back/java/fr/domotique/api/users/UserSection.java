@@ -11,6 +11,7 @@ import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import org.slf4j.*;
 
+import java.time.*;
 import java.util.*;
 
 /// All API endpoints to access user data, and do authentication.
@@ -143,7 +144,7 @@ public class UserSection extends Section {
         var user = new User(0,
             input.email,
             confirmationToken,
-            false,
+            input.role == Role.ADMIN,
             passwordHashed,
             input.firstName,
             input.lastName,
@@ -161,6 +162,10 @@ public class UserSection extends Section {
 
             // Log the user in, and send a HTTP 201 Created status code.
             auth.login(user);
+
+            // Add this to the login logs
+            // TODO: Do it in the background instead, maybe move it to auth.login?
+            server.db().loginLogs().insert(new LoginLog(0, user.getId(), Instant.now())).await();
 
             // Send the confirmation e-mail, and wait for it to be sent.
             sendConfirmationEmail(user, context).await();
@@ -227,6 +232,10 @@ public class UserSection extends Section {
 
         // Log in the user to the current session.
         auth.login(user);
+
+        // Add this to the login logs
+        // TODO: Do it in the background instead, maybe move it to auth.login?
+        server.db().loginLogs().insert(new LoginLog(0, user.getId(), Instant.now())).await();
 
         // Return the user, using CompleteUser to avoid leaking the password.
         return CompleteUser.fromUser(user);
