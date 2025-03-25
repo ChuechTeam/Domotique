@@ -1,6 +1,7 @@
 package fr.domotique.api.devicetypes;
 
 import fr.domotique.*;
+import fr.domotique.api.devices.*;
 import fr.domotique.base.*;
 import fr.domotique.base.Validation;
 import fr.domotique.base.apidocs.*;
@@ -173,12 +174,40 @@ public class DeviceTypeSection extends Section {
             throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
         }
 
+        // Compute the attribute set, and see if they changed.
+        EnumSet<AttributeType> newAttributes = input.attributesAsEnumSet();
+        boolean attributesChanged = !deviceType.getAttributes().equals(newAttributes);
+
         // Update device type properties
         deviceType.setName(input.name);
-        deviceType.setAttributes(input.attributesAsEnumSet());
+        deviceType.setAttributes(newAttributes);
 
+        // Submit changes to the database
         server.db().deviceTypes().update(deviceType).await();
         log.info("Device type updated with id {} and name {}", deviceType.getId(), deviceType.getName());
+
+        // Okay... But what happens if the attributes changed?
+        // We might have devices of that device type, and they have either:
+        //   - attributes that aren't there anymore
+        //   - missing attributes that are new
+        //
+        // So let's fix that!
+        if (attributesChanged) {
+            // Find all devices that use this type. We only need their identifiers and attributes.
+            List<DeviceTable.DeviceAndAttributes> devicesNeedingUpdates
+                = server.db().devices().getAllAttribsOfDeviceType(deviceTypeId).await();
+
+            // Maybe we have no devices to update, don't do useless work in that case!
+            if (!devicesNeedingUpdates.isEmpty()) {
+                // We have some devices to update; begin changing their attributes
+                for (var d : devicesNeedingUpdates) {
+                    DeviceOperations.fixAttributes(d.attributes(), deviceType);
+                }
+
+                // Push the changes to the database
+                server.db().devices().updateAttributesBatch(devicesNeedingUpdates).await();
+            }
+        }
 
         return CompleteDeviceType.fromDeviceType(deviceType);
     }

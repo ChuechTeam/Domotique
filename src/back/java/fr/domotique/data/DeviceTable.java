@@ -76,4 +76,48 @@ public class DeviceTable extends Table {
     public Future<Boolean> delete(int id) {
         return delete(ENTITY, id);
     }
+    // --- Special functions ---
+
+    public Future<List<DeviceAndAttributes>> getAllAttribsOfDeviceType(int deviceTypeId) {
+        return queryMany(DeviceAndAttributes::fromTuple, "SELECT id, attributes FROM Device WHERE typeId = ?", deviceTypeId);
+    }
+
+    public Future<Void> updateAttributesBatch(List<DeviceAndAttributes> updates) {
+        return client.preparedQuery("""
+                        UPDATE Device SET
+                            attributes = ?
+                        WHERE id = ?
+                """)
+            .executeBatch(updates.stream().map(DeviceAndAttributes::toTuple).toList())
+            .andThen(res -> {
+                if (res.succeeded()) {
+                    var result = res.result();
+                    while (result != null) {
+                        if (result.rowCount() == 0) {
+                            log.warn("Some devices were not updated by updateAttributesBatch");
+                        }
+                        result = result.next();
+                    }
+                } else {
+                    log.error("Failed to update device attributes", res.cause());
+                }
+            })
+            .mapEmpty();
+    }
+
+    public record DeviceAndAttributes(int deviceId, EnumMap<AttributeType, Object> attributes) {
+        Tuple toTuple() {
+            return Tuple.of(
+                Device.attributesToDB(attributes),
+                deviceId
+            );
+        }
+
+        static DeviceAndAttributes fromTuple(Row row) {
+            return new DeviceAndAttributes(
+                row.getInteger(0),
+                Device.attributesFromDB(row.getJsonArray(1))
+            );
+        }
+    }
 }

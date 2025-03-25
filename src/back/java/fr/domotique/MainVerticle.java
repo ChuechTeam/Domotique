@@ -72,13 +72,7 @@ public class MainVerticle extends VerticleBase {
         }
 
         // Create the Database object containing all our tables for easy access.
-        Database db = new Database(
-            new UserTable(client),
-            new RoomTable(client),
-            new DeviceTypeTable(client),
-            new DeviceTable(client),
-            new LoginLogTable(client)
-        );
+        Database db = new Database(client);
 
         // Create the session store, storing user sessions for logged-in users, currently in-memory.
         LocalSessionStore sessionStore = LocalSessionStore.create(vertx);

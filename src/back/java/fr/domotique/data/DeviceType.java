@@ -28,11 +28,11 @@ public class DeviceType {
         ),
         new EntityColumn<>("id", DeviceType::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", DeviceType::getName),
-        new EntityColumn<>("attributes", DeviceType::attributesToDB)
+        new EntityColumn<>("attributes", x -> attributesToDB(x.getAttributes()))
     );
 
     /// Converts the EnumSet into JSON for the database
-    private JsonArray attributesToDB() {
+    public static JsonArray attributesToDB(EnumSet<AttributeType> attributes) {
         // Make an array with integers (= ordinal of the enum)
         // It's Integer because boxing sucks :(
         var attrArray = new Integer[attributes.size()];

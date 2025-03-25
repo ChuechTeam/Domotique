@@ -70,12 +70,12 @@ public class Device {
         new EntityColumn<>("description", Device::getDescription),
         new EntityColumn<>("typeId", Device::getTypeId),
         new EntityColumn<>("roomId", Device::getRoomId),
-        new EntityColumn<>("attributes", Device::attributesToDB),
+        new EntityColumn<>("attributes", x -> attributesToDB(x.attributes)),
         new EntityColumn<>("powered", Device::isPowered),
         new EntityColumn<>("energyConsumption", Device::getEnergyConsumption)
     );
 
-    private JsonArray attributesToDB() {
+    public static JsonArray attributesToDB(EnumMap<AttributeType, Object> attributes) {
         // Convert the enum keys to integers (using ordinal)
         ArrayList<Integer> keys = new ArrayList<>(attributes.size());
         for (var key : attributes.keySet()) {

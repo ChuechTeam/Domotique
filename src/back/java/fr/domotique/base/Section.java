@@ -202,26 +202,6 @@ public abstract class Section {
         };
     }
 
-    /// When encountering a particular type of exception, transforms it into another one.
-    ///
-    /// Made to be used in conjunction with [Future#recover(java.util.function.Function)]
-    ///
-    /// ## Example
-    ///
-    /// ```java
-    /// someFuture.recover(errMap(IllegalArgumentException.class, e -> new RequestException("Invalid input", 400)));
-    /// ```
-    public static <E extends Throwable, T> Function<Throwable, Future<T>> errMap(Class<E> exceptionClass,
-                                                                                 Function<E, ? extends Throwable> action) {
-        return ex -> {
-            if (exceptionClass.isInstance(ex)) {
-                return Future.failedFuture(action.apply(exceptionClass.cast(ex)));
-            } else {
-                return Future.failedFuture(ex);
-            }
-        };
-    }
-
     /// Add API documentation to a route using [RouteDoc]
     ///
     /// ## Example
@@ -246,9 +226,9 @@ public abstract class Section {
 
 
     /// Creates a sub router with `prefix`, and with additional documentation using `docs`.
-    protected Router newSubRouter(Router parent, String prefix, RouteDoc docs) {
+    protected Router newSubRouter(Router parent, String prefix) {
         var router = newRouter();
-        parent.route(prefix).subRouter(router).putMetadata(RouteDoc.KEY, docs);
+        parent.route(prefix).subRouter(router);
         return router;
     }
 

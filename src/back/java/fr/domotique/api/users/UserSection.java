@@ -1,5 +1,6 @@
 package fr.domotique.api.users;
 
+import com.fasterxml.jackson.annotation.*;
 import fr.domotique.*;
 import fr.domotique.base.*;
 import fr.domotique.base.Validation;
@@ -44,8 +45,8 @@ public class UserSection extends Section {
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
         userRoutes.post("/login").respond(vt(this::login)).putMetadata(RouteDoc.KEY, LOGIN_DOC);
         userRoutes.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
-        userRoutes.post("/me/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
-        userRoutes.post("/me/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
+        userRoutes.post("/:userId/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
+        userRoutes.post("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
 
         // Paths with parameters come last.
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
@@ -300,18 +301,28 @@ public class UserSection extends Section {
 
     // --- Updates ---
 
+    static final ParamDoc USERID_PARAM = new ParamDoc().name("userId").valueType(String.class)
+        .desc("The ID of the user. Use 'me' to refer to the currently authenticated user.");
+
     // TODO: Change "me" to a path arg and handle the "me" string
-    // region POST /api/users/me/profile | Update profile
+    // region POST /api/users/:userId/profile | Update profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")
         .description("Update the profile of the currently authenticated user.")
-        .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE))
+        .param(USERID_PARAM)
+        .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE, null, null, null))
         .response(200, UserProfile.class, "The new updated profile.");
 
     record UpdateProfileInput(
         String firstName,
         String lastName,
-        Gender gender
+        Gender gender,
+        @ApiDoc(value = "The role of the user. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        Role role,
+        @ApiDoc(value = "The level of the user. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        Level level,
+        @ApiDoc(value = "The number of points the user has. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        Integer points
     ) {
         public UpdateProfileInput {
             // Sanitize strings before doing anything else.
@@ -326,6 +337,15 @@ public class UserSection extends Section {
         // Make sure we're logged in!
         auth.requireAuth();
 
+        // Read the user id. Me = current user
+        int userId = readUserId(context);
+
+        // If we're trying to modify another user's profile, make sure we're an admin.
+        boolean isMe = userId != auth.getUserId();
+        if (isMe) {
+            auth.requireAuth(Level.EXPERT);
+        }
+
         // Read the JSON from the request
         UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
 
@@ -333,15 +353,50 @@ public class UserSection extends Section {
         try (var block = Validation.start()) {
             UserValidation.firstName(block, input.firstName);
             UserValidation.lastName(block, input.lastName);
+            if (input.points != null && input.points < 0) {
+                block.addError("points", "Le nombre de points ne peut pas être négatif.");
+            }
         }
 
-        // Get the user from the database.
-        var user = auth.getUserOrFail().await();
+        // Get the user from the database. Take the user from the authenticator first since it might be cached.
+        var user = isMe ? auth.getUser().await() : server.db().users().get(userId).await();
+        if (user == null) {
+            throw new RequestException("L'utilisateur n'existe pas.", 404, "USER_NOT_FOUND");
+        }
+
+        // Are we trying to modify any "sensitive" profile information?
+        if (input.role != null || input.level != null || input.points != null) {
+            // See if we have the rights to do so.
+            if (!auth.hasLevel(Level.EXPERT)) {
+                throw new RequestException("Vous n'avez pas les droits pour modifier les valeurs de rôle, niveau ou de points.",
+                    403, "INSUFFICIENT_PERMISSIONS");
+            }
+
+            // Prevent admins from stepping down, to avoid the "no-admin situation".
+            if (input.role != null && input.role != Role.ADMIN && user.getRole() == Role.ADMIN) {
+                throw new RequestException("Les administrateurs ne peuvent pas s'auto-rétrograder.", 422, "AUTO_DEMOTE_ADMIN");
+            }
+        }
 
         // Set all the values
         user.setFirstName(input.firstName);
         user.setLastName(input.lastName);
         user.setGender(input.gender);
+        if (input.role != null) {
+            user.setRole(input.role);
+        }
+        if (input.level != null) {
+            user.setLevel(input.level);
+        }
+        if (input.points != null) {
+            user.setPoints(input.points);
+        }
+
+        // Admins are always expert. Would be dumb to have a non-expert admin.
+        // Maybe we should enforce this better but for now it works(tm).
+        if (user.getRole() == Role.ADMIN) {
+            user.setLevel(Level.EXPERT);
+        }
 
         // Update the user in the database.
         server.db().users().update(user).await();
@@ -354,11 +409,12 @@ public class UserSection extends Section {
     // region POST /api/users/me/password | Change password
     static final RouteDoc CHANGE_PASSWORD_DOC = new RouteDoc("changePassword")
         .summary("Change password")
-        .description("Change the password of the currently authenticated user.")
+        .description("Change the password of the given user.")
+        .param(USERID_PARAM)
         .requestBody(ChangePasswordInput.class, new ChangePasswordInput("oldPassword123", "newPassword456"))
         .response(204, "Password successfully changed.")
         .response(401, ErrorResponse.class, "You are not logged in.")
-        .response(403, ErrorResponse.class, "The old password is incorrect.")
+        .response(403, ErrorResponse.class, "The old password is incorrect, or you don't have rights to change this user's password.")
         .response(422, ErrorResponse.class, "The new password is invalid.");
 
     record ChangePasswordInput(
@@ -372,6 +428,15 @@ public class UserSection extends Section {
         // Make sure the user is logged in
         auth.requireAuth();
 
+        // Read the user id. Me = current user
+        int userId = readUserId(context);
+
+        // If we're trying to modify another user's profile, make sure we're an admin.
+        boolean isMe = userId != auth.getUserId();
+        if (isMe) {
+            auth.requireAuth(Level.EXPERT);
+        }
+
         // Read the JSON from the request
         ChangePasswordInput input = readBody(context, ChangePasswordInput.class);
 
@@ -380,11 +445,14 @@ public class UserSection extends Section {
             UserValidation.password(block, "newPassword", input.newPassword);
         }
 
-        // Get the logged-in user
-        User user = auth.getUserOrFail().await();
+        // Get the user from the database. Take the user from the authenticator first since it might be cached.
+        var user = isMe ? auth.getUser().await() : server.db().users().get(userId).await();
+        if (user == null) {
+            throw new RequestException("L'utilisateur n'existe pas.", 404, "USER_NOT_FOUND");
+        }
 
-        // Verify old password
-        if (!auth.checkPassword(input.oldPassword, user.getPassHash())) {
+        // Verify old password only when we aren't editing our own password
+        if (!isMe || !auth.checkPassword(input.oldPassword, user.getPassHash())) {
             throw new RequestException("L'ancien mot de passe est incorrect.", 403);
         }
 
@@ -396,7 +464,7 @@ public class UserSection extends Section {
         server.db().users().update(user).await();
 
         // Finally, log it to the console!
-        log.info("User {} successfully changed their password", user.getId());
+        log.info("User {}'s password was successfully changed (initiator: {})", user.getId(), auth.getUserId());
     }
     // endregion
 
@@ -467,8 +535,8 @@ public class UserSection extends Section {
         // Send the confirmation email
         // Get base URL (e.g., "http://localhost:7777")
         String baseUrl = ctx.request().scheme() + "://"
-            + ctx.request().authority().host()
-            + ":" + ctx.request().authority().port();
+                         + ctx.request().authority().host()
+                         + ":" + ctx.request().authority().port();
 
         // Construct the confirmation URL
         String confirmUrl = baseUrl + "/api/users/confirmEmail?token=" + u.getEmailConfirmationToken() + "&user=" + u.getId();
@@ -489,5 +557,23 @@ public class UserSection extends Section {
                 log.info("Confirmation e-mail sent to user {}", u.getId());
             }))
             .map(u);
+    }
+
+    /// Reads the userId from the path parameter.
+    ///
+    /// If it's "me", then returns the logged-in user id
+    /// Else, returns the user id as an integer.
+    private int readUserId(RoutingContext context) {
+        if (context.pathParam("userId").equals("me")) {
+            Authenticator auth = Authenticator.get(context);
+            var id = auth.getUserId();
+            if (id == 0) {
+                throw Authenticator.UNAUTHORIZED_EXCEPTION;
+            }
+
+            return id;
+        } else {
+            return readIntPathParam(context, "userId");
+        }
     }
 }

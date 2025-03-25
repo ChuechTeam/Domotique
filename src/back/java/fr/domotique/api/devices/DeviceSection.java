@@ -30,7 +30,10 @@ public class DeviceSection extends Section {
     @Override
     public void register(Router router) {
         // Create a sub-router for all device routes
-        var deviceRoutes = newRouter();
+        var deviceRoutes = newSubRouter(router, PATH_PREFIX)
+            .putMetadata(RouteDoc.KEY, new RouteDoc().tag("Devices")
+            .response(401, ErrorResponse.class, "You are not logged in.")
+            .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
 
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
@@ -56,13 +59,6 @@ public class DeviceSection extends Section {
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
         deviceRoutes.post("/:deviceId").respond(vt(this::updateDevice)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
-
-        // Register the sub-router with the main router
-        // And add common authorization responses to the documentation.
-        doc(router.route(PATH_PREFIX).subRouter(deviceRoutes))
-            .tag("Devices")
-            .response(401, ErrorResponse.class, "You are not logged in.")
-            .response(403, ErrorResponse.class, "You don't have permission to access this resource.");
     }
 
     // region GET /api/devices | Get all devices
@@ -106,6 +102,11 @@ public class DeviceSection extends Section {
         public DeviceInput {
             name = Sanitize.string(name);
             description = Sanitize.string(description);
+
+            // Ensure the attributes map is never null, it will always have a default value of an empty map
+            if (attributes == null) {
+                attributes = new EnumMap<>(AttributeType.class);
+            }
         }
 
         /// Runs validation for this input.
@@ -159,6 +160,15 @@ public class DeviceSection extends Section {
         // Validate data
         input.validate();
 
+        // Find the device type
+        DeviceType deviceType = server.db().deviceTypes().get(input.typeId).await();
+        if (deviceType == null) {
+            throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
+        }
+
+        // Add any missing attributes, remove those that are not in the device type
+        DeviceOperations.fixAttributes(input.attributes, deviceType);
+
         // Create the device
         Device device = new Device(
             0,
@@ -166,7 +176,7 @@ public class DeviceSection extends Section {
             input.description,
             input.typeId,
             input.roomId,
-            input.attributes != null ? input.attributes : new EnumMap<>(AttributeType.class),
+            input.attributes,
             input.powered,
             input.energyConsumption
         );
@@ -174,6 +184,8 @@ public class DeviceSection extends Section {
         try {
             server.db().devices().insert(device).await();
             log.info("Device created with id {} and name {}", device.getId(), device.getName());
+
+            // TODO: Add an entry in the database to log devices turning off/on
 
             // Get the complete device with all the related data
             CompleteDevice completeDevice = server.db().devices().getComplete(device.getId()).await();
@@ -217,13 +229,24 @@ public class DeviceSection extends Section {
             throw new RequestException("Appareil introuvable.", 404, "DEVICE_NOT_FOUND");
         }
 
+        // Find the device type
+        DeviceType deviceType = server.db().deviceTypes().get(input.typeId).await();
+        if (deviceType == null) {
+            throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
+        }
+
+        // Add any missing attributes, remove those that are not in the device type
+        DeviceOperations.fixAttributes(input.attributes, deviceType);
+
+        // See if our device turned off or on.
+        boolean devicePowerChanged = input.powered != device.isPowered();
+
         // Update device properties
-        // TODO: Put default values for missing attributes and remove attributes not in the device type
         device.setName(input.name);
         device.setDescription(input.description);
         device.setTypeId(input.typeId);
         device.setRoomId(input.roomId);
-        device.setAttributes(input.attributes != null ? input.attributes : new EnumMap<>(AttributeType.class));
+        device.setAttributes(input.attributes);
         device.setPowered(input.powered);
         device.setEnergyConsumption(input.energyConsumption);
 
@@ -231,6 +254,10 @@ public class DeviceSection extends Section {
             // Update device on the database
             server.db().devices().update(device).await();
             log.info("Device updated with id {} and name {}", device.getId(), device.getName());
+
+            if (devicePowerChanged) {
+                // TODO: Add an entry in the database to log devices turning off/on
+            }
 
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();
@@ -264,6 +291,7 @@ public class DeviceSection extends Section {
     }
     // endregion
 
+    /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {
         if (ex.getMessage().contains(DeviceTable.ROOM_FK)) {
             throw new RequestException("La pièce n'existe pas.", 422, "ROOM_NOT_FOUND");

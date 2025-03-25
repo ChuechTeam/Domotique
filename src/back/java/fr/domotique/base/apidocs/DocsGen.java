@@ -79,6 +79,14 @@ public final class DocsGen {
         if (subRouter != null) {
             String fullPath = normalizePrefix(prefix + subPath);
 
+            // See if the sub router also has documentation, and merge what we can merge!
+            RouteDoc subRd = subRouter.getMetadata(RouteDoc.KEY);
+            if (subRd != null) {
+                responses = mergeResponses(subRd, responses);
+                params = mergeParams(subRd, params);
+                tags = mergeTags(subRd, tags);
+            }
+
             for (Route r : subRouter.getRoutes()) {
                 visitRoute(fullPath, r, responses, params, tags);
             }
@@ -119,7 +127,7 @@ public final class DocsGen {
 
             // Create the response object, with all responses from the RouteDoc.
             ApiResponses apiResponses = new ApiResponses();
-            for (ResponseDoc response : rd.responses) {
+            for (ResponseDoc response : responses) {
                 apiResponses.put(Integer.toString(response.getStatus()), toOpenAPI(response));
             }
 
