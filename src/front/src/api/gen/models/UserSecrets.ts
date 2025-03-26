@@ -31,12 +31,6 @@ export interface UserSecrets {
      * @memberof UserSecrets
      */
     email: string;
-    /**
-     * The amount of points the user has accumulated. Never negative.
-     * @type {number}
-     * @memberof UserSecrets
-     */
-    points: number;
 }
 
 /**
@@ -45,7 +39,6 @@ export interface UserSecrets {
 export function instanceOfUserSecrets(value: object): value is UserSecrets {
     if (!('emailConfirmed' in value) || value['emailConfirmed'] === undefined) return false;
     if (!('email' in value) || value['email'] === undefined) return false;
-    if (!('points' in value) || value['points'] === undefined) return false;
     return true;
 }
 
@@ -61,7 +54,6 @@ export function UserSecretsFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         'emailConfirmed': json['emailConfirmed'],
         'email': json['email'],
-        'points': json['points'],
     };
 }
 
@@ -78,7 +70,6 @@ export function UserSecretsToJSONTyped(value?: UserSecrets | null, ignoreDiscrim
         
         'emailConfirmed': value['emailConfirmed'],
         'email': value['email'],
-        'points': value['points'],
     };
 }
 

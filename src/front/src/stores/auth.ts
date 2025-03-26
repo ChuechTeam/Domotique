@@ -124,6 +124,7 @@ export const useAuthStore = defineStore('auth', {
 
             try {
                 this.user.profile = await api.users.updateProfile({
+                    userId: "me",
                     updateProfileInput: input
                 });
             } catch (e) {
@@ -143,6 +144,7 @@ export const useAuthStore = defineStore('auth', {
 
             try {
                 await api.users.changePassword({
+                    userId: "me",
                     changePasswordInput: {
                         oldPassword,
                         newPassword

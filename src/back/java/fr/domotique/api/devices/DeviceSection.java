@@ -12,6 +12,7 @@ import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
+import java.time.*;
 import java.util.*;
 
 /// All API endpoints to access device data
@@ -191,7 +192,7 @@ public class DeviceSection extends Section {
             } else {
                 status = "POWER_OFF";
             }
-            server.db().powerLog().insert(
+            server.db().powerLogs().insert(
                 new PowerLog(device.getId(), status, LocalDateTime.now())
             ).await();
 
@@ -270,7 +271,7 @@ public class DeviceSection extends Section {
                     } else {
                         status = "POWER_OFF";
                     }
-                    server.db().powerLog().insert(
+                    server.db().powerLogs().insert(
                         new PowerLog(device.getId(), status, LocalDateTime.now())
                     ).await();
                 }

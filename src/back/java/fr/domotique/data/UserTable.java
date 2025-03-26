@@ -65,4 +65,47 @@ public class UserTable extends Table {
     public Future<Boolean> delete(int id) {
         return delete(ENTITY, id);
     }
+
+    // -- Point requests
+
+    public Future<List<PointInfo>> getManyPointInfo(Collection<Integer> userIds) {
+        if (userIds.isEmpty()) {
+            return Future.succeededFuture(Collections.emptyList());
+        }
+
+        var args = new StringJoiner(", ", "(", ")");
+        for (int i = 0; i < userIds.size(); i++) args.add("?");
+
+        final String sql = """
+                               SELECT id, points, level
+                               FROM User
+                               WHERE User.id IN\s""" + args;
+
+        return queryMany(PointInfo::fromRow, sql, userIds.toArray());
+    }
+
+    public Future<Void> updateManyPointInfo(Collection<PointInfo> pointInfos) {
+        if (pointInfos.isEmpty()) {
+            return Future.succeededFuture();
+        }
+
+        // TODO: Check success after executeBatch
+        return client.preparedQuery("""
+                    UPDATE User
+                    SET points = ?, level = ?
+                    WHERE id = ?
+                """)
+            .executeBatch(pointInfos.stream().map(PointInfo::toTuple).toList())
+            .mapEmpty();
+    }
+
+    public record PointInfo(int id, int points, Level level) {
+        Tuple toTuple() {
+            return Tuple.of(points, level.ordinal(), id);
+        }
+
+        static PointInfo fromRow(Row t) {
+            return new PointInfo(t.getInteger(0), t.getInteger(1), Level.values()[t.getInteger(2)]);
+        }
+    }
 }

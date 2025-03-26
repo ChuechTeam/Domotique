@@ -308,7 +308,6 @@ public class UserSection extends Section {
     static final ParamDoc USERID_PARAM = new ParamDoc().name("userId").valueType(String.class)
         .desc("The ID of the user. Use 'me' to refer to the currently authenticated user.");
 
-    // TODO: Change "me" to a path arg and handle the "me" string
     // region POST /api/users/:userId/profile | Update profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")
@@ -317,7 +316,7 @@ public class UserSection extends Section {
         .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE, null, null, null))
         .response(200, UserProfile.class, "The new updated profile.");
 
-    @ApiDoc("The data to update the user profile. Each value can be omitted or set to `null` to not change it.")
+    @ApiDoc(value = "The data to update the user profile. Each value can be omitted or set to `null` to not change it.", optional = true)
     record UpdateProfileInput(
         @ApiDoc("The first name of the user")
         String firstName,
@@ -496,7 +495,7 @@ public class UserSection extends Section {
 
     record DeleteUserInput(
         @ApiDoc(value = "When a user deletes their account, they must provide their password. This does not apply to" +
-                "admins deleting other users.", optional = true)
+                        " admins deleting other users.", optional = true)
         @Nullable String password
     ) {}
 

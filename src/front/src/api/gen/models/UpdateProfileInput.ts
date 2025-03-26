@@ -13,6 +13,20 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Role } from './Role';
+import {
+    RoleFromJSON,
+    RoleFromJSONTyped,
+    RoleToJSON,
+    RoleToJSONTyped,
+} from './Role';
+import type { Level } from './Level';
+import {
+    LevelFromJSON,
+    LevelFromJSONTyped,
+    LevelToJSON,
+    LevelToJSONTyped,
+} from './Level';
 import type { Gender } from './Gender';
 import {
     GenderFromJSON,
@@ -22,29 +36,47 @@ import {
 } from './Gender';
 
 /**
- * 
+ * The data to update the user profile. Each value can be omitted or set to `null` to not change it.
  * @export
  * @interface UpdateProfileInput
  */
 export interface UpdateProfileInput {
     /**
-     * 
+     * The first name of the user
      * @type {string}
      * @memberof UpdateProfileInput
      */
-    firstName: string;
+    firstName?: string;
+    /**
+     * The last name of the user
+     * @type {string}
+     * @memberof UpdateProfileInput
+     */
+    lastName?: string;
     /**
      * 
-     * @type {string}
+     * @type {Role}
      * @memberof UpdateProfileInput
      */
-    lastName: string;
+    role?: Role;
     /**
      * 
      * @type {Gender}
      * @memberof UpdateProfileInput
      */
-    gender: Gender;
+    gender?: Gender;
+    /**
+     * 
+     * @type {Level}
+     * @memberof UpdateProfileInput
+     */
+    level?: Level;
+    /**
+     * The number of points the user has. Modifiable only by an admin.
+     * @type {number}
+     * @memberof UpdateProfileInput
+     */
+    points?: number;
 }
 
 
@@ -53,9 +85,6 @@ export interface UpdateProfileInput {
  * Check if a given object implements the UpdateProfileInput interface.
  */
 export function instanceOfUpdateProfileInput(value: object): value is UpdateProfileInput {
-    if (!('firstName' in value) || value['firstName'] === undefined) return false;
-    if (!('lastName' in value) || value['lastName'] === undefined) return false;
-    if (!('gender' in value) || value['gender'] === undefined) return false;
     return true;
 }
 
@@ -69,9 +98,12 @@ export function UpdateProfileInputFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'firstName': json['firstName'],
-        'lastName': json['lastName'],
-        'gender': GenderFromJSON(json['gender']),
+        'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'lastName': json['lastName'] == null ? undefined : json['lastName'],
+        'role': json['role'] == null ? undefined : RoleFromJSON(json['role']),
+        'gender': json['gender'] == null ? undefined : GenderFromJSON(json['gender']),
+        'level': json['level'] == null ? undefined : LevelFromJSON(json['level']),
+        'points': json['points'] == null ? undefined : json['points'],
     };
 }
 
@@ -88,7 +120,10 @@ export function UpdateProfileInputToJSONTyped(value?: UpdateProfileInput | null,
         
         'firstName': value['firstName'],
         'lastName': value['lastName'],
+        'role': RoleToJSON(value['role']),
         'gender': GenderToJSON(value['gender']),
+        'level': LevelToJSON(value['level']),
+        'points': value['points'],
     };
 }
 

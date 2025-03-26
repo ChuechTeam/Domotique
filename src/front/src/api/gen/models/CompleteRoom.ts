@@ -32,7 +32,7 @@ export interface CompleteRoom {
      * @type {UserProfile}
      * @memberof CompleteRoom
      */
-    owner: UserProfile;
+    owner?: UserProfile;
     /**
      * The room's color, in RGB format. The last 8 bits can be ignored.
      * @type {number}
@@ -57,7 +57,6 @@ export interface CompleteRoom {
  * Check if a given object implements the CompleteRoom interface.
  */
 export function instanceOfCompleteRoom(value: object): value is CompleteRoom {
-    if (!('owner' in value) || value['owner'] === undefined) return false;
     if (!('color' in value) || value['color'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
@@ -74,7 +73,7 @@ export function CompleteRoomFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'owner': UserProfileFromJSON(json['owner']),
+        'owner': json['owner'] == null ? undefined : UserProfileFromJSON(json['owner']),
         'color': json['color'],
         'name': json['name'],
         'id': json['id'],

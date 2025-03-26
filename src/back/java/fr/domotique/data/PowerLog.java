@@ -1,5 +1,7 @@
 package fr.domotique.data;
 
+import fr.domotique.base.data.*;
+
 import java.time.LocalDateTime;
 
 public class PowerLog {
@@ -51,4 +53,18 @@ public class PowerLog {
     public void setTime(LocalDateTime time) {
         this.time = time;
     }
+
+    public static final EntityInfo<PowerLog> ENTITY = new EntityInfo<>(
+        PowerLog.class,
+        (r, s) -> new PowerLog(
+            r.getInteger(s.next()),
+            r.getInteger(s.next()),
+            r.getString(s.next()),
+            r.getLocalDateTime(s.next())
+        ),
+        new EntityColumn<>("id", PowerLog::getId, ColumnType.GENERATED_KEY),
+        new EntityColumn<>("deviceId", PowerLog::getDeviceId),
+        new EntityColumn<>("status", PowerLog::getStatus),
+        new EntityColumn<>("time", PowerLog::getTime)
+    );
 }

@@ -6,7 +6,7 @@ import io.vertx.sqlclient.*;
 
 import java.util.*;
 
-import static fr.domotique.data.LoginLog.*;
+import static fr.domotique.data.PowerLog.ENTITY;
 
 public class PowerLogTable extends Table {
 

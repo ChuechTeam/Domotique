@@ -1,6 +1,7 @@
 package fr.domotique;
 
 import io.vertx.ext.web.common.*;
+import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -34,11 +35,16 @@ import java.util.*;
 /// @param databaseUri   `domotique.databaseUri`: the URI to the database; can't be null
 /// @param port          `domotique.port`: the port to run the server on
 /// @param isDevelopment `vertxweb.environment=dev` true when we're in development mode
+/// @param sendGridToken `domotique.sendGridToken`: the SendGrid token to send emails; a null or blank value will default
+///                                                 to the [Console email sender][fr.domotique.email.ConsoleEmail]
+/// @param sendGridEmail `domotique.sendGridEmail`: the email to send emails from, must be SendGrid "Single Sender Verification"
 /// @author Dynamic
 public record Config(
         String databaseUri,
         int port,
-        boolean isDevelopment
+        boolean isDevelopment,
+        @Nullable String sendGridToken,
+        @Nullable String sendGridEmail
 ) {
     // The logger to log stuff about configuration loading.
     private static final Logger log = LoggerFactory.getLogger(Config.class);
@@ -46,11 +52,16 @@ public record Config(
     // System properties
     private static final String DATABASE_URI_PROP = "domotique.databaseUri";
     private static final String PORT_PROP = "domotique.port";
+    private static final String SENDGRID_TOKEN_PROP = "domotique.sendGridToken";
+    private static final String SENDGRID_EMAIL_PROP = "domotique.sendGridEmail";
 
     // Constructor to check every value of the configuration.
     public Config {
         if (databaseUri == null || databaseUri.isBlank()) {
             throw new IllegalArgumentException("The Database URI (" + DATABASE_URI_PROP + ") hasn't been specified.");
+        }
+        if (sendGridToken != null && sendGridEmail == null) {
+            throw new IllegalArgumentException("The SendGrid email (" + SENDGRID_EMAIL_PROP + ") must be specified when the token is.");
         }
     }
 
@@ -101,8 +112,10 @@ public record Config(
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("The port (" + PORT_PROP + "=" + port + ") must be an integer.");
         }
+        String sendGridToken = props.getProperty(SENDGRID_TOKEN_PROP);
+        String sendGridEmail = props.getProperty(SENDGRID_EMAIL_PROP);
 
-        return new Config(dbUri, intPort, isDevelopment);
+        return new Config(dbUri, intPort, isDevelopment, sendGridToken, sendGridEmail);
     }
 
     private static boolean tryLoadStream(Properties props, InputStream is, String fileName) {

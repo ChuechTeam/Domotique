@@ -36,7 +36,7 @@ export interface RoomInput {
      * @type {number}
      * @memberof RoomInput
      */
-    ownerId: number;
+    ownerId?: number;
 }
 
 /**
@@ -45,7 +45,6 @@ export interface RoomInput {
 export function instanceOfRoomInput(value: object): value is RoomInput {
     if (!('color' in value) || value['color'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('ownerId' in value) || value['ownerId'] === undefined) return false;
     return true;
 }
 
@@ -61,7 +60,7 @@ export function RoomInputFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         
         'color': json['color'],
         'name': json['name'],
-        'ownerId': json['ownerId'],
+        'ownerId': json['ownerId'] == null ? undefined : json['ownerId'],
     };
 }
 
