@@ -6,6 +6,7 @@ import DashboardView from "@/views/app/DashboardView.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileView from "@/views/app/ProfileView.vue";
+import HomeView from '@/views/tour/HomeView.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,7 +20,7 @@ const router = createRouter({
                 {
                     path: '/',
                     name: 'home',
-                    component: TourHome,
+                    component: HomeView,
                 }
             ],
         },
