@@ -40,7 +40,7 @@ public class UserTable extends Table {
     }
 
     static final String PROFILE_FN_SQL = makeModularSQL("""
-        SELECT :cols FROM User
+        SELECT %s FROM User
         WHERE INSTR(firstName, ?) > 0 OR INSTR(lastName, ?) > 0
         """, UserProfile.columnList(null)); // -> "id, firstName, lastName, role, level, etc."
 

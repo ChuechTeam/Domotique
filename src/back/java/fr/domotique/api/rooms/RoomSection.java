@@ -34,15 +34,6 @@ public class RoomSection extends Section {
         // Create a sub-router for all room routes
         var roomRoutes = newRouter();
 
-        roomRoutes.post("/test")
-            .respond(ctx -> {
-                return server.db().rooms().create(new Room(0,
-                    "Test Room",
-                    0x2E86C1,
-                    null
-                ));
-            });
-
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
         // - A user modifies data, they must be AT LEAST an ADVANCED user
@@ -65,7 +56,7 @@ public class RoomSection extends Section {
 
         // Routes with parameters come last
         roomRoutes.get("/:roomId").respond(this::getRoomById).putMetadata(RouteDoc.KEY, GET_ROOM_DOC);
-        roomRoutes.post("/:roomId").respond(vt(this::updateRoom)).putMetadata(RouteDoc.KEY, UPDATE_ROOM_DOC);
+        roomRoutes.put("/:roomId").respond(vt(this::updateRoom)).putMetadata(RouteDoc.KEY, UPDATE_ROOM_DOC);
         roomRoutes.delete("/:roomId").respond(vt(this::deleteRoom)).putMetadata(RouteDoc.KEY, DELETE_ROOM_DOC);
 
         // Register the sub-router with the main router

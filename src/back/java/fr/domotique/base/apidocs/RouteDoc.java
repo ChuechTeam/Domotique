@@ -1,5 +1,6 @@
 package fr.domotique.base.apidocs;
 
+import lombok.*;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.*;
@@ -113,10 +114,6 @@ public class RouteDoc {
     public RouteDoc requestBodyExample(@Nullable Object requestBodyExample) {
         this.requestBodyExample = requestBodyExample;
         return this;
-    }
-
-    public String getRequestBodyType() {
-        return requestBodyType;
     }
 
     public RouteDoc requestBodyType(String requestBodyType) {

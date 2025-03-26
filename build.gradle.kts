@@ -6,7 +6,7 @@ plugins {
     application
     id("com.gradleup.shadow") version "9.0.0-beta10"
     // see if we'll use lombok later
-  id("io.freefair.lombok") version "8.13"
+    id("io.freefair.lombok") version "8.13"
 }
 
 group = "fr.domotique"
@@ -95,6 +95,11 @@ tasks.withType<Javadoc> {
         // No idea why this is needed for "bottom" to work properly. Allow script in COMMENTS?!
         addBooleanOption("-allow-script-in-comments", true)
     }
+}
+
+// Fix Lombok compilation (???)
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-implicit:class")
 }
 
 tasks.withType<ShadowJar> {

@@ -6,7 +6,7 @@ public enum ColumnType {
     NORMAL(true, true, false),
     /// A `PRIMARY KEY` that needs to be set manually in `INSERT``
     MANUAL_KEY(true, false, true),
-    /// A `PRIMARY KEY` with `AUTO_INCREMENT` turned on; does not figure in `INSERT``
+    /// A `PRIMARY KEY` with `AUTO_INCREMENT` turned on; does not figure in `INSERT`
     GENERATED_KEY(false, false, true);
 
     /// true when this column should be included in INSERT queries: `INSERT INTO Table (col1, col2)``
