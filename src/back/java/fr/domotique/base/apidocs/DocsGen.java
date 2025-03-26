@@ -337,8 +337,10 @@ public final class DocsGen {
 
         // Find the documentation name of the class using the DocName annotation.
         String docsName = getDocsName(clazz);
+        ApiDoc classAnn = clazz.getAnnotation(ApiDoc.class);
         Schema<?> existingSchema;
         Schema<?> newSchema;
+
         if (clazz.isEnum()) {
             // Enum case -> Make a string schema with the enum values
             @SuppressWarnings("unchecked")
@@ -399,7 +401,8 @@ public final class DocsGen {
                     propSchema.description(descAnn.value());
                 }
 
-                if (descAnn == null || !descAnn.optional()) {
+                // It's optional if the property annotation is, or if the class annotation has optional == true.
+                if (descAnn == null || !descAnn.optional() && (classAnn == null || !classAnn.optional())) {
                     requiredProps.add(propName);
                 }
 
@@ -419,10 +422,9 @@ public final class DocsGen {
         }
 
         // Register the description of the class if we do have one.
-        ApiDoc descAnn = clazz.getAnnotation(ApiDoc.class);
-        if (descAnn != null) {
+        if (classAnn != null) {
             // Put it in a stringbuilder for later if it's an enum.
-            StringBuilder doc = new StringBuilder(descAnn.value());
+            StringBuilder doc = new StringBuilder(classAnn.value());
 
             // OpenAPI doesn't support documentation on enums so we'll glue them to the documentation instead.
             if (clazz.isEnum()) {

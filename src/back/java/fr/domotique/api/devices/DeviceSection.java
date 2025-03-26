@@ -57,7 +57,7 @@ public class DeviceSection extends Section {
 
         // Routes with parameters come last
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
-        deviceRoutes.post("/:deviceId").respond(vt(this::updateDevice)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_DOC);
+        deviceRoutes.put("/:deviceId").respond(vt(this::updateDevice)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
     }
 

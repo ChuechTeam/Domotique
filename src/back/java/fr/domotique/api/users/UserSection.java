@@ -10,6 +10,7 @@ import fr.domotique.data.*;
 import io.vertx.core.Future;
 import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
+import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
 import java.time.*;
@@ -45,8 +46,9 @@ public class UserSection extends Section {
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
         userRoutes.post("/login").respond(vt(this::login)).putMetadata(RouteDoc.KEY, LOGIN_DOC);
         userRoutes.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
-        userRoutes.post("/:userId/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
-        userRoutes.post("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
+        userRoutes.patch("/:userId/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
+        userRoutes.put("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
+        userRoutes.delete("/:userId").respond(vt(this::deleteUser)).putMetadata(RouteDoc.KEY, DELETE_USER_DOC);
 
         // Paths with parameters come last.
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
@@ -289,7 +291,9 @@ public class UserSection extends Section {
     record ProfileSearchOutput(List<UserProfile> profiles) {}
 
     Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
-        // todo: add auth
+        // Make sure the user is logged in and has their email confirmed.
+        Authenticator.get(context).requireAuth(Level.BEGINNER);
+
         var fullName = context.queryParams().get("fullName");
         if (fullName == null || fullName.isBlank()) {
             throw new RequestException("La recherche est vide.", 400);
@@ -308,26 +312,40 @@ public class UserSection extends Section {
     // region POST /api/users/:userId/profile | Update profile
     static final RouteDoc UPDATE_PROFILE_DOC = new RouteDoc("updateProfile")
         .summary("Update profile")
-        .description("Update the profile of the currently authenticated user.")
+        .description("Update the profile of the currently authenticated user. Each value can be omitted or set to `null` to not change it.")
         .param(USERID_PARAM)
         .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE, null, null, null))
         .response(200, UserProfile.class, "The new updated profile.");
 
+    @ApiDoc("The data to update the user profile. Each value can be omitted or set to `null` to not change it.")
     record UpdateProfileInput(
+        @ApiDoc("The first name of the user")
         String firstName,
+        @ApiDoc("The last name of the user")
         String lastName,
+        @ApiDoc("The gender of the user")
         Gender gender,
-        @ApiDoc(value = "The role of the user. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        @ApiDoc("The role of the user. Modifiable only by an admin.")
         Role role,
-        @ApiDoc(value = "The level of the user. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        @ApiDoc("The level of the user. Modifiable only by an admin.")
         Level level,
-        @ApiDoc(value = "The number of points the user has. Modifiable only by an admin. A null or absent value will not change anything.", optional = true)
+        @ApiDoc("The number of points the user has. Modifiable only by an admin.")
         Integer points
     ) {
         public UpdateProfileInput {
             // Sanitize strings before doing anything else.
             firstName = Sanitize.string(firstName);
             lastName = Sanitize.string(lastName);
+        }
+
+        public void validate() {
+            try (var block = Validation.start()) {
+                if (firstName != null) UserValidation.firstName(block, firstName);
+                if (lastName != null) UserValidation.lastName(block, lastName);
+                if (points != null && points < 0) {
+                    block.addError("points", "Le nombre de points ne peut pas être négatif.");
+                }
+            }
         }
     }
 
@@ -341,7 +359,7 @@ public class UserSection extends Section {
         int userId = readUserId(context);
 
         // If we're trying to modify another user's profile, make sure we're an admin.
-        boolean isMe = userId != auth.getUserId();
+        boolean isMe = userId == auth.getUserId();
         if (isMe) {
             auth.requireAuth(Level.EXPERT);
         }
@@ -350,13 +368,7 @@ public class UserSection extends Section {
         UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
 
         // Validate incoming values
-        try (var block = Validation.start()) {
-            UserValidation.firstName(block, input.firstName);
-            UserValidation.lastName(block, input.lastName);
-            if (input.points != null && input.points < 0) {
-                block.addError("points", "Le nombre de points ne peut pas être négatif.");
-            }
-        }
+        input.validate();
 
         // Get the user from the database. Take the user from the authenticator first since it might be cached.
         var user = isMe ? auth.getUser().await() : server.db().users().get(userId).await();
@@ -365,32 +377,34 @@ public class UserSection extends Section {
         }
 
         // Are we trying to modify any "sensitive" profile information?
-        if (input.role != null || input.level != null || input.points != null) {
+        if ((input.role != null && input.role != user.getRole())
+            || (input.level != null && input.level != user.getLevel())
+            || (input.points != null && input.points != user.getPoints())) {
             // See if we have the rights to do so.
             if (!auth.hasLevel(Level.EXPERT)) {
                 throw new RequestException("Vous n'avez pas les droits pour modifier les valeurs de rôle, niveau ou de points.",
                     403, "INSUFFICIENT_PERMISSIONS");
             }
 
+            // Only ADMINs can edit other ADMINs, not just "experts". So enforce that.
+            if (!isMe && user.getRole() == Role.ADMIN && !auth.isOfRole(Role.ADMIN)) {
+                throw new RequestException("Seuls les administrateurs peuvent modifier les administrateurs.", 403, "ADMIN_EDIT_ADMIN");
+            }
+
             // Prevent admins from stepping down, to avoid the "no-admin situation".
-            if (input.role != null && input.role != Role.ADMIN && user.getRole() == Role.ADMIN) {
+            // (Maybe we should check numAdmins > 0 but too complicated)
+            if (isMe && input.role != null && input.role != Role.ADMIN && user.getRole() == Role.ADMIN) {
                 throw new RequestException("Les administrateurs ne peuvent pas s'auto-rétrograder.", 422, "AUTO_DEMOTE_ADMIN");
             }
         }
 
-        // Set all the values
-        user.setFirstName(input.firstName);
-        user.setLastName(input.lastName);
-        user.setGender(input.gender);
-        if (input.role != null) {
-            user.setRole(input.role);
-        }
-        if (input.level != null) {
-            user.setLevel(input.level);
-        }
-        if (input.points != null) {
-            user.setPoints(input.points);
-        }
+        // Set all the values, only if they are present.
+        if (input.firstName != null) user.setFirstName(input.firstName);
+        if (input.lastName != null) user.setLastName(input.lastName);
+        if (input.gender != null) user.setGender(input.gender);
+        if (input.role != null) user.setRole(input.role);
+        if (input.level != null) user.setLevel(input.level);
+        if (input.points != null) user.setPoints(input.points);
 
         // Admins are always expert. Would be dumb to have a non-expert admin.
         // Maybe we should enforce this better but for now it works(tm).
@@ -432,7 +446,7 @@ public class UserSection extends Section {
         int userId = readUserId(context);
 
         // If we're trying to modify another user's profile, make sure we're an admin.
-        boolean isMe = userId != auth.getUserId();
+        boolean isMe = userId == auth.getUserId();
         if (isMe) {
             auth.requireAuth(Level.EXPERT);
         }
@@ -465,6 +479,85 @@ public class UserSection extends Section {
 
         // Finally, log it to the console!
         log.info("User {}'s password was successfully changed (initiator: {})", user.getId(), auth.getUserId());
+    }
+    // endregion
+
+    // region DELETE /api/users/:userId | Delete user
+    static final RouteDoc DELETE_USER_DOC = new RouteDoc("deleteUser")
+        .summary("Delete user")
+        .description("Deletes a user from the app. When a user deletes their account, " +
+                     "the password must be given to confirm the deletion.")
+        .param(USERID_PARAM)
+        .requestBody(DeleteUserInput.class, new DeleteUserInput("password234"))
+        .response(204, "User successfully deleted.")
+        .response(401, ErrorResponse.class, "You are not logged in.")
+        .response(403, ErrorResponse.class, "You don't have the rights to delete this user.")
+        .response(422, ErrorResponse.class, "The password is incorrect or missing.");
+
+    record DeleteUserInput(
+        @ApiDoc(value = "When a user deletes their account, they must provide their password. This does not apply to" +
+                "admins deleting other users.", optional = true)
+        @Nullable String password
+    ) {}
+
+    void deleteUser(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
+        // Make sure the user is logged in
+        auth.requireAuth();
+
+        // Read the user id. Me = current user
+        int userId = readUserId(context);
+
+        // If we're trying to delete another user, make sure we're an admin.
+        boolean isMe = userId == auth.getUserId();
+        if (isMe) {
+            auth.requireAuth(Level.EXPERT);
+        }
+
+        // Read the JSON from the request
+        DeleteUserInput input = readBody(context, DeleteUserInput.class);
+
+        // The password must not be blank when deleting our own user
+        if (!isMe) {
+            try (var block = Validation.start()) {
+                Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
+            }
+        }
+
+        // Find the user from the database
+        User user = isMe ? auth.getUserOrFail().await() : server.db().users().get(userId).await();
+        if (user == null) {
+            throw new RequestException("L'utilisateur n'existe pas.", 404, "USER_NOT_FOUND");
+        }
+
+        // Prevent admins from deleting themselves
+        if (isMe && user.getRole() == Role.ADMIN) {
+            throw new RequestException("L'administrateur ne peut pas s'auto-détruire.", 422, "ADMIN_SELF_DELETE");
+        }
+
+        // Only admins can delete other admins, not just "experts". So enforce that.
+        if (!isMe && user.getRole() == Role.ADMIN && !auth.isOfRole(Role.ADMIN)) {
+            throw new RequestException("Seuls les administrateurs peuvent supprimer les administrateurs.", 403, "ADMIN_DELETE_ADMIN");
+        }
+
+        // When a user deletes themselves, check their password first. Admins don't need to input other users' passwords!
+        if (isMe && !auth.checkPassword(input.password, user.getPassHash())) {
+            throw new RequestException("Le mot de passe est incorrect.", 422, "INCORRECT_PASSWORD");
+        }
+
+        // Finally, begin deleting the user. The following will happen to associated data:
+        //   - Rooms owned by this user:    the owner will be set to NULL
+        //   - Login logs about this user:  the logs will be deleted
+        server.db().users().delete(userId).await();
+
+        // If we deleted ourselves, log out of the app now.
+        if (isMe) {
+            auth.logout();
+        }
+
+        // Complete the request with the 204 CREATED status code.
+        context.response().setStatusCode(204);
     }
     // endregion
 

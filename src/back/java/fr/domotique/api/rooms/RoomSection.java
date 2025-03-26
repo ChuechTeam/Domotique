@@ -56,7 +56,7 @@ public class RoomSection extends Section {
 
         // Routes with parameters come last
         roomRoutes.get("/:roomId").respond(this::getRoomById).putMetadata(RouteDoc.KEY, GET_ROOM_DOC);
-        roomRoutes.post("/:roomId").respond(vt(this::updateRoom)).putMetadata(RouteDoc.KEY, UPDATE_ROOM_DOC);
+        roomRoutes.put("/:roomId").respond(vt(this::updateRoom)).putMetadata(RouteDoc.KEY, UPDATE_ROOM_DOC);
         roomRoutes.delete("/:roomId").respond(vt(this::deleteRoom)).putMetadata(RouteDoc.KEY, DELETE_ROOM_DOC);
 
         // Register the sub-router with the main router

@@ -53,7 +53,7 @@ public class DeviceTypeSection extends Section {
 
         // Routes with parameters come last
         deviceTypeRoutes.get("/:deviceTypeId").respond(this::getDeviceTypeById).putMetadata(RouteDoc.KEY, GET_DEVICE_TYPE_DOC);
-        deviceTypeRoutes.post("/:deviceTypeId").respond(vt(this::updateDeviceType)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_TYPE_DOC);
+        deviceTypeRoutes.put("/:deviceTypeId").respond(vt(this::updateDeviceType)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_TYPE_DOC);
         deviceTypeRoutes.delete("/:deviceTypeId").respond(vt(this::deleteDeviceType)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_TYPE_DOC);
 
         // Register the sub-router with the main router
