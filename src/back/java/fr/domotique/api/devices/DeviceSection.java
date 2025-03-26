@@ -264,8 +264,17 @@ public class DeviceSection extends Section {
             log.info("Device updated with id {} and name {}", device.getId(), device.getName());
 
             if (devicePowerChanged) {
-                // TODO: Add an entry in the database to log devices turning off/on
-            }
+                    String status;
+                    if (device.isPowered()) {
+                        status = "POWER_ON";
+                    } else {
+                        status = "POWER_OFF";
+                    }
+                    server.db().powerLog().insert(
+                        new PowerLog(device.getId(), status, LocalDateTime.now())
+                    ).await();
+                }
+
 
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();
