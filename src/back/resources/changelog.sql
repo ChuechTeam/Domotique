@@ -46,41 +46,16 @@ CREATE TABLE Room(
 
 -- rollback drop table `Room`;
 
--- changeset dynamic:add_devices
-
-CREATE TABLE DeviceType(
+-- changeset Evan:add_power_logs
+CREATE TABLE PowerLog(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(128) NOT NULL,
-    attributes JSON NOT NULL
-);
-
-CREATE TABLE Device(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(128) NOT NULL,
-    description TEXT NOT NULL,
-    typeId INT NOT NULL,
-    roomId INT NOT NULL,
-    attributes JSON NOT NULL,
-    powered BOOL NOT NULL,
-    energyConsumption FLOAT NOT NULL,
-
-    constraint fk_device_type FOREIGN KEY (typeId) REFERENCES DeviceType(id) ON DELETE RESTRICT,
-    constraint fk_device_room FOREIGN KEY (roomId) REFERENCES Room(id) ON DELETE RESTRICT,
-    INDEX idx_device_type(typeId),
-    INDEX idx_device_room(roomId)
-);
-
--- rollback drop table `Device`;
--- rollback drop table `DeviceType`;
-
--- changeset dynamic:add_login_logs
-
-CREATE TABLE LoginLog(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    userId INT NOT NULL,
+    deviceId INT NOT NULL,
+    status VARCHAR(20) NOT NULL,
     time DATETIME NOT NULL,
 
-    FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE,
-    INDEX idx_login_user(userId),
-    index idx_time(time)
+    FOREIGN KEY (deviceId) REFERENCES Device(id) ON DELETE CASCADE,
+    INDEX idx_powerlog_device (deviceId),
+    INDEX idx_powerlog_time (time)
 );
+
+-- rollback drop table `PowerLog`;

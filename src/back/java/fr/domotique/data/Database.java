@@ -12,7 +12,8 @@ public record Database(
     RoomTable rooms,
     DeviceTypeTable deviceTypes,
     DeviceTable devices,
-    LoginLogTable loginLogs
+    LoginLogTable loginLogs,
+    PowerLogTable powerLogs
 ) {
     /// Makes a database object with all tables ready
     public Database(SqlClient client) {
@@ -21,7 +22,8 @@ public record Database(
             new RoomTable(client),
             new DeviceTypeTable(client),
             new DeviceTable(client),
-            new LoginLogTable(client)
+            new LoginLogTable(client),
+            new PowerLogTable(client)
         );
     }
 }

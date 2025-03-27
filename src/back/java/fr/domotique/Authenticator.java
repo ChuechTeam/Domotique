@@ -81,12 +81,15 @@ public class Authenticator {
         // If the user is logged in; use it!
         if (loggedUser != null) {
             this.user = loggedUser;
-            this.session = new SessionData(loggedUser.getId(), loggedUser.getLevel(), loggedUser.isEmailConfirmed());
+            this.session = new SessionData(loggedUser.getId(),
+                loggedUser.getLevel(),
+                loggedUser.getRole(),
+                loggedUser.isEmailConfirmed());
         }
     }
 
     /// Contains necessary information about a user authorization, stored in a session.
-    record SessionData(int userId, Level level, boolean emailConfirmed) {}
+    record SessionData(int userId, Level level, Role role, boolean emailConfirmed) {}
 
     /// Creates a new authenticator for the current request, that will request the user from the database.
     public static Future<Authenticator> create(RoutingContext ctx, Server server) {
@@ -137,7 +140,7 @@ public class Authenticator {
 
         // Set the user id in the authenticator.
         this.user = user;
-        this.session = new SessionData(user.getId(), user.getLevel(), user.isEmailConfirmed());
+        this.session = new SessionData(user.getId(), user.getLevel(), user.getRole(), user.isEmailConfirmed());
     }
 
     /// Logs the user out of the app. Does nothing when the user isn't logged in.
@@ -213,8 +216,14 @@ public class Authenticator {
         }
     }
 
+    /// Returns true when the user is logged and has a level of at least `level`.
     public boolean hasLevel(Level level) {
         return session != null && session.level.compareTo(level) >= 0;
+    }
+
+    /// Returns true when the user is logged and has a role of `role`.
+    public boolean isOfRole(Role role) {
+        return session != null && session.role == role;
     }
 
     /// Returns true if a user is currently logged in.
@@ -242,7 +251,13 @@ public class Authenticator {
         }
 
         // Query the database for the user, then store it in the Authenticator.
-        return server.db().users().get(session.userId).andThen(x -> user = x.result());
+        return server.db().users().get(session.userId).andThen(x -> {
+            user = x.result();
+            if (user == null) {
+                // Then the user has been deleted. Remove the session!
+                logout();
+            }
+        });
     }
 
     /// Returns the currently logged-in user from the database.

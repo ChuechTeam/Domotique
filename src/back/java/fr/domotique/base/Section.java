@@ -170,7 +170,11 @@ public abstract class Section {
     ///```
     public static <T> T readBody(RoutingContext context, Class<T> clazz) {
         try {
-            return context.body().asPojo(clazz);
+            T value = context.body().asPojo(clazz);
+            if (value == null) {
+                throw new RequestException("Body is missing.", 400, "INVALID_JSON");
+            }
+            return value;
         } catch (DecodeException e) {
             throw new RequestException("Invalid JSON body.", 400, "INVALID_JSON");
         }

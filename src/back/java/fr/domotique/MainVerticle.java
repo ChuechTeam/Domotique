@@ -1,5 +1,6 @@
 package fr.domotique;
 
+import fr.domotique.api.users.*;
 import fr.domotique.base.*;
 import fr.domotique.data.*;
 import fr.domotique.email.*;
@@ -80,8 +81,15 @@ public class MainVerticle extends VerticleBase {
         // Make the JTE templating engine, so we can render HTML
         JteTemplateEngine templateEngine = JteTemplateEngine.create(vertx, "views");
 
-        // Create the e-mail client to send mails to the console (for now)
-        EmailSender email = new ConsoleEmail();
+        // Create the e-mail client to send mails using SendGrid or the console (depending on the configuration)
+        EmailSender email;
+        if (config.sendGridToken() != null) {
+            email = new SendGridEmail(vertx, config.sendGridToken(), config.sendGridEmail());
+            log.info("Using SendGrid email service using email {}", config.sendGridEmail());
+        } else {
+            email = new ConsoleEmail();
+            log.info("Using console email service");
+        }
 
         // Create the server object, with our new SqlClient and the configuration
         var server = new Server(client, db, sessionStore, templateEngine, email, config, vertx);
@@ -95,12 +103,15 @@ public class MainVerticle extends VerticleBase {
         }
 
         // Deploy RouterVerticles and log the server address when ready
-        return vertx.deployVerticle(() -> new RouterVerticle(server), options).andThen(x -> {
-            log.info("Server ready at http://localhost:{} ({} instances)", config.port(), options.getInstances());
-            if (config.isDevelopment()) {
-                log.info("API documentation is available at http://localhost:{}/api-docs", config.port());
-            }
-        });
+        // Also deploy other verticles, like the PointsVerticle
+        return vertx.deployVerticle(() -> new RouterVerticle(server), options)
+            .andThen(x -> {
+                log.info("Server ready at http://localhost:{} ({} instances)", config.port(), options.getInstances());
+                if (config.isDevelopment()) {
+                    log.info("API documentation is available at http://localhost:{}/api-docs", config.port());
+                }
+            })
+            .compose(_ -> vertx.deployVerticle(new PointsVerticle(server)));
     }
 
     @Override

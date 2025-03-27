@@ -77,6 +77,12 @@ export interface UserProfile {
      * @memberof UserProfile
      */
     id: number;
+    /**
+     * The number of points this user has accumulated.
+     * @type {number}
+     * @memberof UserProfile
+     */
+    points: number;
 }
 
 
@@ -91,6 +97,7 @@ export function instanceOfUserProfile(value: object): value is UserProfile {
     if (!('gender' in value) || value['gender'] === undefined) return false;
     if (!('level' in value) || value['level'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('points' in value) || value['points'] === undefined) return false;
     return true;
 }
 
@@ -110,6 +117,7 @@ export function UserProfileFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'gender': GenderFromJSON(json['gender']),
         'level': LevelFromJSON(json['level']),
         'id': json['id'],
+        'points': json['points'],
     };
 }
 
@@ -130,6 +138,7 @@ export function UserProfileToJSONTyped(value?: UserProfile | null, ignoreDiscrim
         'gender': GenderToJSON(value['gender']),
         'level': LevelToJSON(value['level']),
         'id': value['id'],
+        'points': value['points'],
     };
 }
 

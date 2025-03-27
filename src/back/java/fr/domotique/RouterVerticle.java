@@ -4,6 +4,7 @@ import fr.domotique.api.devices.*;
 import fr.domotique.api.devicetypes.*;
 import fr.domotique.api.loginlogs.*;
 import fr.domotique.api.rooms.*;
+import fr.domotique.api.userevents.*;
 import fr.domotique.api.users.*;
 import fr.domotique.base.*;
 import fr.domotique.base.apidocs.*;
@@ -68,7 +69,8 @@ public class RouterVerticle extends VerticleBase {
             new RoomSection(server),
             new DeviceTypeSection(server),
             new DeviceSection(server),
-            new LoginLogSection(server)
+            new LoginLogSection(server),
+            new UserEventsSection(server)
         };
     }
 
