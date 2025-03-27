@@ -6,6 +6,8 @@ import DashboardView from "@/views/app/DashboardView.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileView from "@/views/app/ProfileView.vue";
+import Inscription from '@/inscription.vue';
+import RadioButton from 'primevue/radiobutton';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,6 +22,11 @@ const router = createRouter({
                     path: '/',
                     name: 'home',
                     component: TourHome,
+                },
+                { 
+                    path: "/inscription", 
+                    name: "Inscription", 
+                    component: Inscription,
                 }
             ],
 
