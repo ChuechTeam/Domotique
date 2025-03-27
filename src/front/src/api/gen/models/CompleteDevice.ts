@@ -20,6 +20,20 @@ import {
     CompleteDeviceTypeToJSON,
     CompleteDeviceTypeToJSONTyped,
 } from './CompleteDeviceType';
+import type { UserProfile } from './UserProfile';
+import {
+    UserProfileFromJSON,
+    UserProfileFromJSONTyped,
+    UserProfileToJSON,
+    UserProfileToJSONTyped,
+} from './UserProfile';
+import type { DeviceCategory } from './DeviceCategory';
+import {
+    DeviceCategoryFromJSON,
+    DeviceCategoryFromJSONTyped,
+    DeviceCategoryToJSON,
+    DeviceCategoryToJSONTyped,
+} from './DeviceCategory';
 import type { CompleteRoom } from './CompleteRoom';
 import {
     CompleteRoomFromJSON,
@@ -34,6 +48,12 @@ import {
  * @interface CompleteDevice
  */
 export interface CompleteDevice {
+    /**
+     * 
+     * @type {UserProfile}
+     * @memberof CompleteDevice
+     */
+    owner?: UserProfile;
     /**
      * 
      * @type {number}
@@ -72,6 +92,12 @@ export interface CompleteDevice {
     id: number;
     /**
      * 
+     * @type {DeviceCategory}
+     * @memberof CompleteDevice
+     */
+    category: DeviceCategory;
+    /**
+     * 
      * @type {CompleteDeviceType}
      * @memberof CompleteDevice
      */
@@ -81,8 +107,10 @@ export interface CompleteDevice {
      * @type {CompleteRoom}
      * @memberof CompleteDevice
      */
-    room: CompleteRoom;
+    room?: CompleteRoom;
 }
+
+
 
 /**
  * Check if a given object implements the CompleteDevice interface.
@@ -93,8 +121,8 @@ export function instanceOfCompleteDevice(value: object): value is CompleteDevice
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('category' in value) || value['category'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('room' in value) || value['room'] === undefined) return false;
     return true;
 }
 
@@ -108,14 +136,16 @@ export function CompleteDeviceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'owner': json['owner'] == null ? undefined : UserProfileFromJSON(json['owner']),
         'energyConsumption': json['energyConsumption'],
         'powered': json['powered'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'attributes': json['attributes'],
         'id': json['id'],
+        'category': DeviceCategoryFromJSON(json['category']),
         'type': CompleteDeviceTypeFromJSON(json['type']),
-        'room': CompleteRoomFromJSON(json['room']),
+        'room': json['room'] == null ? undefined : CompleteRoomFromJSON(json['room']),
     };
 }
 
@@ -130,12 +160,14 @@ export function CompleteDeviceToJSONTyped(value?: CompleteDevice | null, ignoreD
 
     return {
         
+        'owner': UserProfileToJSON(value['owner']),
         'energyConsumption': value['energyConsumption'],
         'powered': value['powered'],
         'name': value['name'],
         'description': value['description'],
         'attributes': value['attributes'],
         'id': value['id'],
+        'category': DeviceCategoryToJSON(value['category']),
         'type': CompleteDeviceTypeToJSON(value['type']),
         'room': CompleteRoomToJSON(value['room']),
     };

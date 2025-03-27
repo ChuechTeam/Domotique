@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DeviceCategory } from './DeviceCategory';
+import {
+    DeviceCategoryFromJSON,
+    DeviceCategoryFromJSONTyped,
+    DeviceCategoryToJSON,
+    DeviceCategoryToJSONTyped,
+} from './DeviceCategory';
+
 /**
  * Data for both INSERT and UPDATE operations on a device.
  * @export
@@ -57,11 +65,25 @@ export interface DeviceInput {
     attributes: { [key: string]: object; };
     /**
      * 
+     * @type {DeviceCategory}
+     * @memberof DeviceInput
+     */
+    category: DeviceCategory;
+    /**
+     * 
      * @type {number}
      * @memberof DeviceInput
      */
-    roomId: number;
+    userId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeviceInput
+     */
+    roomId?: number;
 }
+
+
 
 /**
  * Check if a given object implements the DeviceInput interface.
@@ -73,7 +95,7 @@ export function instanceOfDeviceInput(value: object): value is DeviceInput {
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('typeId' in value) || value['typeId'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
-    if (!('roomId' in value) || value['roomId'] === undefined) return false;
+    if (!('category' in value) || value['category'] === undefined) return false;
     return true;
 }
 
@@ -93,7 +115,9 @@ export function DeviceInputFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'description': json['description'],
         'typeId': json['typeId'],
         'attributes': json['attributes'],
-        'roomId': json['roomId'],
+        'category': DeviceCategoryFromJSON(json['category']),
+        'userId': json['userId'] == null ? undefined : json['userId'],
+        'roomId': json['roomId'] == null ? undefined : json['roomId'],
     };
 }
 
@@ -114,6 +138,8 @@ export function DeviceInputToJSONTyped(value?: DeviceInput | null, ignoreDiscrim
         'description': value['description'],
         'typeId': value['typeId'],
         'attributes': value['attributes'],
+        'category': DeviceCategoryToJSON(value['category']),
+        'userId': value['userId'],
         'roomId': value['roomId'],
     };
 }

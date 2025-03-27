@@ -61,6 +61,36 @@ public class RouteDoc {
         this.operationId = operationId;
     }
 
+    // todo: move this elsewhere
+    public static Type listType(Type inner) {
+        return new ParameterizedType() {
+            @Override
+            public @NotNull Type @NotNull [] getActualTypeArguments() {
+                return new Type[]{inner};
+            }
+
+            @Override
+            public @NotNull Type getRawType() {
+                return List.class;
+            }
+
+            @Override
+            public Type getOwnerType() {
+                return null;
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null || getClass() != obj.getClass()) return false;
+                ParameterizedType that = (ParameterizedType) obj;
+                return Arrays.equals(getActualTypeArguments(), that.getActualTypeArguments()) &&
+                        Objects.equals(getRawType(), that.getRawType()) &&
+                        Objects.equals(getOwnerType(), that.getOwnerType());
+            }
+        };
+    }
+
     public @Nullable String getOperationId() {
         return operationId;
     }
@@ -179,6 +209,11 @@ public class RouteDoc {
 
     public RouteDoc queryParam(String name, Type valType, String description) {
         params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType));
+        return this;
+    }
+
+    public RouteDoc optionalQueryParam(String name, Type valType, String description) {
+        params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType).required(false));
         return this;
     }
 

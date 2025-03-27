@@ -13,7 +13,13 @@ models/CompleteDeviceType.ts
 models/CompleteRoom.ts
 models/CompleteUser.ts
 models/DeleteUserInput.ts
+models/DeviceCategory.ts
 models/DeviceInput.ts
+models/DeviceStat.ts
+models/DeviceStats.ts
+models/DeviceStatsQuery.ts
+models/DeviceStatsQueryFunction.ts
+models/DeviceStatsQueryGrouping.ts
 models/DeviceTypeInput.ts
 models/DeviceTypesResponse.ts
 models/DevicesResponse.ts
@@ -29,6 +35,7 @@ models/Role.ts
 models/RoomInput.ts
 models/RoomsResponse.ts
 models/UpdateProfileInput.ts
+models/UpgradeInfo.ts
 models/UserProfile.ts
 models/UserSecrets.ts
 models/index.ts

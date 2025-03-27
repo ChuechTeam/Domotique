@@ -31,6 +31,6 @@ public class Room {
         new EntityColumn<>("id", Room::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", Room::getName),
         new EntityColumn<>("color", Room::getColor),
-        new EntityColumn<>("ownerId", Room::getOwnerId)
+        new EntityColumn<>("userId", Room::getOwnerId)
     );
 }

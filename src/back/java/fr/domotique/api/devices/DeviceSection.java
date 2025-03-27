@@ -55,6 +55,7 @@ public class DeviceSection extends Section {
         // Register all device-related endpoints
         deviceRoutes.get("/").respond(this::getAll).putMetadata(RouteDoc.KEY, GET_DEVICES_DOC);
         deviceRoutes.post("/").respond(vt(this::createDevice)).putMetadata(RouteDoc.KEY, CREATE_DEVICE_DOC);
+        deviceRoutes.post("/stats").respond(this::getDeviceStats).putMetadata(RouteDoc.KEY, GET_DEVICE_STATS_DOC);
 
         // Routes with parameters come last
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
@@ -65,16 +66,46 @@ public class DeviceSection extends Section {
     // region GET /api/devices | Get all devices
     static final RouteDoc GET_DEVICES_DOC = new RouteDoc("getDevices")
         .summary("Get devices")
-        .description("Gets all devices from the database.")
+        .description("Gets all devices from the database matching the given filters. All query parameters are optional.")
+        .optionalQueryParam("name", String.class, "The name of the device to search for.")
+        .optionalQueryParam("typeId", int.class, "Filters the devices by this type.")
+        .optionalQueryParam("roomId", int.class, "Filters the devices by this room.")
+        .optionalQueryParam("userId", int.class, "Filters the devices by this owner.")
+        .optionalQueryParam("powered", boolean.class, "Filters the devices by their power status: `true`, or `false`.")
         .response(200, DevicesResponse.class, "The list of all devices.");
 
     record DevicesResponse(List<CompleteDevice> devices) {}
 
     Future<DevicesResponse> getAll(RoutingContext context) {
-        return server.db().devices().getCompleteAll()
+        String name = Sanitize.string(context.queryParams().get("name"));
+        Integer typeId = readIntOrNull(context.queryParams().get("typeId"));
+        Integer roomId = readIntOrNull(context.queryParams().get("roomId"));
+        Integer userId = readIntOrNull(context.queryParams().get("userId"));
+        Boolean powered = readBooleanOrNull(context.queryParams().get("powered"));
+
+        var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered);
+
+        return server.db().devices().queryComplete(query)
             .map(DevicesResponse::new);
     }
     // endregion
+
+    // region GET /api/devices/stats | Get device stats
+    static final RouteDoc GET_DEVICE_STATS_DOC = new RouteDoc("getDeviceStats")
+        .summary("Get device stats")
+        .description("Gets the stats for devices.")
+        .requestBody(DeviceStatsQuery.class)
+        .response(200, DeviceStats.class, "The device stats.")
+        .response(204, "Device not found.");
+
+    record DeviceStats(List<DeviceStat> stats) {}
+
+    Future<DeviceStats> getDeviceStats(RoutingContext context) {
+        // TODO: Make it send full entities for room, user, and device.
+        var body = readBody(context, DeviceStatsQuery.class);
+        return server.db().devices().queryStats(body)
+            .map(DeviceStats::new);
+    }
 
     // region GET /api/devices/:deviceId | Get device by ID
     static final RouteDoc GET_DEVICE_DOC = new RouteDoc("getDeviceById")
@@ -95,10 +126,12 @@ public class DeviceSection extends Section {
         String name,
         @Nullable String description,
         int typeId,
-        int roomId,
+        @ApiDoc(optional = true) Integer roomId,
+        @ApiDoc(optional = true) Integer userId,
         EnumMap<AttributeType, Object> attributes,
         boolean powered,
-        double energyConsumption
+        double energyConsumption,
+        DeviceCategory category
     ) {
         public DeviceInput {
             name = Sanitize.string(name);
@@ -125,11 +158,25 @@ public class DeviceSection extends Section {
                 if (energyConsumption < 0) {
                     block.addError("energyConsumption", "La consommation d'énergie ne peut pas être négative.");
                 }
+
+                // Now, validate the attributes
+                var attrBlock = block.child("attributes");
+                for (var kv : attributes.entrySet()) {
+                    AttributeType key = kv.getKey();
+                    Object value = kv.getValue();
+
+                    if (!key.validate(value)) {
+                        // Note: dependant on JSON serialization choices
+                        attrBlock.addError(key.name(), "L'attribut « " + key.getName() + " » possède une valeur invalide.");
+                    }
+                }
             }
         }
     }
 
     // region POST /api/devices | Create device
+
+    // TODO: Attribute validation.
 
     // Error common to both create and update operations
     static final ResponseDoc CREATE_OR_UPDATE_ERR =
@@ -137,7 +184,8 @@ public class DeviceSection extends Section {
             Either:
             - There are some validation errors (code: `VALIDATION_ERROR`)
             - The device type was not found (code: `DEVICE_TYPE_NOT_FOUND`)
-            - The room was not found (code: `ROOM_NOT_FOUND`)""");
+            - The room was not found (code: `ROOM_NOT_FOUND`)
+            - The owner user was not found (code: `USER_NOT_FOUND`)""");
 
     static final RouteDoc CREATE_DEVICE_DOC = new RouteDoc("createDevice")
         .summary("Create device")
@@ -147,9 +195,11 @@ public class DeviceSection extends Section {
             "Description of my device",
             1, // typeId
             1, // roomId
+            null, // userId
             new EnumMap<>(AttributeType.class),
             true, // powered
-            5.5 // energyConsumption
+            5.5, // energyConsumption
+            DeviceCategory.HEALTH // category
         ))
         .response(201, CompleteDevice.class, "The device was created successfully.")
         .response(404, ErrorResponse.class, "Device not found.")
@@ -177,9 +227,11 @@ public class DeviceSection extends Section {
             input.description,
             input.typeId,
             input.roomId,
+            input.userId,
             input.attributes,
             input.powered,
-            input.energyConsumption
+            input.energyConsumption,
+            input.category
         );
 
         try {
@@ -217,9 +269,11 @@ public class DeviceSection extends Section {
             "Updated description",
             1, // typeId
             1, // roomId
+            1,
             new EnumMap<>(AttributeType.class),
             false, // powered
-            3.2 // energyConsumption
+            3.2, // energyConsumption
+            DeviceCategory.HEALTH // category
         ))
         .response(200, CompleteDevice.class, "The device was updated successfully.")
         .response(404, ErrorResponse.class, "Device not found.")
@@ -255,9 +309,11 @@ public class DeviceSection extends Section {
         device.setDescription(input.description);
         device.setTypeId(input.typeId);
         device.setRoomId(input.roomId);
+        device.setUserId(input.userId);
         device.setAttributes(input.attributes);
         device.setPowered(input.powered);
         device.setEnergyConsumption(input.energyConsumption);
+        device.setCategory(input.category);
 
         try {
             // Update device on the database
@@ -315,6 +371,8 @@ public class DeviceSection extends Section {
             throw new RequestException("La pièce n'existe pas.", 422, "ROOM_NOT_FOUND");
         } else if (ex.getMessage().contains(DeviceTable.TYPE_FK)) {
             throw new RequestException("Le type d'appareil n'existe pas.", 422, "DEVICE_TYPE_NOT_FOUND");
+        } else if (ex.getMessage().contains(DeviceTable.USER_FK)) {
+            throw new RequestException("L'utilisateur n'existe pas.", 422, "USER_NOT_FOUND");
         } else {
             throw new IllegalStateException("Unknown foreign key error: " + ex.getMessage(), ex);
         }

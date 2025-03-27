@@ -17,6 +17,8 @@ import * as runtime from '../runtime';
 import type {
   CompleteDevice,
   DeviceInput,
+  DeviceStats,
+  DeviceStatsQuery,
   DevicesResponse,
   ErrorResponse,
 } from '../models/index';
@@ -25,6 +27,10 @@ import {
     CompleteDeviceToJSON,
     DeviceInputFromJSON,
     DeviceInputToJSON,
+    DeviceStatsFromJSON,
+    DeviceStatsToJSON,
+    DeviceStatsQueryFromJSON,
+    DeviceStatsQueryToJSON,
     DevicesResponseFromJSON,
     DevicesResponseToJSON,
     ErrorResponseFromJSON,
@@ -41,6 +47,18 @@ export interface DeleteDeviceRequest {
 
 export interface GetDeviceByIdRequest {
     deviceId: number;
+}
+
+export interface GetDeviceStatsRequest {
+    deviceStatsQuery: DeviceStatsQuery;
+}
+
+export interface GetDevicesRequest {
+    userId?: number;
+    name?: string;
+    powered?: boolean;
+    typeId?: number;
+    roomId?: number;
 }
 
 export interface UpdateDeviceRequest {
@@ -168,11 +186,76 @@ export class DevicesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Gets all devices from the database.
+     * Gets the stats for devices.
+     * Get device stats
+     */
+    async getDeviceStatsRaw(requestParameters: GetDeviceStatsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeviceStats>> {
+        if (requestParameters['deviceStatsQuery'] == null) {
+            throw new runtime.RequiredError(
+                'deviceStatsQuery',
+                'Required parameter "deviceStatsQuery" was null or undefined when calling getDeviceStats().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/devices/stats`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: DeviceStatsQueryToJSON(requestParameters['deviceStatsQuery']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DeviceStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * Gets the stats for devices.
+     * Get device stats
+     */
+    async getDeviceStats(requestParameters: GetDeviceStatsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DeviceStats | null | undefined > {
+        const response = await this.getDeviceStatsRaw(requestParameters, initOverrides);
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
+    }
+
+    /**
+     * Gets all devices from the database matching the given filters. All query parameters are optional.
      * Get devices
      */
-    async getDevicesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DevicesResponse>> {
+    async getDevicesRaw(requestParameters: GetDevicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DevicesResponse>> {
         const queryParameters: any = {};
+
+        if (requestParameters['userId'] != null) {
+            queryParameters['userId'] = requestParameters['userId'];
+        }
+
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
+
+        if (requestParameters['powered'] != null) {
+            queryParameters['powered'] = requestParameters['powered'];
+        }
+
+        if (requestParameters['typeId'] != null) {
+            queryParameters['typeId'] = requestParameters['typeId'];
+        }
+
+        if (requestParameters['roomId'] != null) {
+            queryParameters['roomId'] = requestParameters['roomId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -187,11 +270,11 @@ export class DevicesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Gets all devices from the database.
+     * Gets all devices from the database matching the given filters. All query parameters are optional.
      * Get devices
      */
-    async getDevices(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DevicesResponse> {
-        const response = await this.getDevicesRaw(initOverrides);
+    async getDevices(requestParameters: GetDevicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DevicesResponse> {
+        const response = await this.getDevicesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

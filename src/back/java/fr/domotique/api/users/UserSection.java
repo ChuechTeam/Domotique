@@ -1,6 +1,5 @@
 package fr.domotique.api.users;
 
-import com.fasterxml.jackson.annotation.*;
 import fr.domotique.*;
 import fr.domotique.base.*;
 import fr.domotique.base.Validation;
@@ -45,12 +44,14 @@ public class UserSection extends Section {
         userRoutes.post("/").respond(vt(this::registerUser)).putMetadata(RouteDoc.KEY, REGISTER_DOC);
         userRoutes.post("/logout").respond(this::logout).putMetadata(RouteDoc.KEY, LOGOUT_DOC);
         userRoutes.post("/login").respond(vt(this::login)).putMetadata(RouteDoc.KEY, LOGIN_DOC);
+        userRoutes.get("/level-info").respond(this::getLevelInfo).putMetadata(RouteDoc.KEY, LEVEL_INFO_DOC);
         userRoutes.get("/confirmEmail").handler(this::confirmEmail).putMetadata(RouteDoc.KEY, CONFIRM_EMAIL_DOC);
+
+
+        // Paths with parameters come last.
         userRoutes.patch("/:userId/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
         userRoutes.put("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
         userRoutes.delete("/:userId").respond(vt(this::deleteUser)).putMetadata(RouteDoc.KEY, DELETE_USER_DOC);
-
-        // Paths with parameters come last.
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
 
         // Finally, register that router to the main router, prefixed by /api/users
@@ -282,9 +283,13 @@ public class UserSection extends Section {
 
     // region GET /api/users | Search users
     static final RouteDoc SEARCH_USERS_DOC = new RouteDoc("searchUsers")
-        .summary("Search users")
-        .description("Search for users by their first name, last name, or email.")
-        .queryParam("fullName", String.class, "The full name to search for.")
+        .summary("Get users")
+        .description("""
+            Find users by either:
+            - a list of ids, using `ids`
+            - their full name, using `fullName`.""")
+        .optionalQueryParam("fullName", String.class, "The full name to search for.")
+        .optionalQueryParam("ids", RouteDoc.listType(Integer.class), "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
         .response(400, ErrorResponse.class, "The full name query parameter is missing.");
 
@@ -295,11 +300,24 @@ public class UserSection extends Section {
         Authenticator.get(context).requireAuth(Level.BEGINNER);
 
         var fullName = context.queryParams().get("fullName");
-        if (fullName == null || fullName.isBlank()) {
-            throw new RequestException("La recherche est vide.", 400);
-        }
+        var ids = context.queryParam("ids");
 
-        return server.db().users().getProfilesByFullName(fullName).map(ProfileSearchOutput::new);
+        if (!ids.isEmpty()) {
+            var intIds = new Integer[ids.size()];
+            for (int i = 0; i < ids.size(); i++) {
+                intIds[i] = readIntOrNull(ids.get(i));
+                if (intIds[i] == null) {
+                    throw new RequestException("L'identifiant " + ids.get(i) + " n'est pas un entier valide.", 400);
+                }
+            }
+
+            return server.db().users().getAllProfiles(Arrays.asList(intIds)).map(ProfileSearchOutput::new);
+        } else {
+            if (fullName == null || fullName.isBlank()) {
+                throw new RequestException("La recherche est vide.", 400);
+            }
+            return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
+        }
     }
     // endregion
 
@@ -557,6 +575,35 @@ public class UserSection extends Section {
 
         // Complete the request with the 204 CREATED status code.
         context.response().setStatusCode(204);
+    }
+    // endregion
+
+    // --- Point information ---
+
+    // region GET /api/users/level-info
+    static final RouteDoc LEVEL_INFO_DOC = new RouteDoc("getLevelInfo")
+        .summary("Get level upgrade information")
+        .description("Gives the amount of points necessary to reach all levels.")
+        .response(200, UpgradeInfo.class, "The information about the next upgrade.");
+
+    record UpgradeInfo(Map<Level, Integer> pointsRequired) {
+        /// Current value global to the program.
+        static final UpgradeInfo CURRENT = new UpgradeInfo(
+            new EnumMap<>(Map.of(
+                Level.BEGINNER, 0,
+                Level.INTERMEDIATE, UserOperations.INTERMEDIATE_POINTS,
+                Level.ADVANCED, UserOperations.ADVANCED_POINTS,
+                Level.EXPERT, UserOperations.EXPERT_POINTS
+            ))
+        );
+
+        /// Example for the API docs
+        static final UpgradeInfo EXAMPLE = CURRENT;
+    }
+
+    Future<UpgradeInfo> getLevelInfo(RoutingContext context) {
+        // Return the information, no need to check for authentication honestly it's not a big deal.
+        return Future.succeededFuture(UpgradeInfo.CURRENT);
     }
     // endregion
 

@@ -139,6 +139,18 @@ public abstract class Section {
         }
     }
 
+    /// Parses the boolean of the given value. Returns `null` if either:
+    /// - the value isn't a valid boolean
+    /// - the value is `null`
+    public static Boolean readBooleanOrNull(String value) {
+        try {
+            if (value == null) {return null;}
+            return Boolean.parseBoolean(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /// Parses the unsigned long of the given value. Returns `null` if either:
     /// - the value isn't a valid unsigned long
     /// - the value is `null`

@@ -20,6 +20,8 @@ public class ParamDoc {
     String desc = "";
     /// The data type of this parameter
     Type valueType = String.class;
+    /// Whether this parameter is required or optional
+    boolean required = true;
 
     /// Where the parameter is located in the request.
     public enum Location {

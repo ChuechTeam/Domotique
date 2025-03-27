@@ -2,6 +2,7 @@ package fr.domotique.api.devices;
 
 import fr.domotique.api.devicetypes.*;
 import fr.domotique.api.rooms.*;
+import fr.domotique.api.users.*;
 import fr.domotique.base.apidocs.*;
 import fr.domotique.base.data.*;
 import fr.domotique.data.*;
@@ -17,13 +18,16 @@ public record CompleteDevice(
     EnumMap<AttributeType, Object> attributes,
     boolean powered,
     double energyConsumption,
+    DeviceCategory category,
     CompleteDeviceType type,
-    CompleteRoom room
+    @ApiDoc(optional = true) CompleteRoom room,
+    @ApiDoc(optional = true) UserProfile owner
 ) {
     public static final Mapper<CompleteDevice> MAP = Mapper.of(
-        6
+        7
         + CompleteDeviceType.MAP.getColumns()
-        + CompleteRoom.MAP.getColumns(),
+        + CompleteRoom.MAP.getColumns()
+        + UserProfile.MAP.getColumns(),
         (r, s) -> new CompleteDevice(
             r.getInteger(s.next()),
             r.getString(s.next()),
@@ -31,12 +35,14 @@ public record CompleteDevice(
             Device.attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
             r.getDouble(s.next()),
+            DeviceCategory.fromByte(r.get(Byte.class, s.next())),
             CompleteDeviceType.MAP.apply(r, s),
-            CompleteRoom.MAP.apply(r, s)
+            CompleteRoom.MAP.apply(r, s),
+            UserProfile.MAP.apply(r, s)
         )
     );
 
     public static String columnList(String tableName) {
-        return QueryUtils.columnList(tableName, "id", "name", "description", "attributes", "powered", "energyConsumption");
+        return QueryUtils.columnList(tableName, "id", "name", "description", "attributes", "powered", "category", "energyConsumption");
     }
 }

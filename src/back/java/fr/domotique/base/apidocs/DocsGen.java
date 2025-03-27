@@ -236,7 +236,7 @@ public final class DocsGen {
             .name(pd.name)
             .in(pd.location.toString().toLowerCase())
             .description(pd.desc)
-            .required(true)
+            .required(pd.required)
             .schema(schemaForReflect(pd.valueType));
     }
 

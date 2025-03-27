@@ -26,8 +26,12 @@ public class Device {
     /// The [DeviceType] of this device. Required!
     int typeId;
 
-    /// The [Room] in which this device is located. Required!
-    int roomId;
+    /// The [Room] in which this device is located. Can be null.
+    Integer roomId;
+
+    /// The user owning this device, who often has exclusive access to it. Can be `null` for a publicly available
+    /// device.
+    Integer userId;
 
     /// Attributes assigned to this device
     ///
@@ -52,6 +56,9 @@ public class Device {
     /// Energy consumption in Watts of this device while powered on
     double energyConsumption;
 
+    /// The category assigned to this device. Can be set to [DeviceCategory#OTHER] to tell that it has no category.
+    DeviceCategory category;
+
     /// Information associating the SQL database table to the Java class
     public static final EntityInfo<Device> ENTITY = new EntityInfo<>(
         Device.class,
@@ -61,18 +68,22 @@ public class Device {
             r.getString(s.next()),
             r.getInteger(s.next()),
             r.getInteger(s.next()),
+            r.getInteger(s.next()),
             attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
-            r.getDouble(s.next())
+            r.getDouble(s.next()),
+            DeviceCategory.fromByte(r.get(Byte.class, s.next()))
         ),
         new EntityColumn<>("id", Device::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", Device::getName),
         new EntityColumn<>("description", Device::getDescription),
         new EntityColumn<>("typeId", Device::getTypeId),
         new EntityColumn<>("roomId", Device::getRoomId),
+        new EntityColumn<>("userId", Device::getUserId),
         new EntityColumn<>("attributes", x -> attributesToDB(x.attributes)),
         new EntityColumn<>("powered", Device::isPowered),
-        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption)
+        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption),
+        new EntityColumn<>("category", Device::getCategory)
     );
 
     public static JsonArray attributesToDB(EnumMap<AttributeType, Object> attributes) {

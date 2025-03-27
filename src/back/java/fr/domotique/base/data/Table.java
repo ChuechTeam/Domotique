@@ -227,6 +227,25 @@ public abstract class Table {
         return String.format(sql, params);
     }
 
+    /// Appends a string like `(?, ?, ?, ..., ?)` with `n` parameters.
+    public static void paramList(StringBuilder sb, int n) {
+        sb.append("(");
+        for (int i = 0; i < n; i++) {
+            sb.append("?");
+            if (i < n - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+    }
+
+    /// Makes a string like `(?, ?, ?, ..., ?)` with `n` parameters.
+    public static String paramList(int n) {
+        StringBuilder sb = new StringBuilder();
+        paramList(sb, n);
+        return sb.toString();
+    }
+
     /// Given a list of rows, gives the first one, or null if there's nothing.
     public static <T> T firstRow(RowSet<T> rs) {
         return rs.iterator().hasNext() ? rs.iterator().next() : null;
