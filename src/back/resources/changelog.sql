@@ -123,3 +123,21 @@ ALTER TABLE Device
     ADD INDEX idx_device_room(roomId);
 
 -- rollback empty
+
+-- changeset dynamic:fix_desc_nullable_and_categories
+
+ALTER TABLE Device
+    CHANGE description description TEXT NULL,
+    DROP category;
+
+ALTER TABLE DeviceType
+    ADD category TINYINT NOT NULL DEFAULT 0 AFTER name,
+    ADD INDEX idx_device_type_category(category);
+
+-- rollback ALTER TABLE Device
+-- rollback     CHANGE description description TEXT NOT NULL,
+-- rollback     ADD category TINYINT NOT NULL DEFAULT 0 AFTER energyConsumption;
+--
+-- rollback ALTER TABLE DeviceType
+-- rollback     DROP category,
+-- rollback     DROP INDEX idx_device_type_category;

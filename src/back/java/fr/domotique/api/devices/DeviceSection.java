@@ -1,5 +1,6 @@
 package fr.domotique.api.devices;
 
+import com.fasterxml.jackson.annotation.*;
 import fr.domotique.*;
 import fr.domotique.base.*;
 import fr.domotique.base.Validation;
@@ -10,6 +11,7 @@ import io.vertx.core.Future;
 import io.vertx.core.http.*;
 import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
+import org.openapitools.jackson.nullable.*;
 import org.slf4j.*;
 
 import java.time.*;
@@ -59,7 +61,7 @@ public class DeviceSection extends Section {
 
         // Routes with parameters come last
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
-        deviceRoutes.put("/:deviceId").respond(vt(this::updateDevice)).putMetadata(RouteDoc.KEY, UPDATE_DEVICE_DOC);
+        deviceRoutes.patch("/:deviceId").respond(vt(this::patchDevice)).putMetadata(RouteDoc.KEY, PATCH_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
     }
 
@@ -73,6 +75,7 @@ public class DeviceSection extends Section {
         .optionalQueryParam("roomId", int.class, "Filters the devices by this room.")
         .optionalQueryParam("userId", int.class, "Filters the devices by this owner.")
         .optionalQueryParam("powered", boolean.class, "Filters the devices by their power status: `true`, or `false`.")
+        .optionalQueryParam("category", DeviceCategory.class, "Filters the devices by their category.")
         .response(200, DevicesResponse.class, "The list of all devices.");
 
     record DevicesResponse(List<CompleteDevice> devices) {}
@@ -90,7 +93,17 @@ public class DeviceSection extends Section {
         Integer userId = readIntOrNull(context.queryParams().get("userId"));
         Boolean powered = readBooleanOrNull(context.queryParams().get("powered"));
 
-        var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered);
+        String categoryStr = context.queryParams().get("category");
+        DeviceCategory category = null;
+        if (categoryStr != null) {
+            try {
+                category = DeviceCategory.valueOf(categoryStr);
+            } catch (IllegalArgumentException e) {
+                throw new RequestException("Catégorie inconnue.", 422, "INVALID_CATEGORY");
+            }
+        }
+
+        var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered, category);
 
         return server.db().devices().queryComplete(query)
             .map(DevicesResponse::new);
@@ -102,7 +115,9 @@ public class DeviceSection extends Section {
         .summary("Get device stats")
         .description("Gets the stats for devices.")
         .requestBody(DeviceStatsQuery.class)
-        .response(200, DeviceStats.class, "The device stats.")
+        .response(200, DeviceStats.class, "The device stats.", new DeviceStats(
+            List.of(new DeviceStat(1, 80), new DeviceStat(8, 41))
+        ))
         .response(204, "Device not found.");
 
     record DeviceStats(List<DeviceStat> stats) {}
@@ -131,7 +146,9 @@ public class DeviceSection extends Section {
     }
     // endregion
 
-    @ApiDoc("Data for both INSERT and UPDATE operations on a device.")
+    // todo: less code duplication with DevicePathInput for both + patchRequestBody
+
+    @ApiDoc("Data for both POST and PUT operations on a device.")
     record DeviceInput(
         String name,
         @Nullable String description,
@@ -140,8 +157,7 @@ public class DeviceSection extends Section {
         @ApiDoc(optional = true) Integer userId,
         EnumMap<AttributeType, Object> attributes,
         boolean powered,
-        double energyConsumption,
-        DeviceCategory category
+        double energyConsumption
     ) {
         public DeviceInput {
             name = Sanitize.string(name);
@@ -156,37 +172,47 @@ public class DeviceSection extends Section {
         /// Runs validation for this input.
         public void validate() {
             try (var block = Validation.start()) {
-                Validation.lengthIn(block, "name", name, 1, 128,
-                    "Le nom est vide.",
-                    "Le nom est trop long.");
+                DeviceValidation.name(block, name);
+                DeviceValidation.description(block, description);
+                DeviceValidation.energyConsumption(block, energyConsumption);
+                DeviceValidation.attributes(block, attributes);
+            }
+        }
+    }
 
-                if (description != null) {
-                    Validation.lengthIn(block, "description", description, 0, 16000,
-                        "La description est trop longue.");
-                }
+    @ApiDoc(value = "Data for PATCH operations on a device.")
+    record DevicePatchInput(
+        String name, // required
+        JsonNullable<String> description,
+        Integer typeId, // required
+        JsonNullable<Integer> roomId,
+        JsonNullable<Integer> userId,
+        EnumMap<AttributeType, Object> attributes,
+        Boolean powered, // required
+        Double energyConsumption // required
+    ) {
+        public DevicePatchInput {
+            name = Sanitize.string(name);
+            description = mapNullable(description, Sanitize::string);
 
-                if (energyConsumption < 0) {
-                    block.addError("energyConsumption", "La consommation d'énergie ne peut pas être négative.");
-                }
+            // Ensure the attributes map is never null, it will always have a default value of an empty map
+            if (attributes == null) {
+                attributes = new EnumMap<>(AttributeType.class);
+            }
+        }
 
-                // Now, validate the attributes
-                var attrBlock = block.child("attributes");
-                for (var kv : attributes.entrySet()) {
-                    AttributeType key = kv.getKey();
-                    Object value = kv.getValue();
-
-                    if (!key.validate(value)) {
-                        // Note: dependant on JSON serialization choices
-                        attrBlock.addError(key.name(), "L'attribut « " + key.getName() + " » possède une valeur invalide.");
-                    }
-                }
+        /// Runs validation for this input.
+        public void validate() {
+            try (var block = Validation.start()) {
+                if (name != null) DeviceValidation.name(block, name);
+                DeviceValidation.description(block, description.orElse(null));
+                if (energyConsumption != null) DeviceValidation.energyConsumption(block, energyConsumption);
+                DeviceValidation.attributes(block, attributes);
             }
         }
     }
 
     // region POST /api/devices | Create device
-
-    // TODO: Attribute validation.
 
     // Error common to both create and update operations
     static final ResponseDoc CREATE_OR_UPDATE_ERR =
@@ -208,8 +234,7 @@ public class DeviceSection extends Section {
             null, // userId
             new EnumMap<>(AttributeType.class),
             true, // powered
-            5.5, // energyConsumption
-            DeviceCategory.HEALTH // category
+            5.5 // energyConsumption
         ))
         .response(201, CompleteDevice.class, "The device was created successfully.")
         .response(404, ErrorResponse.class, "Device not found.")
@@ -228,7 +253,7 @@ public class DeviceSection extends Section {
         }
 
         // Add any missing attributes, remove those that are not in the device type
-        DeviceOperations.fixAttributes(input.attributes, deviceType);
+        DeviceOperations.fixAttributes(input.attributes, deviceType, true);
 
         // Create the device
         Device device = new Device(
@@ -240,8 +265,7 @@ public class DeviceSection extends Section {
             input.userId,
             input.attributes,
             input.powered,
-            input.energyConsumption,
-            input.category
+            input.energyConsumption
         );
 
         try {
@@ -269,29 +293,28 @@ public class DeviceSection extends Section {
     }
     // endregion
 
-    // region POST /api/devices/:deviceId | Update device
-    static final RouteDoc UPDATE_DEVICE_DOC = new RouteDoc("updateDevice")
-        .summary("Update device")
-        .description("Updates an existing device.")
-        .pathParam("deviceId", int.class, "The ID of the device to update.")
-        .requestBody(DeviceInput.class, new DeviceInput(
-            "Updated Smart Watch",
-            "Updated description",
-            1, // typeId
-            1, // roomId
-            1,
+    // region PATCH /api/devices/:deviceId | Patch device
+    static final RouteDoc PATCH_DEVICE_DOC = new RouteDoc("patchDevice")
+        .summary("Patch device")
+        .description("Patches an existing device.")
+        .pathParam("deviceId", int.class, "The ID of the device to patch.")
+        .requestBody(DevicePatchInput.class, new DevicePatchInput(
+            null,
+            JsonNullable.of("Updated description"),
+            null,
+            JsonNullable.of(1),
+            JsonNullable.of(1),
             new EnumMap<>(AttributeType.class),
-            false, // powered
-            3.2, // energyConsumption
-            DeviceCategory.HEALTH // category
+            null,
+            null
         ))
-        .response(200, CompleteDevice.class, "The device was updated successfully.")
+        .response(200, CompleteDevice.class, "The device was patched successfully.")
         .response(404, ErrorResponse.class, "Device not found.")
         .response(CREATE_OR_UPDATE_ERR);
 
-    CompleteDevice updateDevice(RoutingContext context) {
+    CompleteDevice patchDevice(RoutingContext context) {
         int deviceId = readIntPathParam(context, "deviceId");
-        DeviceInput input = readBody(context, DeviceInput.class);
+        DevicePatchInput input = readBody(context, DevicePatchInput.class);
 
         // Validate device input
         input.validate();
@@ -303,45 +326,44 @@ public class DeviceSection extends Section {
         }
 
         // Find the device type
-        DeviceType deviceType = server.db().deviceTypes().get(input.typeId).await();
+        int typeId = input.typeId != null ? input.typeId : device.getTypeId();
+        DeviceType deviceType = server.db().deviceTypes().get(typeId).await();
         if (deviceType == null) {
             throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
         }
 
-        // Add any missing attributes, remove those that are not in the device type
-        DeviceOperations.fixAttributes(input.attributes, deviceType);
+        // Remove those that are not in the device type
+        DeviceOperations.fixAttributes(input.attributes, deviceType, false);
 
         // See if our device turned off or on.
-        boolean devicePowerChanged = input.powered != device.isPowered();
+        boolean devicePowerChanged = input.powered != null && input.powered != device.isPowered();
 
         // Update device properties
-        device.setName(input.name);
-        device.setDescription(input.description);
-        device.setTypeId(input.typeId);
-        device.setRoomId(input.roomId);
-        device.setUserId(input.userId);
-        device.setAttributes(input.attributes);
-        device.setPowered(input.powered);
-        device.setEnergyConsumption(input.energyConsumption);
-        device.setCategory(input.category);
+        if (input.name != null) device.setName(input.name);
+        input.description.ifPresent(device::setDescription);
+        if (input.typeId != null) device.setTypeId(input.typeId);
+        input.roomId.ifPresent(device::setRoomId);
+        input.userId.ifPresent(device::setUserId);
+        input.attributes.forEach((k, v) -> device.getAttributes().put(k, v));
+        if (input.powered != null) device.setPowered(input.powered);
+        if (input.energyConsumption != null) device.setEnergyConsumption(input.energyConsumption);
 
         try {
             // Update device on the database
             server.db().devices().update(device).await();
-            log.info("Device updated with id {} and name {}", device.getId(), device.getName());
+            log.info("Device patched with id {} and name {}", device.getId(), device.getName());
 
             if (devicePowerChanged) {
-                    String status;
-                    if (device.isPowered()) {
-                        status = "POWER_ON";
-                    } else {
-                        status = "POWER_OFF";
-                    }
-                    server.db().powerLogs().insert(
-                        new PowerLog(device.getId(), status, LocalDateTime.now())
-                    ).await();
+                String status;
+                if (device.isPowered()) {
+                    status = "POWER_ON";
+                } else {
+                    status = "POWER_OFF";
                 }
-
+                server.db().powerLogs().insert(
+                    new PowerLog(device.getId(), status, LocalDateTime.now())
+                ).await();
+            }
 
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();

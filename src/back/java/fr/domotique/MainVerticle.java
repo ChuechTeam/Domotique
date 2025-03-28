@@ -1,11 +1,16 @@
 package fr.domotique;
 
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.datatype.jdk8.*;
 import fr.domotique.api.users.*;
 import fr.domotique.base.*;
+import fr.domotique.base.data.*;
 import fr.domotique.data.*;
 import fr.domotique.email.*;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
+import io.vertx.core.json.jackson.*;
 import io.vertx.ext.auth.prng.*;
 import io.vertx.ext.web.*;
 import io.vertx.ext.web.sstore.*;
@@ -13,6 +18,8 @@ import io.vertx.ext.web.templ.jte.*;
 import io.vertx.mysqlclient.*;
 import io.vertx.sqlclient.*;
 import io.vertx.sqlclient.PoolOptions;
+import liquibase.exception.*;
+import org.openapitools.jackson.nullable.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -46,6 +53,12 @@ import java.io.*;
 public class MainVerticle extends VerticleBase {
     // The logger used to print messages to the console with nice colors.
     private static final Logger log = LoggerFactory.getLogger(MainVerticle.class);
+
+    static {
+        // Register the Java 8 module for JSON serialization so we can use Optional<T>.
+        DatabindCodec.mapper().registerModule(new Jdk8Module().configureReadAbsentAsNull(true));
+        DatabindCodec.mapper().registerModule(new JsonNullableModule());
+    }
 
     // The starting point of our main verticle.
     // Should be started using VIRTUAL_THREADS, so we can use await()

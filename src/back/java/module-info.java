@@ -10,6 +10,7 @@ open module fr.domotique.web {
     requires io.vertx.sql.client.mysql;
     requires io.vertx.sql.client;
     requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.datatype.jdk8;
 
     requires io.vertx.httpproxy;
     requires io.vertx.web.proxy;
@@ -43,4 +44,5 @@ open module fr.domotique.web {
 
     // Lombok :D
     requires static lombok;
+    requires org.openapitools.jackson.nullable;
 }

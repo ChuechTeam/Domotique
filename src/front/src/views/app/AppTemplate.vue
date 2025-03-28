@@ -11,46 +11,72 @@ const router = useRouter();
 function logout() {
     auth.logout()
 }
+
+const userLink = computed(() => "/profile/" + auth.user.profile.id);
 </script>
 
 
 <template>
     <div>
-        <Menubar :model="[
-            {
-                label: 'Tableau de bord',
-                route: '/dashboard',
-            },
-            {
-                label: 'Profil',
-                route: '/profile'
-            },
-            {
-                label: 'Déconnexion',
-                command: logout
-            }
-        ]">
-            <!-- props here is for style mainly. remove it and its ugly. yeah it's not explained at all go figure -->
-            <template #item="{ item, props, hasSubmenu }">
-                <RouterLink v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
-                    <a :href="href" v-bind="props.action" @click="navigate">
-<!--                        <span :class="item.icon" />-->
-                        <span>{{ item.label }}</span>
-                    </a>
-                </RouterLink>
-                <a v-else :href="item.url" :target="item.target" v-bind="props.action">
-<!--                    <span :class="item.icon" />-->
-                    <span>{{ item.label }}</span>
-                    <span v-if="hasSubmenu" class="pi pi-fw pi-angle-down" />
-                </a>
-            </template>
-
-        </Menubar>
-        <h1>Coucou (espace utilisateur)</h1>
-        <RouterView/>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
+            <RouterLink class="navbar-brand fw-bold" to="/dashboard">Retraités Connectés</RouterLink>
+            <div class="d-flex align-items-center gap-3">
+                <RouterLink class="nav-link" to="/devices">Appareils</RouterLink>
+                <RouterLink class="nav-link" to="/rooms">Salles</RouterLink>
+                <RouterLink class="nav-link" to="/profiles">Profils</RouterLink>
+                <RouterLink class="nav-link" to="/themes">Thèmes</RouterLink>
+            </div>
+            <RouterLink class="ms-auto user-pill" :to="userLink">
+                {{ auth.user.profile.firstName + ' ' + auth.user.profile.lastName }}
+            </RouterLink>
+        </nav>
+        <main class="content">
+            <Suspense class="content">
+                <RouterView/>
+                <template #fallback>
+                    <div class="spinner-border mx-auto" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </template>
+            </Suspense>
+        </main>
     </div>
 </template>
 
 <style scoped>
+.content {
+    padding-top: 8px;
+}
+.navbar-brand {
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+.nav-link {
+    font-weight: 500;
+    color: #333;
+    text-decoration: none;
+}
+.nav-link:hover {
+    color: #007bff;
+}
 
+.user-pill {
+    display: flex;
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+        background-color: #e2e6ea;
+        cursor: pointer;
+    }
+    &.router-link-active {
+        background-color: #007bff;
+        color: white;
+    }
+}
 </style>

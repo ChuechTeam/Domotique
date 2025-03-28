@@ -49,7 +49,7 @@ public class UserSection extends Section {
 
 
         // Paths with parameters come last.
-        userRoutes.patch("/:userId/profile").respond(vt(this::updateProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
+        userRoutes.patch("/:userId/profile").respond(vt(this::patchProfile)).putMetadata(RouteDoc.KEY, UPDATE_PROFILE_DOC);
         userRoutes.put("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
         userRoutes.delete("/:userId").respond(vt(this::deleteUser)).putMetadata(RouteDoc.KEY, DELETE_USER_DOC);
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
@@ -312,7 +312,7 @@ public class UserSection extends Section {
             - a list of ids, using `ids`
             - their full name, using `fullName`.""")
         .optionalQueryParam("fullName", String.class, "The full name to search for.")
-        .optionalQueryParam("ids", RouteDoc.listType(Integer.class), "A list of identifiers of users to find.")
+        .optionalQueryParam("ids", Integer[].class, "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
         .response(400, ErrorResponse.class, "The full name query parameter is blank.");
 
@@ -346,11 +346,11 @@ public class UserSection extends Section {
         .summary("Update profile")
         .description("Update the profile of the currently authenticated user. Each value can be omitted or set to `null` to not change it.")
         .param(USERID_PARAM)
-        .requestBody(UpdateProfileInput.class, new UpdateProfileInput("Gérard", "Poulet", Gender.MALE, null, null, null))
+        .requestBody(PatchProfileInput.class, new PatchProfileInput("Gérard", "Poulet", Gender.MALE, null, null, null))
         .response(200, UserProfile.class, "The new updated profile.");
 
     @ApiDoc(value = "The data to update the user profile. Each value can be omitted or set to `null` to not change it.", optional = true)
-    record UpdateProfileInput(
+    record PatchProfileInput(
         @ApiDoc("The first name of the user")
         String firstName,
         @ApiDoc("The last name of the user")
@@ -364,7 +364,7 @@ public class UserSection extends Section {
         @ApiDoc("The number of points the user has. Modifiable only by an admin.")
         Integer points
     ) {
-        public UpdateProfileInput {
+        public PatchProfileInput {
             // Sanitize strings before doing anything else.
             firstName = Sanitize.string(firstName);
             lastName = Sanitize.string(lastName);
@@ -381,7 +381,7 @@ public class UserSection extends Section {
         }
     }
 
-    UserProfile updateProfile(RoutingContext context) {
+    UserProfile patchProfile(RoutingContext context) {
         Authenticator auth = Authenticator.get(context);
 
         // Make sure we're logged in!
@@ -397,7 +397,7 @@ public class UserSection extends Section {
         }
 
         // Read the JSON from the request
-        UpdateProfileInput input = readBody(context, UpdateProfileInput.class);
+        PatchProfileInput input = readBody(context, PatchProfileInput.class);
 
         // Validate incoming values
         input.validate();

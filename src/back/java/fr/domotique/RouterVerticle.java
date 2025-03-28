@@ -89,11 +89,6 @@ public class RouterVerticle extends VerticleBase {
         // Serve files from the 'assets' folder when someone requests them from the assets/ folder
         r.route("/assets/*").handler(StaticHandler.create("assets"));
 
-        // Serve API documentation at the /api-docs/ URL when we're in development mode
-        if (server.config().isDevelopment()) {
-            serveApiDocumentation(r);
-        }
-
         // Limit the incoming requests to 128KB of data, for better security.
         // Could also be used later on to add support for file uploads.
         r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));
@@ -126,6 +121,11 @@ public class RouterVerticle extends VerticleBase {
         // Register all sections.
         for (Section section : allSections()) {
             section.register(r);
+        }
+
+        // Serve API documentation at the /api-docs/ URL when we're in development mode
+        if (server.config().isDevelopment()) {
+            serveApiDocumentation(r);
         }
 
         // If nothing works, and we're in dev mode; redirect all GET requests to the vue dev server

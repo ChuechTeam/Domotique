@@ -14,7 +14,12 @@
 
 
 /**
- * 
+ * The function to apply to the attribute values.
+ * - `COUNT`: Counts the number of devices: `COUNT(*)` in SQL
+ * - `SUM`: Sums the values of the attribute: `SUM(attribute)` in SQL
+ * - `AVG`: Averages the values of the attribute: `AVG(attribute)` in SQL
+ * - `MIN`: Finds the minimum value of the attribute: `MIN(attribute)` in SQL
+ * - `MAX`: Finds the maximum value of the attribute: `MAX(attribute)` in SQL
  * @export
  */
 export const DeviceStatsQueryFunction = {

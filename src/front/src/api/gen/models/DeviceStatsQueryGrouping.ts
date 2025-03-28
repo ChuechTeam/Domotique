@@ -14,7 +14,12 @@
 
 
 /**
- * 
+ * The entity to group the results by.
+ * - `DEVICE`: Group by individual devices. Outputs the device ID.
+ * - `DEVICE_TYPE`: Group by the type of the device. Outputs the device type.
+ * - `ROOM`: Group by the room the device is in. Outputs the room ID.
+ * - `USER`: Group by the user who owns the device. Outputs the user ID.
+ * - `CATEGORY`: Group by the category of the device. Outputs the category name.
  * @export
  */
 export const DeviceStatsQueryGrouping = {

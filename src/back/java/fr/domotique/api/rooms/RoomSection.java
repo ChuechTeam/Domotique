@@ -71,17 +71,23 @@ public class RoomSection extends Section {
     static final RouteDoc GET_ROOMS_DOC = new RouteDoc("getRooms")
         .summary("Get rooms")
         .description("Gets all rooms from the database.")
-        .optionalQueryParam("ids", RouteDoc.listType(int.class), "List of room IDs to get. If empty, all rooms are returned.")
+        .optionalQueryParam("ids", int[].class, "List of room IDs to get. If empty, all rooms are returned.")
+        .optionalQueryParam("name", String.class, "Filters rooms by a search query.")
         .response(200, RoomsResponse.class, "The list of all rooms.");
 
     record RoomsResponse(List<CompleteRoom> rooms) {}
 
     Future<RoomsResponse> getAll(RoutingContext context) {
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
-
         if (!ids.isEmpty()) {
             return server.db().rooms().getAllComplete(ids).map(RoomsResponse::new);
-        } else {
+        }
+
+        String name = Sanitize.string(context.queryParams().get("name"));
+        if (name != null) {
+            return server.db().rooms().getAllCompleteMatchingName(name).map(RoomsResponse::new);
+        }
+        else {
             return server.db().rooms().getAllComplete().map(RoomsResponse::new);
         }
     }

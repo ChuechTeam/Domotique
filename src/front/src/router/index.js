@@ -50,9 +50,10 @@ const router = createRouter({
                     }
                 },
                 {
-                    path: "/profile",
+                    path: "/profile/:userId(\\d+)",
                     name: "profile",
-                    component: ProfileView
+                    component: ProfileView,
+                    props: true
                 }
             ]
         },

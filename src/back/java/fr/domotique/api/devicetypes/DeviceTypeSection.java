@@ -107,7 +107,7 @@ public class DeviceTypeSection extends Section {
     // endregion
 
     @ApiDoc("Data for both INSERT and UPDATE operations on a device type.")
-    record DeviceTypeInput(String name, List<AttributeType> attributes) {
+    record DeviceTypeInput(String name, DeviceCategory category, List<AttributeType> attributes) {
         public DeviceTypeInput {
             name = Sanitize.string(name);
         }
@@ -138,6 +138,7 @@ public class DeviceTypeSection extends Section {
         .description("Creates a new device type.")
         .requestBody(DeviceTypeInput.class, new DeviceTypeInput(
             "Smart Watch",
+            DeviceCategory.HEALTH,
             List.of(AttributeType.TEMPERATURE, AttributeType.HUMIDITY)))
         .response(201, CompleteDeviceType.class, "The device type was created successfully.")
         .response(422, ErrorResponse.class, "Some fields are invalid or the device type name already exists.");
@@ -149,7 +150,7 @@ public class DeviceTypeSection extends Section {
         input.validate();
 
         // Create the device type
-        DeviceType deviceType = new DeviceType(0, input.name, input.attributesAsEnumSet());
+        DeviceType deviceType = new DeviceType(0, input.name, input.category, input.attributesAsEnumSet());
 
         server.db().deviceTypes().insert(deviceType).await();
         log.info("Device type created with id {} and name {}", deviceType.getId(), deviceType.getName());
@@ -166,6 +167,7 @@ public class DeviceTypeSection extends Section {
         .pathParam("deviceTypeId", int.class, "The ID of the device type to update.")
         .requestBody(DeviceTypeInput.class, new DeviceTypeInput(
             "Updated Smart Watch",
+            DeviceCategory.HEALTH,
             List.of(AttributeType.TEMPERATURE, AttributeType.HUMIDITY, AttributeType.CALORIES_BURNED)))
         .response(200, CompleteDeviceType.class, "The device type was updated successfully.")
         .response(404, ErrorResponse.class, "Device type not found.")
@@ -191,6 +193,7 @@ public class DeviceTypeSection extends Section {
         // Update device type properties
         deviceType.setName(input.name);
         deviceType.setAttributes(newAttributes);
+        deviceType.setCategory(input.category);
 
         // Submit changes to the database
         server.db().deviceTypes().update(deviceType).await();
@@ -211,7 +214,7 @@ public class DeviceTypeSection extends Section {
             if (!devicesNeedingUpdates.isEmpty()) {
                 // We have some devices to update; begin changing their attributes
                 for (var d : devicesNeedingUpdates) {
-                    DeviceOperations.fixAttributes(d.attributes(), deviceType);
+                    DeviceOperations.fixAttributes(d.attributes(), deviceType, true);
                 }
 
                 // Push the changes to the database

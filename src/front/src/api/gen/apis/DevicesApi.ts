@@ -16,7 +16,9 @@
 import * as runtime from '../runtime';
 import type {
   CompleteDevice,
+  DeviceCategory,
   DeviceInput,
+  DevicePatchInput,
   DeviceStats,
   DeviceStatsQuery,
   DevicesResponse,
@@ -25,8 +27,12 @@ import type {
 import {
     CompleteDeviceFromJSON,
     CompleteDeviceToJSON,
+    DeviceCategoryFromJSON,
+    DeviceCategoryToJSON,
     DeviceInputFromJSON,
     DeviceInputToJSON,
+    DevicePatchInputFromJSON,
+    DevicePatchInputToJSON,
     DeviceStatsFromJSON,
     DeviceStatsToJSON,
     DeviceStatsQueryFromJSON,
@@ -58,12 +64,14 @@ export interface GetDevicesRequest {
     name?: string;
     powered?: boolean;
     typeId?: number;
+    category?: DeviceCategory;
+    ids?: Array<number>;
     roomId?: number;
 }
 
-export interface UpdateDeviceRequest {
+export interface PatchDeviceRequest {
     deviceId: number;
-    deviceInput: DeviceInput;
+    devicePatchInput: DevicePatchInput;
 }
 
 /**
@@ -253,6 +261,14 @@ export class DevicesApi extends runtime.BaseAPI {
             queryParameters['typeId'] = requestParameters['typeId'];
         }
 
+        if (requestParameters['category'] != null) {
+            queryParameters['category'] = requestParameters['category'];
+        }
+
+        if (requestParameters['ids'] != null) {
+            queryParameters['ids'] = requestParameters['ids'];
+        }
+
         if (requestParameters['roomId'] != null) {
             queryParameters['roomId'] = requestParameters['roomId'];
         }
@@ -279,21 +295,21 @@ export class DevicesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates an existing device.
-     * Update device
+     * Patches an existing device.
+     * Patch device
      */
-    async updateDeviceRaw(requestParameters: UpdateDeviceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompleteDevice>> {
+    async patchDeviceRaw(requestParameters: PatchDeviceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompleteDevice>> {
         if (requestParameters['deviceId'] == null) {
             throw new runtime.RequiredError(
                 'deviceId',
-                'Required parameter "deviceId" was null or undefined when calling updateDevice().'
+                'Required parameter "deviceId" was null or undefined when calling patchDevice().'
             );
         }
 
-        if (requestParameters['deviceInput'] == null) {
+        if (requestParameters['devicePatchInput'] == null) {
             throw new runtime.RequiredError(
-                'deviceInput',
-                'Required parameter "deviceInput" was null or undefined when calling updateDevice().'
+                'devicePatchInput',
+                'Required parameter "devicePatchInput" was null or undefined when calling patchDevice().'
             );
         }
 
@@ -305,21 +321,21 @@ export class DevicesApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: `/api/devices/{deviceId}`.replace(`{${"deviceId"}}`, encodeURIComponent(String(requestParameters['deviceId']))),
-            method: 'PUT',
+            method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: DeviceInputToJSON(requestParameters['deviceInput']),
+            body: DevicePatchInputToJSON(requestParameters['devicePatchInput']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CompleteDeviceFromJSON(jsonValue));
     }
 
     /**
-     * Updates an existing device.
-     * Update device
+     * Patches an existing device.
+     * Patch device
      */
-    async updateDevice(requestParameters: UpdateDeviceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompleteDevice> {
-        const response = await this.updateDeviceRaw(requestParameters, initOverrides);
+    async patchDevice(requestParameters: PatchDeviceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompleteDevice> {
+        const response = await this.patchDeviceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

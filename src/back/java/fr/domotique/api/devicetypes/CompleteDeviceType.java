@@ -12,14 +12,17 @@ public record CompleteDeviceType(
     int id,
     @ApiDoc("The name of the device type.")
     String name,
+    @ApiDoc("The category of the device type.")
+    DeviceCategory category,
     @ApiDoc("All attributes that devices of this type will have.")
     EnumSet<AttributeType> attributes
 ) {
     public static final Mapper<CompleteDeviceType> MAP = Mapper.of(
-        3,
+        4,
         (r, s) -> new CompleteDeviceType(
             r.getInteger(s.next()),
             r.getString(s.next()),
+            DeviceCategory.fromByte(r.get(Byte.class, s.next())),
             DeviceType.attributesFromDB(r.getJsonArray(s.next()))
         )
     );
@@ -31,11 +34,12 @@ public record CompleteDeviceType(
         return new CompleteDeviceType(
             deviceType.getId(),
             deviceType.getName(),
+            deviceType.getCategory(),
             deviceType.getAttributes()
         );
     }
 
     public static String columnList(String tableName) {
-        return QueryUtils.columnList(tableName, "id", "name", "attributes");
+        return QueryUtils.columnList(tableName, "id", "name", "category", "attributes");
     }
 }

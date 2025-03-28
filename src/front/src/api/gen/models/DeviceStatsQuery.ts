@@ -42,7 +42,7 @@ import {
  */
 export interface DeviceStatsQuery {
     /**
-     * 
+     * True when the results should be sorted in ascending order.
      * @type {boolean}
      * @memberof DeviceStatsQuery
      */

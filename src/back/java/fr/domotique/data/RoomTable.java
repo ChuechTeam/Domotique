@@ -75,6 +75,11 @@ public class RoomTable extends Table {
         );
     }
 
+    /// Gets all [CompleteRoom] in the database having a similar name as `name`.
+    public Future<List<CompleteRoom>> getAllCompleteMatchingName(String name) {
+        return queryMany(CompleteRoom.MAP, COMPLETE_MANY_SQL + " WHERE INSTR(r.name, ?) > 0", name);
+    }
+
     /// Creates a room in the database.
     ///
     /// @param room the room to create, must have an id of 0

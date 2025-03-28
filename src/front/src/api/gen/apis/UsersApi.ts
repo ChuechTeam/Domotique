@@ -20,9 +20,9 @@ import type {
   DeleteUserInput,
   ErrorResponse,
   LoginInput,
+  PatchProfileInput,
   ProfileSearchOutput,
   RegisterInput,
-  UpdateProfileInput,
   UpgradeInfo,
   UserProfile,
 } from '../models/index';
@@ -37,12 +37,12 @@ import {
     ErrorResponseToJSON,
     LoginInputFromJSON,
     LoginInputToJSON,
+    PatchProfileInputFromJSON,
+    PatchProfileInputToJSON,
     ProfileSearchOutputFromJSON,
     ProfileSearchOutputToJSON,
     RegisterInputFromJSON,
     RegisterInputToJSON,
-    UpdateProfileInputFromJSON,
-    UpdateProfileInputToJSON,
     UpgradeInfoFromJSON,
     UpgradeInfoToJSON,
     UserProfileFromJSON,
@@ -64,6 +64,10 @@ export interface DeleteUserRequest {
     deleteUserInput: DeleteUserInput;
 }
 
+export interface FindFullUserRequest {
+    userId: number;
+}
+
 export interface FindUserRequest {
     userId: number;
 }
@@ -83,7 +87,7 @@ export interface SearchUsersRequest {
 
 export interface UpdateProfileRequest {
     userId: string;
-    updateProfileInput: UpdateProfileInput;
+    patchProfileInput: PatchProfileInput;
 }
 
 /**
@@ -226,6 +230,48 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async deleteUser(requestParameters: DeleteUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteUserRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Gets a user by their ID, and return their public AND private data. Only available for admins.
+     * Get a full user by ID
+     */
+    async findFullUserRaw(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling findFullUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/users/{userId}/full`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserProfileFromJSON(jsonValue));
+    }
+
+    /**
+     * Gets a user by their ID, and return their public AND private data. Only available for admins.
+     * Get a full user by ID
+     */
+    async findFullUser(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserProfile | null | undefined > {
+        const response = await this.findFullUserRaw(requestParameters, initOverrides);
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
     }
 
     /**
@@ -477,10 +523,10 @@ export class UsersApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['updateProfileInput'] == null) {
+        if (requestParameters['patchProfileInput'] == null) {
             throw new runtime.RequiredError(
-                'updateProfileInput',
-                'Required parameter "updateProfileInput" was null or undefined when calling updateProfile().'
+                'patchProfileInput',
+                'Required parameter "patchProfileInput" was null or undefined when calling updateProfile().'
             );
         }
 
@@ -495,7 +541,7 @@ export class UsersApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: UpdateProfileInputToJSON(requestParameters['updateProfileInput']),
+            body: PatchProfileInputToJSON(requestParameters['patchProfileInput']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserProfileFromJSON(jsonValue));

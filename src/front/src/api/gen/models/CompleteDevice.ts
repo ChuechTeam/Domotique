@@ -27,13 +27,6 @@ import {
     UserProfileToJSON,
     UserProfileToJSONTyped,
 } from './UserProfile';
-import type { DeviceCategory } from './DeviceCategory';
-import {
-    DeviceCategoryFromJSON,
-    DeviceCategoryFromJSONTyped,
-    DeviceCategoryToJSON,
-    DeviceCategoryToJSONTyped,
-} from './DeviceCategory';
 import type { CompleteRoom } from './CompleteRoom';
 import {
     CompleteRoomFromJSON,
@@ -92,12 +85,6 @@ export interface CompleteDevice {
     id: number;
     /**
      * 
-     * @type {DeviceCategory}
-     * @memberof CompleteDevice
-     */
-    category: DeviceCategory;
-    /**
-     * 
      * @type {CompleteDeviceType}
      * @memberof CompleteDevice
      */
@@ -110,8 +97,6 @@ export interface CompleteDevice {
     room?: CompleteRoom;
 }
 
-
-
 /**
  * Check if a given object implements the CompleteDevice interface.
  */
@@ -121,7 +106,6 @@ export function instanceOfCompleteDevice(value: object): value is CompleteDevice
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('category' in value) || value['category'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     return true;
 }
@@ -143,7 +127,6 @@ export function CompleteDeviceFromJSONTyped(json: any, ignoreDiscriminator: bool
         'description': json['description'] == null ? undefined : json['description'],
         'attributes': json['attributes'],
         'id': json['id'],
-        'category': DeviceCategoryFromJSON(json['category']),
         'type': CompleteDeviceTypeFromJSON(json['type']),
         'room': json['room'] == null ? undefined : CompleteRoomFromJSON(json['room']),
     };
@@ -167,7 +150,6 @@ export function CompleteDeviceToJSONTyped(value?: CompleteDevice | null, ignoreD
         'description': value['description'],
         'attributes': value['attributes'],
         'id': value['id'],
-        'category': DeviceCategoryToJSON(value['category']),
         'type': CompleteDeviceTypeToJSON(value['type']),
         'room': CompleteRoomToJSON(value['room']),
     };

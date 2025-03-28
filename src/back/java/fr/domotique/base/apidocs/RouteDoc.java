@@ -1,6 +1,5 @@
 package fr.domotique.base.apidocs;
 
-import lombok.*;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.*;
@@ -41,6 +40,9 @@ public class RouteDoc {
 
     /// The content type of the request body.
     String requestBodyType = "application/json";
+    
+    /// True when all properties of the request body should be marked as optional.
+    boolean requestBodyFullyOptional = false;
 
     /// Tags for categorizing this endpoint in documentation.
     final List<String> tags = new ArrayList<>();
@@ -59,36 +61,6 @@ public class RouteDoc {
 
     public RouteDoc(@Nullable String operationId) {
         this.operationId = operationId;
-    }
-
-    // todo: move this elsewhere
-    public static Type listType(Type inner) {
-        return new ParameterizedType() {
-            @Override
-            public @NotNull Type @NotNull [] getActualTypeArguments() {
-                return new Type[]{inner};
-            }
-
-            @Override
-            public @NotNull Type getRawType() {
-                return List.class;
-            }
-
-            @Override
-            public Type getOwnerType() {
-                return null;
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) return true;
-                if (obj == null || getClass() != obj.getClass()) return false;
-                ParameterizedType that = (ParameterizedType) obj;
-                return Arrays.equals(getActualTypeArguments(), that.getActualTypeArguments()) &&
-                        Objects.equals(getRawType(), that.getRawType()) &&
-                        Objects.equals(getOwnerType(), that.getOwnerType());
-            }
-        };
     }
 
     public @Nullable String getOperationId() {
@@ -134,6 +106,39 @@ public class RouteDoc {
         this.requestBody = requestBody;
         this.requestBodyType = requestBodyType;
         this.requestBodyExample = requestBodyExample;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody() {
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody) {
+        this.requestBody = requestBody;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, @Nullable Object requestBodyExample) {
+        this.requestBody = requestBody;
+        this.requestBodyExample = requestBodyExample;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, String requestBodyType) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, String requestBodyType, @Nullable Object requestBodyExample) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        this.requestBodyExample = requestBodyExample;
+        this.requestBodyFullyOptional = true;
         return this;
     }
 

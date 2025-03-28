@@ -56,9 +56,6 @@ public class Device {
     /// Energy consumption in Watts of this device while powered on
     double energyConsumption;
 
-    /// The category assigned to this device. Can be set to [DeviceCategory#OTHER] to tell that it has no category.
-    DeviceCategory category;
-
     /// Information associating the SQL database table to the Java class
     public static final EntityInfo<Device> ENTITY = new EntityInfo<>(
         Device.class,
@@ -71,8 +68,7 @@ public class Device {
             r.getInteger(s.next()),
             attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
-            r.getDouble(s.next()),
-            DeviceCategory.fromByte(r.get(Byte.class, s.next()))
+            r.getDouble(s.next())
         ),
         new EntityColumn<>("id", Device::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", Device::getName),
@@ -82,8 +78,7 @@ public class Device {
         new EntityColumn<>("userId", Device::getUserId),
         new EntityColumn<>("attributes", x -> attributesToDB(x.attributes)),
         new EntityColumn<>("powered", Device::isPowered),
-        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption),
-        new EntityColumn<>("category", Device::getCategory)
+        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption)
     );
 
     public static JsonArray attributesToDB(EnumMap<AttributeType, Object> attributes) {

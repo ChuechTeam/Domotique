@@ -14,79 +14,78 @@
 
 import { mapValues } from '../runtime';
 /**
- * Data for both POST and PUT operations on a device.
+ * Data for PATCH operations on a device.
  * @export
- * @interface DeviceInput
+ * @interface DevicePatchInput
  */
-export interface DeviceInput {
+export interface DevicePatchInput {
     /**
      * 
      * @type {number}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     energyConsumption: number;
     /**
      * 
      * @type {boolean}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     powered: boolean;
     /**
      * 
      * @type {string}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     name: string;
     /**
      * 
      * @type {string}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
-    description: string;
+    description?: string;
     /**
      * 
      * @type {number}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     typeId: number;
     /**
      * 
      * @type {{ [key: string]: object; }}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     attributes: { [key: string]: object; };
     /**
      * 
      * @type {number}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     userId?: number;
     /**
      * 
      * @type {number}
-     * @memberof DeviceInput
+     * @memberof DevicePatchInput
      */
     roomId?: number;
 }
 
 /**
- * Check if a given object implements the DeviceInput interface.
+ * Check if a given object implements the DevicePatchInput interface.
  */
-export function instanceOfDeviceInput(value: object): value is DeviceInput {
+export function instanceOfDevicePatchInput(value: object): value is DevicePatchInput {
     if (!('energyConsumption' in value) || value['energyConsumption'] === undefined) return false;
     if (!('powered' in value) || value['powered'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('description' in value) || value['description'] === undefined) return false;
     if (!('typeId' in value) || value['typeId'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
     return true;
 }
 
-export function DeviceInputFromJSON(json: any): DeviceInput {
-    return DeviceInputFromJSONTyped(json, false);
+export function DevicePatchInputFromJSON(json: any): DevicePatchInput {
+    return DevicePatchInputFromJSONTyped(json, false);
 }
 
-export function DeviceInputFromJSONTyped(json: any, ignoreDiscriminator: boolean): DeviceInput {
+export function DevicePatchInputFromJSONTyped(json: any, ignoreDiscriminator: boolean): DevicePatchInput {
     if (json == null) {
         return json;
     }
@@ -95,7 +94,7 @@ export function DeviceInputFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'energyConsumption': json['energyConsumption'],
         'powered': json['powered'],
         'name': json['name'],
-        'description': json['description'],
+        'description': json['description'] == null ? undefined : json['description'],
         'typeId': json['typeId'],
         'attributes': json['attributes'],
         'userId': json['userId'] == null ? undefined : json['userId'],
@@ -103,11 +102,11 @@ export function DeviceInputFromJSONTyped(json: any, ignoreDiscriminator: boolean
     };
 }
 
-export function DeviceInputToJSON(json: any): DeviceInput {
-    return DeviceInputToJSONTyped(json, false);
+export function DevicePatchInputToJSON(json: any): DevicePatchInput {
+    return DevicePatchInputToJSONTyped(json, false);
 }
 
-export function DeviceInputToJSONTyped(value?: DeviceInput | null, ignoreDiscriminator: boolean = false): any {
+export function DevicePatchInputToJSONTyped(value?: DevicePatchInput | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

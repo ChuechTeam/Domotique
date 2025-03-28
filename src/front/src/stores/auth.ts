@@ -30,7 +30,11 @@ export const useAuthStore = defineStore('auth', {
          * - the user is already logged in
          * - last time the user visited the app, they were logged in
          */
-        isProbablyLoggedIn: s => s.user != null || localStorage.getItem("wasLoggedIn") != null
+        isProbablyLoggedIn: s => s.user != null || localStorage.getItem("wasLoggedIn") != null,
+        /**
+         * The user id of the logged-in user. Null if not logged-in.
+         */
+        userId: s => s.user?.profile?.id ?? null,
     },
     actions: {
         /**

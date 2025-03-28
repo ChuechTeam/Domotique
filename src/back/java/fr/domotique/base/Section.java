@@ -8,6 +8,7 @@ import io.vertx.core.buffer.*;
 import io.vertx.core.internal.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
+import org.openapitools.jackson.nullable.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -296,6 +297,15 @@ public abstract class Section {
         });
     }
 
+    /// Takes in a [JsonNullable] and applies a function to its (nullable) value.
+    /// Keeps it undefined if the nullable itself is undefined.
+    protected static <T, U> JsonNullable<U> mapNullable(JsonNullable<T> value, Function<T, U> mapper) {
+        if (value.isPresent()) {
+            return JsonNullable.of(mapper.apply(value.get()));
+        } else {
+            return JsonNullable.undefined();
+        }
+    }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`.
     ///

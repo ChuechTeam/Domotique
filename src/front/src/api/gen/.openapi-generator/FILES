@@ -15,6 +15,7 @@ models/CompleteUser.ts
 models/DeleteUserInput.ts
 models/DeviceCategory.ts
 models/DeviceInput.ts
+models/DevicePatchInput.ts
 models/DeviceStat.ts
 models/DeviceStats.ts
 models/DeviceStatsQuery.ts
@@ -29,12 +30,12 @@ models/Level.ts
 models/LoginInput.ts
 models/LoginLog.ts
 models/LoginLogsResponse.ts
+models/PatchProfileInput.ts
 models/ProfileSearchOutput.ts
 models/RegisterInput.ts
 models/Role.ts
 models/RoomInput.ts
 models/RoomsResponse.ts
-models/UpdateProfileInput.ts
 models/UpgradeInfo.ts
 models/UserProfile.ts
 models/UserSecrets.ts

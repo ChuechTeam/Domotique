@@ -6,7 +6,9 @@ import fr.domotique.data.*;
 public record DeviceStatsQuery(
     Grouping grouping,
     Function function,
+    @ApiDoc("The attribute to apply the function to. Devices without that attribute are not taken into account.")
     AttributeType attribute,
+    @ApiDoc("True when the results should be sorted in ascending order.")
     boolean ascendingOrder
 ) {
     @DocName("DeviceStatsQueryGrouping")
@@ -48,7 +50,7 @@ public record DeviceStatsQuery(
     }
 
     static final DeviceStatsQuery EXAMPLE = new DeviceStatsQuery(
-        Grouping.DEVICE,
+        Grouping.USER,
         Function.SUM,
         AttributeType.CALORIES_BURNED,
         false

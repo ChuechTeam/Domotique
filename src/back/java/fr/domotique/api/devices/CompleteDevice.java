@@ -18,13 +18,12 @@ public record CompleteDevice(
     EnumMap<AttributeType, Object> attributes,
     boolean powered,
     double energyConsumption,
-    DeviceCategory category,
     CompleteDeviceType type,
     @ApiDoc(optional = true) CompleteRoom room,
     @ApiDoc(optional = true) UserProfile owner
 ) {
     public static final Mapper<CompleteDevice> MAP = Mapper.of(
-        7
+        6
         + CompleteDeviceType.MAP.getColumns()
         + CompleteRoom.MAP.getColumns()
         + UserProfile.MAP.getColumns(),
@@ -35,7 +34,6 @@ public record CompleteDevice(
             Device.attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
             r.getDouble(s.next()),
-            DeviceCategory.fromByte(r.get(Byte.class, s.next())),
             CompleteDeviceType.MAP.apply(r, s),
             CompleteRoom.MAP.apply(r, s),
             UserProfile.MAP.apply(r, s)
@@ -43,6 +41,6 @@ public record CompleteDevice(
     );
 
     public static String columnList(String tableName) {
-        return QueryUtils.columnList(tableName, "id", "name", "description", "attributes", "powered", "category", "energyConsumption");
+        return QueryUtils.columnList(tableName, "id", "name", "description", "attributes", "powered", "energyConsumption");
     }
 }

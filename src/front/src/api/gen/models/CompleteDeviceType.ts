@@ -20,6 +20,13 @@ import {
     AttributeTypeToJSON,
     AttributeTypeToJSONTyped,
 } from './AttributeType';
+import type { DeviceCategory } from './DeviceCategory';
+import {
+    DeviceCategoryFromJSON,
+    DeviceCategoryFromJSONTyped,
+    DeviceCategoryToJSON,
+    DeviceCategoryToJSONTyped,
+} from './DeviceCategory';
 
 /**
  * A device type with all its attributes.
@@ -45,7 +52,15 @@ export interface CompleteDeviceType {
      * @memberof CompleteDeviceType
      */
     id: number;
+    /**
+     * 
+     * @type {DeviceCategory}
+     * @memberof CompleteDeviceType
+     */
+    category: DeviceCategory;
 }
+
+
 
 /**
  * Check if a given object implements the CompleteDeviceType interface.
@@ -54,6 +69,7 @@ export function instanceOfCompleteDeviceType(value: object): value is CompleteDe
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('category' in value) || value['category'] === undefined) return false;
     return true;
 }
 
@@ -70,6 +86,7 @@ export function CompleteDeviceTypeFromJSONTyped(json: any, ignoreDiscriminator: 
         'name': json['name'],
         'attributes': ((json['attributes'] as Array<any>).map(AttributeTypeFromJSON)),
         'id': json['id'],
+        'category': DeviceCategoryFromJSON(json['category']),
     };
 }
 
@@ -87,6 +104,7 @@ export function CompleteDeviceTypeToJSONTyped(value?: CompleteDeviceType | null,
         'name': value['name'],
         'attributes': ((value['attributes'] as Array<any>).map(AttributeTypeToJSON)),
         'id': value['id'],
+        'category': DeviceCategoryToJSON(value['category']),
     };
 }
 

@@ -15,6 +15,8 @@ public class DeviceType {
     int id;
     /// The name of the device type
     String name;
+    /// The category assigned to this device type. Can be set to [DeviceCategory#OTHER] to tell that it has no category.
+    DeviceCategory category;
     /// All attributes that this device can display.
     EnumSet<AttributeType> attributes;
 
@@ -24,10 +26,12 @@ public class DeviceType {
         (r, s) -> new DeviceType(
             r.getInteger(s.next()),
             r.getString(s.next()),
+            DeviceCategory.fromByte(r.get(Byte.class, s.next())),
             attributesFromDB(r.getJsonArray(s.next()))
         ),
         new EntityColumn<>("id", DeviceType::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", DeviceType::getName),
+        new EntityColumn<>("category", DeviceType::getCategory),
         new EntityColumn<>("attributes", x -> attributesToDB(x.getAttributes()))
     );
 

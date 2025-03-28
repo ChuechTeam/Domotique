@@ -77,7 +77,8 @@ public class DeviceTable extends Table {
         @Nullable Integer typeId,
         @Nullable Integer roomId,
         @Nullable Integer userId,
-        @Nullable Boolean powered) {}
+        @Nullable Boolean powered,
+        @Nullable DeviceCategory category) {}
 
     public Future<List<CompleteDevice>> queryComplete(CompleteQuery completeQuery) {
         var sql = new StringBuilder(COMPLETE_MANY_SQL);
@@ -105,6 +106,11 @@ public class DeviceTable extends Table {
             sql.append("\nAND d.powered = ?");
             args.add(completeQuery.powered);
         }
+        if (completeQuery.category != null) {
+            // dt is the DeviceType table.
+            sql.append("\nAND dt.category = ?");
+            args.add(completeQuery.category.ordinal());
+        }
 
         log.debug("Running search query {} with SQL\n{}", completeQuery, sql);
 
@@ -117,27 +123,32 @@ public class DeviceTable extends Table {
             return Future.failedFuture("Invalid stats query");
         }
 
+        // Build the SQL query for device statistics
         var sql = new StringBuilder("SELECT ");
         var args = new ArrayList<>();
 
+        // Determine the grouping column based on the query parameter
         var groupId = switch (statsQuery.grouping()) {
-            case DEVICE -> "d.id";
-            case DEVICE_TYPE -> "d.typeId";
-            case ROOM -> "d.roomId";
-            case USER -> "d.userId";
-            case CATEGORY -> "d.category";
+            case DEVICE -> "d.id";           // Group by device ID
+            case DEVICE_TYPE -> "d.typeId";  // Group by device type ID
+            case ROOM -> "d.roomId";         // Group by room ID
+            case USER -> "d.userId";         // Group by user ID
+            case CATEGORY -> "dt.category";  // Group by device type category
         };
         sql.append(groupId);
 
+        // Add the aggregation function to the SELECT clause
         sql.append(", ");
-        sql.append(statsQuery.function().name());
-        sql.append("(attrValues.value) AS val\n");
+        sql.append(statsQuery.function().name());  // e.g., SUM, AVG, MIN, MAX, COUNT
+        sql.append("(attrValues.value) AS val\n"); // Add the argument for the function
 
+        // Determine SQL type based on attribute content type
         var sqlAttrType = switch (statsQuery.attribute().getContent()) {
             case BOOLEAN -> "BOOLEAN";
             case STRING -> "VARCHAR(128)";
             case NUMBER -> "DOUBLE";
         };
+        // Build FROM clause with JSON_TABLE to extract attributes
         sql.append("""
             FROM Device d,
                  JSON_TABLE(attributes, '$[0][*]' COLUMNS (
@@ -150,28 +161,41 @@ public class DeviceTable extends Table {
         sql.append(sqlAttrType);
         sql.append(" PATH '$')) AS attrValues\n");
 
+        if (statsQuery.grouping() == DeviceStatsQuery.Grouping.CATEGORY) {
+            // Join with DeviceType table to get the category
+            sql.append("INNER JOIN DeviceType dt ON d.typeId = dt.id\n");
+        }
+
+        // Add WHERE clause to filter by the specific attribute type
         sql.append("WHERE attrKeys.idx = attrValues.idx AND attrKeys.value = ?\n");
         args.add(statsQuery.attribute().ordinal());
 
+        // Add GROUP BY clause using the same grouping as in SELECT
         sql.append("GROUP BY ");
         sql.append(groupId);
         sql.append("\n");
 
+        // Add ORDER BY clause based on the requested sort order
         if (statsQuery.ascendingOrder()) {
             sql.append("ORDER BY val ASC");
         } else {
             sql.append("ORDER BY val DESC");
         }
 
+        // Create mapping function to convert rows to DeviceStat objects
         Function<Row, DeviceStat> mappingFunction;
         if (statsQuery.grouping() == DeviceStatsQuery.Grouping.CATEGORY) {
+            // When grouping by category, first column is a byte representing the category enum
             mappingFunction = x -> new DeviceStat(DeviceCategory.fromByte(x.get(Byte.class, 0)), x.getDouble(1));
-        } else { // something with an id
+        } else { 
+            // For all other groupings, first column is an integer ID
             mappingFunction = x -> new DeviceStat(x.getInteger(0), x.getDouble(1));
         }
 
+        // Log the query for debugging purposes
         log.debug("Running stats query {} with SQL\n{}", statsQuery, sql);
 
+        // Execute the query and map results to DeviceStat objects
         return queryMany(mappingFunction, sql.toString(), args.toArray());
     }
 
