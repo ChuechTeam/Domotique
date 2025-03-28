@@ -163,6 +163,19 @@ public abstract class Section {
         }
     }
 
+    public static List<Integer> readIntListFromQueryParams(RoutingContext ctx, String name) {
+        var ids = ctx.queryParam(name);
+        var intIds = new Integer[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            intIds[i] = readIntOrNull(ids.get(i));
+            if (intIds[i] == null) {
+                throw new RequestException("L'identifiant " + ids.get(i) + " n'est pas un entier valide.", 400);
+            }
+        }
+
+        return Arrays.asList(intIds);
+    }
+
     /// Reads the body of the request in JSON format, with the given class.
     ///
     /// Ends the request with a 400 status code if the body is not valid JSON, or when the data is invalid/missing.

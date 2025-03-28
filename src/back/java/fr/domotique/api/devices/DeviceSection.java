@@ -67,6 +67,7 @@ public class DeviceSection extends Section {
     static final RouteDoc GET_DEVICES_DOC = new RouteDoc("getDevices")
         .summary("Get devices")
         .description("Gets all devices from the database matching the given filters. All query parameters are optional.")
+        .optionalQueryParam("ids", int[].class, "The IDs of the devices to get. If set, ignores all other parameters.")
         .optionalQueryParam("name", String.class, "The name of the device to search for.")
         .optionalQueryParam("typeId", int.class, "Filters the devices by this type.")
         .optionalQueryParam("roomId", int.class, "Filters the devices by this room.")
@@ -77,6 +78,12 @@ public class DeviceSection extends Section {
     record DevicesResponse(List<CompleteDevice> devices) {}
 
     Future<DevicesResponse> getAll(RoutingContext context) {
+        List<Integer> ids = readIntListFromQueryParams(context, "ids");
+        if (!ids.isEmpty()) {
+            // If we have IDs, we ignore all other parameters
+            return server.db().devices().getCompleteAll(ids).map(DevicesResponse::new);
+        }
+
         String name = Sanitize.string(context.queryParams().get("name"));
         Integer typeId = readIntOrNull(context.queryParams().get("typeId"));
         Integer roomId = readIntOrNull(context.queryParams().get("roomId"));
@@ -103,6 +110,9 @@ public class DeviceSection extends Section {
     Future<DeviceStats> getDeviceStats(RoutingContext context) {
         // TODO: Make it send full entities for room, user, and device.
         var body = readBody(context, DeviceStatsQuery.class);
+        if (!body.validQuery()) {
+            throw new RequestException("Invalid query.", 422, "INVALID_QUERY");
+        }
         return server.db().devices().queryStats(body)
             .map(DeviceStats::new);
     }

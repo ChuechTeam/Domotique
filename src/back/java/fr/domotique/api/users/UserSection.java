@@ -53,6 +53,7 @@ public class UserSection extends Section {
         userRoutes.put("/:userId/password").respond(vt(this::changePassword)).putMetadata(RouteDoc.KEY, CHANGE_PASSWORD_DOC);
         userRoutes.delete("/:userId").respond(vt(this::deleteUser)).putMetadata(RouteDoc.KEY, DELETE_USER_DOC);
         userRoutes.get("/:userId").respond(this::getUser).putMetadata(RouteDoc.KEY, GET_USER_DOC);
+        userRoutes.get("/:userId/full").respond(this::getFullUser).putMetadata(RouteDoc.KEY, GET_FULL_USER_DOC);
 
         // Finally, register that router to the main router, prefixed by /api/users
         doc(router.route(PATH_PREFIX).subRouter(userRoutes))
@@ -73,6 +74,28 @@ public class UserSection extends Section {
 
         // Return the user from the database, and convert it to a UserProfile to not leak passwords!
         return server.db().users().get(userId).map(UserProfile::fromUser);
+    }
+    // endregion
+
+    // region GET /api/users/:userId/full
+    static final RouteDoc GET_FULL_USER_DOC = new RouteDoc("findFullUser")
+        .summary("Get a full user by ID")
+        .description("Gets a user by their ID, and return their public AND private data. Only available for admins.")
+        .pathParam("userId", int.class, "The ID of the user.")
+        .response(200, UserProfile.class, "The user's data.")
+        .response(204, "User not found.")
+        .response(401, ErrorResponse.class, "You are not logged in.")
+        .response(403, ErrorResponse.class, "You don't have the rights to access this resource.");
+
+    Future<CompleteUser> getFullUser(RoutingContext context) {
+        // Make sure we're at least an expert
+        Authenticator.get(context).requireAuth(Level.EXPERT);
+
+        // Read the user id from the path parameter (/api/users/:userId)
+        int userId = readIntPathParam(context, "userId");
+
+        // Return the user from the database, and convert it to a UserProfile to not leak passwords!
+        return server.db().users().get(userId).map(CompleteUser::fromUser);
     }
     // endregion
 
@@ -291,7 +314,7 @@ public class UserSection extends Section {
         .optionalQueryParam("fullName", String.class, "The full name to search for.")
         .optionalQueryParam("ids", RouteDoc.listType(Integer.class), "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
-        .response(400, ErrorResponse.class, "The full name query parameter is missing.");
+        .response(400, ErrorResponse.class, "The full name query parameter is blank.");
 
     record ProfileSearchOutput(List<UserProfile> profiles) {}
 
@@ -299,25 +322,17 @@ public class UserSection extends Section {
         // Make sure the user is logged in and has their email confirmed.
         Authenticator.get(context).requireAuth(Level.BEGINNER);
 
-        var fullName = context.queryParams().get("fullName");
-        var ids = context.queryParam("ids");
-
+        // Try doing a by-id search.
+        List<Integer> ids = readIntListFromQueryParams(context, "ids");
         if (!ids.isEmpty()) {
-            var intIds = new Integer[ids.size()];
-            for (int i = 0; i < ids.size(); i++) {
-                intIds[i] = readIntOrNull(ids.get(i));
-                if (intIds[i] == null) {
-                    throw new RequestException("L'identifiant " + ids.get(i) + " n'est pas un entier valide.", 400);
-                }
-            }
-
-            return server.db().users().getAllProfiles(Arrays.asList(intIds)).map(ProfileSearchOutput::new);
-        } else {
-            if (fullName == null || fullName.isBlank()) {
-                throw new RequestException("La recherche est vide.", 400);
-            }
-            return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
+            return server.db().users().getAllProfiles(ids).map(ProfileSearchOutput::new);
         }
+
+        String fullName = context.queryParams().get("fullName");
+        if (fullName == null || fullName.isBlank()) {
+            throw new RequestException("La recherche est vide.", 400);
+        }
+        return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
     }
     // endregion
 

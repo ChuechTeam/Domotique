@@ -68,12 +68,22 @@ public class DeviceTypeSection extends Section {
     static final RouteDoc GET_DEVICE_TYPES_DOC = new RouteDoc("getDeviceTypes")
         .summary("Get device types")
         .description("Gets all device types from the database.")
+        .optionalQueryParam("ids", int[].class, "The ids of devices to look for. If empty, all device types are returned.")
         .response(200, DeviceTypesResponse.class, "The list of all device types.");
 
     record DeviceTypesResponse(List<CompleteDeviceType> deviceTypes) {}
 
     Future<DeviceTypesResponse> getAll(RoutingContext context) {
-        return server.db().deviceTypes().getAll()
+        List<Integer> ids = readIntListFromQueryParams(context, "ids");
+
+        Future<List<DeviceType>> devicesFuture;
+        if (!ids.isEmpty()) {
+            devicesFuture = server.db().deviceTypes().getAll(ids);
+        } else {
+            devicesFuture = server.db().deviceTypes().getAll();
+        }
+
+        return devicesFuture
             .map(deviceTypes -> deviceTypes.stream()
                 .map(CompleteDeviceType::fromDeviceType)
                 .toList())

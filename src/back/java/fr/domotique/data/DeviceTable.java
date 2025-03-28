@@ -60,6 +60,18 @@ public class DeviceTable extends Table {
         return queryMany(CompleteDevice.MAP, COMPLETE_MANY_SQL);
     }
 
+    public Future<List<CompleteDevice>> getCompleteAll(Collection<Integer> ids) {
+        if (ids.isEmpty()) {
+            return Future.succeededFuture(Collections.emptyList());
+        }
+
+        return queryMany(
+            CompleteDevice.MAP,
+            COMPLETE_MANY_SQL + " WHERE d.id IN " + paramList(ids.size()),
+            ids.toArray()
+        );
+    }
+
     public record CompleteQuery(
         @Nullable String name,
         @Nullable Integer typeId,

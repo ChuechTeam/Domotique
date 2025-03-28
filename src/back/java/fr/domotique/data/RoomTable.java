@@ -8,7 +8,7 @@ import io.vertx.sqlclient.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
-import java.util.List;
+import java.util.*;
 
 import static fr.domotique.data.Room.ENTITY;
 
@@ -61,6 +61,18 @@ public class RoomTable extends Table {
     /// Gets all [CompleteRoom] in the database.
     public Future<List<CompleteRoom>> getAllComplete() {
         return queryMany(CompleteRoom.MAP, COMPLETE_MANY_SQL);
+    }
+
+    /// Gets all [CompleteRoom] in the database with the given IDs.
+    public Future<List<CompleteRoom>> getAllComplete(Collection<Integer> ids) {
+        if (ids.isEmpty()) {
+            return Future.succeededFuture(Collections.emptyList());
+        }
+
+        return queryMany(CompleteRoom.MAP,
+            COMPLETE_MANY_SQL + "\n WHERE r.id IN " + paramList(ids.size()),
+            ids.toArray()
+        );
     }
 
     /// Creates a room in the database.

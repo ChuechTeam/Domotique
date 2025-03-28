@@ -13,7 +13,7 @@ import java.util.*;
 
 /// A background verticle that just adds points to users.
 ///
-/// Use [UserOperations#enqueuePointsIncrease(io.vertx.core.Vertx, int, int)] to add points to a user.
+/// Use [UserOperations#enqueuePointsIncrease(io.vertx.core.Vertx, int, PointSource, int)] to add points to a user.
 ///
 /// Must be deployed once only.
 public class PointsVerticle extends VerticleBase {

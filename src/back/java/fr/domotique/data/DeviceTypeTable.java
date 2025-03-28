@@ -17,6 +17,14 @@ public class DeviceTypeTable extends Table {
         return queryMany(ENTITY.mapper(), "SELECT * FROM DeviceType");
     }
 
+    public Future<List<DeviceType>> getAll(Collection<Integer> ids) {
+        if (ids.isEmpty()) {
+            return Future.succeededFuture(Collections.emptyList());
+        }
+
+        return queryMany(ENTITY.mapper(), "SELECT * FROM DeviceType WHERE id IN " + paramList(ids.size()), ids);
+    }
+
     public Future<DeviceType> get(int id) {
         return querySingle(ENTITY.mapper(), "SELECT * FROM DeviceType WHERE id = ?", id);
     }
