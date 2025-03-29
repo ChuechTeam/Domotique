@@ -4,7 +4,7 @@ import api, {Level} from "@/api";
 // Map: Level ---> number of points required to reach that level
 export type PointsReq = {[key in Level]: number};
 
-const useLevelInfoStore = defineStore('levelInfo', {
+export const useLevelInfoStore = defineStore('levelInfo', {
     state() {
         return {
             info: null as PointsReq | null,

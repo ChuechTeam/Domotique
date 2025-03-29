@@ -82,7 +82,7 @@ public class UserSection extends Section {
         .summary("Get a full user by ID")
         .description("Gets a user by their ID, and return their public AND private data. Only available for admins.")
         .pathParam("userId", int.class, "The ID of the user.")
-        .response(200, UserProfile.class, "The user's data.")
+        .response(200, CompleteUser.class, "The user's data.")
         .response(204, "User not found.")
         .response(401, ErrorResponse.class, "You are not logged in.")
         .response(403, ErrorResponse.class, "You don't have the rights to access this resource.");
@@ -392,7 +392,7 @@ public class UserSection extends Section {
 
         // If we're trying to modify another user's profile, make sure we're an admin.
         boolean isMe = userId == auth.getUserId();
-        if (isMe) {
+        if (!isMe) {
             auth.requireAuth(Level.EXPERT);
         }
 
@@ -479,7 +479,7 @@ public class UserSection extends Section {
 
         // If we're trying to modify another user's profile, make sure we're an admin.
         boolean isMe = userId == auth.getUserId();
-        if (isMe) {
+        if (!isMe) {
             auth.requireAuth(Level.EXPERT);
         }
 
@@ -498,7 +498,7 @@ public class UserSection extends Section {
         }
 
         // Verify old password only when we aren't editing our own password
-        if (!isMe || !auth.checkPassword(input.oldPassword, user.getPassHash())) {
+        if (isMe && !auth.checkPassword(input.oldPassword, user.getPassHash())) {
             throw new RequestException("L'ancien mot de passe est incorrect.", 403);
         }
 
@@ -543,7 +543,7 @@ public class UserSection extends Section {
 
         // If we're trying to delete another user, make sure we're an admin.
         boolean isMe = userId == auth.getUserId();
-        if (isMe) {
+        if (!isMe) {
             auth.requireAuth(Level.EXPERT);
         }
 

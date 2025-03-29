@@ -236,7 +236,7 @@ export class UsersApi extends runtime.BaseAPI {
      * Gets a user by their ID, and return their public AND private data. Only available for admins.
      * Get a full user by ID
      */
-    async findFullUserRaw(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
+    async findFullUserRaw(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompleteUser>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -255,14 +255,14 @@ export class UsersApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserProfileFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CompleteUserFromJSON(jsonValue));
     }
 
     /**
      * Gets a user by their ID, and return their public AND private data. Only available for admins.
      * Get a full user by ID
      */
-    async findFullUser(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserProfile | null | undefined > {
+    async findFullUser(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompleteUser | null | undefined > {
         const response = await this.findFullUserRaw(requestParameters, initOverrides);
         switch (response.raw.status) {
             case 200:

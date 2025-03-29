@@ -3,6 +3,7 @@ import {RouterView, useRouter} from 'vue-router'
 import {useAuthStore} from "@/stores/auth"
 import {storeToRefs} from "pinia";
 import {watch} from "vue";
+import { Toast } from 'primevue';
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -28,6 +29,10 @@ watch(isLoggedIn, () => {
 
 <template>
     <RouterView />
+    <!-- Empty dialog is there cause styles wouldn't load properly else(???) -->
+    <Dialog/>
+    <!-- Toasts! -->
+    <Toast position="bottom-center" />
 </template>
 
 <style scoped>

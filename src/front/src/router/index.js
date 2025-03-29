@@ -7,6 +7,11 @@ import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileView from "@/views/app/ProfileView.vue";
 import HomeView from '@/views/tour/HomeView.vue';
+import ProfileEditModal from "@/views/app/ProfileEditModal.vue";
+import CredentialsEditModal from "@/views/app/CredentialsEditModal.vue";
+import TechView from '@/views/app/TechView.vue';
+import DevicesView from '@/views/app/DevicesView.vue';
+import DeviceDetailView from '@/views/app/DeviceDetailView.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,7 +58,49 @@ const router = createRouter({
                     path: "/profile/:userId(\\d+)",
                     name: "profile",
                     component: ProfileView,
-                    props: true
+                    props: true,
+                    children: [
+                        {
+                            path: "edit",
+                            name: "profile-edit",
+                            component: ProfileEditModal,
+                            props: true,
+                        },
+                        {
+                            path: "creds",
+                            name: "profile-creds",
+                            component: CredentialsEditModal,
+                            props: true,
+                        }
+                    ]
+                },
+                {
+                    path: "/tech",
+                    name: "tech",
+                    component: TechView,
+                    props: true,
+                    children: [
+                        {
+                            path: "devices",
+                            name: "devices",
+                            component: DevicesView
+                        },
+
+                        {
+                            path: "devices/:deviceId(\\d+)",
+                            name: "device-detail",
+                            component: DeviceDetailView,
+                            props: true,
+                        },
+                        {
+                            path: "rooms",
+                            name: "rooms"
+                        },
+                        {
+                            path: "types",
+                            name: "types"
+                        }
+                    ]
                 }
             ]
         },

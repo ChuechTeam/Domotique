@@ -17,12 +17,20 @@ const props = defineProps({
 
 const userId = parseInt(props.userId);
 const isCurrentUser = ref(userId === auth.userId);
+const canEdit = computed(() => isCurrentUser.value || auth.user.profile.level === "EXPERT");
+
 let profile;
 if (isCurrentUser.value) {
     const {user} = storeToRefs(auth);
     profile = computed(() => user.value.profile);
 } else {
     profile = ref(await api.users.findUser({ userId: props.userId }));
+}
+
+function profileUpdated(profile) {
+    if (!isCurrentUser.value) {
+        profile.value = profile;
+    }
 }
 
 // Role and Level colors
@@ -50,7 +58,7 @@ const getLevelColor = (level) => {
 <template>
     <div class="container py-3">
         <div v-if="!profile" class="alert alert-warning">
-            Profile not found
+            Ce profil n'existe pas.
         </div>
 
         <div v-else class="profile-container">
@@ -140,11 +148,14 @@ const getLevelColor = (level) => {
             </div>
 
             <!-- Action Buttons - Only show for current user -->
-            <div v-if="isCurrentUser" class="text-center mt-2">
-                <button class="btn btn-primary me-2">Edit Profile</button>
-                <button class="btn btn-outline-secondary">Change Password</button>
+            <div v-if="canEdit" class="text-center mt-2">
+                <router-link class="btn btn-primary me-2" :to="{ name: 'profile-edit', params: { userId } }">Edit Profile</router-link>
+                <router-link class="btn btn-outline-secondary" :to="{ name: 'profile-creds', params: { userId } }">Change Password</router-link>
             </div>
         </div>
+        <RouterView v-slot="{ Component }">
+            <component :is="Component" @profile-update="profileUpdated"/>
+        </RouterView>   
     </div>
 </template>
 

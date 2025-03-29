@@ -26,3 +26,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+:root {
+  --color-admin: #d6fd96;
+  --color-admin-dark: #aed62c;
+  --color-admin-light: #dcffa4;
+
+  --gradient-admin: linear-gradient(
+    135deg,
+    var(--color-admin) 0%,
+    var(--color-admin-light) 100%
+  );
+}

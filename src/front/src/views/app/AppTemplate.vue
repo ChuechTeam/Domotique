@@ -17,11 +17,11 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
 
 
 <template>
-    <div>
+    <div class="app-root">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
             <RouterLink class="navbar-brand fw-bold" to="/dashboard">Retraités Connectés</RouterLink>
             <div class="d-flex align-items-center gap-3">
-                <RouterLink class="nav-link" to="/devices">Appareils</RouterLink>
+                <RouterLink class="nav-link" to="/tech">Technologie</RouterLink>
                 <RouterLink class="nav-link" to="/rooms">Salles</RouterLink>
                 <RouterLink class="nav-link" to="/profiles">Profils</RouterLink>
                 <RouterLink class="nav-link" to="/themes">Thèmes</RouterLink>
@@ -31,8 +31,9 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
             </RouterLink>
         </nav>
         <main class="content">
-            <Suspense class="content">
-                <RouterView/>
+            <Suspense>
+                <!-- Use $route.params as key so the component reloads when same route but different parameters (userId, deviceId...) -->
+                <RouterView :key="$route.params" />
                 <template #fallback>
                     <div class="spinner-border mx-auto" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -44,8 +45,16 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
 </template>
 
 <style scoped>
+.app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
 .content {
     padding-top: 8px;
+    flex: 1;
+    overflow: auto;
 }
 .navbar-brand {
     font-size: 1.5rem;
