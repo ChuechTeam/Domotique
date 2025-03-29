@@ -22,7 +22,6 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
             <RouterLink class="navbar-brand fw-bold" to="/dashboard">Retraités Connectés</RouterLink>
             <div class="d-flex align-items-center gap-3">
                 <RouterLink class="nav-link" to="/tech">Technologie</RouterLink>
-                <RouterLink class="nav-link" to="/rooms">Salles</RouterLink>
                 <RouterLink class="nav-link" to="/profiles">Profils</RouterLink>
                 <RouterLink class="nav-link" to="/themes">Thèmes</RouterLink>
             </div>

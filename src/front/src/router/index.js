@@ -83,14 +83,13 @@ const router = createRouter({
                         {
                             path: "devices",
                             name: "devices",
-                            component: DevicesView
-                        },
-
-                        {
-                            path: "devices/:deviceId(\\d+)",
-                            name: "device-detail",
-                            component: DeviceDetailView,
-                            props: true,
+                            component: DevicesView,
+                            children: [{
+                                path: ":deviceId(\\d+)",
+                                name: "device-detail",
+                                component: DeviceDetailView,
+                                props: true,
+                            }]
                         },
                         {
                             path: "rooms",

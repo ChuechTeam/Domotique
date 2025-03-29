@@ -79,7 +79,7 @@ async function togglePower(id: number) {
 }
 </script>
 <template>
-    <div class="box container">
+    <div class="box container" v-if="$route.name === 'devices'">
         <div class="-filters">
             <div class="filter-section">
                 <h3>Filtres</h3>
@@ -114,6 +114,7 @@ async function togglePower(id: number) {
             </div>
         </div>
     </div>
+    <RouterView v-else />
 </template>
 <style lang="css" scoped>
 .box {
