@@ -180,7 +180,7 @@ public class DeviceSection extends Section {
         }
     }
 
-    @ApiDoc(value = "Data for PATCH operations on a device.")
+    @ApiDoc(value = "Data for PATCH operations on a device.", optional = true)
     record DevicePatchInput(
         String name, // required
         JsonNullable<String> description,
@@ -332,9 +332,6 @@ public class DeviceSection extends Section {
             throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
         }
 
-        // Remove those that are not in the device type
-        DeviceOperations.fixAttributes(input.attributes, deviceType, false);
-
         // See if our device turned off or on.
         boolean devicePowerChanged = input.powered != null && input.powered != device.isPowered();
 
@@ -344,7 +341,10 @@ public class DeviceSection extends Section {
         if (input.typeId != null) device.setTypeId(input.typeId);
         input.roomId.ifPresent(device::setRoomId);
         input.userId.ifPresent(device::setUserId);
+
         input.attributes.forEach((k, v) -> device.getAttributes().put(k, v));
+        DeviceOperations.fixAttributes(device.getAttributes(), deviceType, true);
+
         if (input.powered != null) device.setPowered(input.powered);
         if (input.energyConsumption != null) device.setEnergyConsumption(input.energyConsumption);
 

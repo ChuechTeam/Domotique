@@ -1,7 +1,15 @@
 <script lang="ts" setup>
 import api, { CompleteDevice } from '@/api';
 import DeviceCard from '@/components/DeviceCard.vue';
-import { ref, watch } from 'vue';
+import FullscreenSpinner from '@/components/FullscreenSpinner.vue';
+import { useGuards } from '@/guards';
+import { useAuthStore } from '@/stores/auth';
+import { useGlobalDialogsStore } from '@/stores/globalDialogs';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
+const guards = useGuards()
+const router = useRouter();
 
 const devices = ref<CompleteDevice[]>([]);
 const filters = ref({
@@ -10,6 +18,8 @@ const filters = ref({
 });
 const promise = ref<ReturnType<typeof api.devices.getDevices>>(null);
 const searchTimer = ref<ReturnType<typeof setTimeout>>(null);
+
+const loading = computed(() => promise.value != null);
 
 function load() {
     let thisProm: any;
@@ -36,6 +46,7 @@ function load() {
 }
 
 watch(filters, () => {
+    // Trigger refresh when changing filters.
     clearTimeout(searchTimer.value);
     searchTimer.value = setTimeout(load, 150);
 }, { deep: true });
@@ -44,44 +55,41 @@ load(); // Initial load
 async function togglePower(id: number) {
     try {
         // Find the device in our list
-        const deviceIndex = devices.value.findIndex(d => d.id === id);
-        if (deviceIndex === -1) return;
-        
-        const device = devices.value[deviceIndex];
-        const newPoweredState = !device.powered;
-        
+        const device = devices.value.find(d => d.id === id);
+        if (!device) return;
+
         // Update the device via API
         await api.devices.patchDevice({
             deviceId: id,
             devicePatchInput: {
-                // Keep all existing values but toggle the powered state
-                powered: newPoweredState,
-                name: device.name,
-                energyConsumption: device.energyConsumption,
-                typeId: device.type.id,
-                attributes: device.attributes,
-                // Optional fields
-                description: device.description,
-                roomId: device.room?.id,
-                userId: device.owner?.id
+                powered: !device.powered
             }
         });
-        
+
         // Update the local device data with the new state
-        devices.value[deviceIndex] = {
-            ...device,
-            powered: newPoweredState
-        };
+        device.powered = !device.powered
     } catch (error) {
         console.error('Failed to toggle device power:', error);
         // You might want to add error handling/notification here
     }
 }
+
+function createNewDevice() {
+    if (!guards.mustManage()) {
+        return;
+    }
+
+    router.push("/tech/devices/new");
+}
 </script>
 <template>
-    <div class="box container" v-if="$route.name === 'devices'">
+    <div class="box container-lg" v-if="$route.name === 'devices'">
         <div class="-filters">
             <div class="filter-section">
+                <Button v-slot="sp" @click="createNewDevice">
+                    Créer un appareil
+                </Button>
+
                 <h3>Filtres</h3>
 
                 <div class="filter-item">
@@ -101,20 +109,24 @@ async function togglePower(id: number) {
             </div>
         </div>
         <div class="-results">
-            <div v-if="devices.length === 0" class="no-results">
+            <div v-if="loading"><FullscreenSpinner/></div>
+            <div v-else-if="devices.length === 0" class="no-results">
                 Aucun appareil trouvé.
             </div>
             <div v-else class="device-grid">
-                <DeviceCard 
-                    v-for="device in devices" 
-                    :key="device.id" 
-                    :device="device" 
-                    @toggle-power="togglePower"
-                />
+                <DeviceCard v-for="device in devices" :key="device.id" :device="device" @toggle-power="togglePower" />
             </div>
         </div>
     </div>
-    <RouterView v-else />
+    <RouterView v-else v-slot="{ Component }">
+        <Suspense>
+            <component :is="Component" />
+
+            <template #fallback>
+                <FullscreenSpinner />
+            </template>
+        </Suspense>
+    </RouterView>
 </template>
 <style lang="css" scoped>
 .box {
@@ -122,22 +134,17 @@ async function togglePower(id: number) {
     grid-template:
         "filters results" 1fr / minmax(320px, auto) minmax(auto, 1280px);
 
-    height: 100%;
+    min-height: 0;
     flex: 1;
     padding-top: 2rem;
-
-    & .-banner {
-        max-width: calc(400px + 1280px);
-        width: 100%;
-
-        margin-left: auto;
-    }
 
     & .-results {
         grid-area: results;
         padding-left: 1rem;
         padding-right: 1rem;
         border-left: 1px solid rgba(4, 91, 172, 0.1);
+
+        overflow: auto;
     }
 
     & .-filters {
@@ -145,6 +152,7 @@ async function togglePower(id: number) {
         padding-right: 1em;
 
         width: 100%;
+        height: 100%;
     }
 }
 
@@ -156,6 +164,30 @@ async function togglePower(id: number) {
     max-width: 400px;
     margin-left: auto;
 }
+
+
+@media (max-width: 768px) {
+    .box {
+        grid-template:
+            "filters" auto
+            "results" auto / auto;
+
+        min-height: unset;
+        gap: 2rem;
+
+        & .-results {
+            border: none;
+            padding: 0;
+            overflow: unset;
+        }
+    }
+
+    .filter-section {
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
 
 .filter-item {
     display: flex;

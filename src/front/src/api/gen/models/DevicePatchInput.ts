@@ -24,19 +24,19 @@ export interface DevicePatchInput {
      * @type {number}
      * @memberof DevicePatchInput
      */
-    energyConsumption: number;
+    energyConsumption?: number;
     /**
      * 
      * @type {boolean}
      * @memberof DevicePatchInput
      */
-    powered: boolean;
+    powered?: boolean;
     /**
      * 
      * @type {string}
      * @memberof DevicePatchInput
      */
-    name: string;
+    name?: string;
     /**
      * 
      * @type {string}
@@ -48,13 +48,13 @@ export interface DevicePatchInput {
      * @type {number}
      * @memberof DevicePatchInput
      */
-    typeId: number;
+    typeId?: number;
     /**
      * 
      * @type {{ [key: string]: object; }}
      * @memberof DevicePatchInput
      */
-    attributes: { [key: string]: object; };
+    attributes?: { [key: string]: object; };
     /**
      * 
      * @type {number}
@@ -73,11 +73,6 @@ export interface DevicePatchInput {
  * Check if a given object implements the DevicePatchInput interface.
  */
 export function instanceOfDevicePatchInput(value: object): value is DevicePatchInput {
-    if (!('energyConsumption' in value) || value['energyConsumption'] === undefined) return false;
-    if (!('powered' in value) || value['powered'] === undefined) return false;
-    if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('typeId' in value) || value['typeId'] === undefined) return false;
-    if (!('attributes' in value) || value['attributes'] === undefined) return false;
     return true;
 }
 
@@ -91,12 +86,12 @@ export function DevicePatchInputFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'energyConsumption': json['energyConsumption'],
-        'powered': json['powered'],
-        'name': json['name'],
+        'energyConsumption': json['energyConsumption'] == null ? undefined : json['energyConsumption'],
+        'powered': json['powered'] == null ? undefined : json['powered'],
+        'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
-        'typeId': json['typeId'],
-        'attributes': json['attributes'],
+        'typeId': json['typeId'] == null ? undefined : json['typeId'],
+        'attributes': json['attributes'] == null ? undefined : json['attributes'],
         'userId': json['userId'] == null ? undefined : json['userId'],
         'roomId': json['roomId'] == null ? undefined : json['roomId'],
     };

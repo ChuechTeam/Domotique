@@ -4,9 +4,14 @@ import {RouterView, RouterLink, useRouter} from "vue-router";
 import {Menubar} from "primevue";
 import {useAuthStore} from "@/stores/auth.js";
 import {computed} from "vue";
+import { useGlobalDialogsStore } from "@/stores/globalDialogs";
+import { storeToRefs } from "pinia";
 
 const auth = useAuthStore();
 const router = useRouter();
+const globalDialogs = useGlobalDialogsStore();
+
+const { levelTooLow } = storeToRefs(globalDialogs);
 
 function logout() {
     auth.logout()
@@ -40,6 +45,12 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
                 </template>
             </Suspense>
         </main>
+
+        <Dialog v-model:visible="levelTooLow" modal header="Niveau insuffisant">
+            <p>Votre niveau est insuffisant pour effectuer cette action !</p>
+            <p>Pensez à participer plus pour atteindre le niveau supérieur !</p>
+            <Button label="OK" @click="levelTooLow = false" class="mt-2" fluid />
+        </Dialog>
     </div>
 </template>
 

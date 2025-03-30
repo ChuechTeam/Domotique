@@ -17,6 +17,10 @@ public class DeviceTypeTable extends Table {
         return queryMany(ENTITY.mapper(), "SELECT * FROM DeviceType");
     }
 
+    public Future<List<DeviceType>> getAllByName(String name) {
+        return queryMany(ENTITY.mapper(), "SELECT * FROM DeviceType WHERE INSTR(name, ?) > 0", name);
+    }
+
     public Future<List<DeviceType>> getAll(Collection<Integer> ids) {
         if (ids.isEmpty()) {
             return Future.succeededFuture(Collections.emptyList());

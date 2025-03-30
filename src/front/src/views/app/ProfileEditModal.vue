@@ -53,7 +53,7 @@ async function save() {
         lastName: p.lastName,
         gender: p.gender
     };
-    const adminValues = auth.canEditOtherUsers ? {
+    const adminValues = auth.canAdminister ? {
         role: p.role,
         level: p.level,
         points: p.points
@@ -145,7 +145,7 @@ watch(() => profile?.value?.role, (val, _) => {
                     <ValidationErrList :errors="err?.data?.gender" />
                 </FloatLabel>
 
-                <div class="-admin" v-if="auth.canEditOtherUsers">
+                <div class="-admin" v-if="auth.canAdminister">
                     <h3>Contrôles administrateur</h3>
                     <div class="-admin-fields -through">
                         <FloatLabel variant="in">

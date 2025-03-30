@@ -49,7 +49,7 @@ load(); // Initial load
                 <div class="-tabs">
                     <RouterLink class="-tab" to="/tech/devices">Appareils</RouterLink>
                     <RouterLink class="-tab" to="/tech/rooms">Salles</RouterLink>
-                    <RouterLink class="-tab" to="/tech/types">Types d'appareils</RouterLink>
+                    <RouterLink class="-tab" to="/tech/types">Modèles</RouterLink>
                 </div>
             </div>
         </header>

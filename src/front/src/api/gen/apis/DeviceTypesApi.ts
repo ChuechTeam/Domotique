@@ -44,6 +44,7 @@ export interface GetDeviceTypeByIdRequest {
 }
 
 export interface GetDeviceTypesRequest {
+    name?: string;
     ids?: Array<number>;
 }
 
@@ -177,6 +178,10 @@ export class DeviceTypesApi extends runtime.BaseAPI {
      */
     async getDeviceTypesRaw(requestParameters: GetDeviceTypesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeviceTypesResponse>> {
         const queryParameters: any = {};
+
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
 
         if (requestParameters['ids'] != null) {
             queryParameters['ids'] = requestParameters['ids'];

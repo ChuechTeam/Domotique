@@ -12,6 +12,10 @@ import CredentialsEditModal from "@/views/app/CredentialsEditModal.vue";
 import TechView from '@/views/app/TechView.vue';
 import DevicesView from '@/views/app/DevicesView.vue';
 import DeviceDetailView from '@/views/app/DeviceDetailView.vue';
+import NewDeviceView from '@/views/app/NewDeviceView.vue';
+import RoomsView from '@/views/app/RoomsView.vue';
+import DeviceTypesView from '@/views/app/DeviceTypesView.vue';
+import { useGuards } from '@/guards';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,12 +69,38 @@ const router = createRouter({
                             name: "profile-edit",
                             component: ProfileEditModal,
                             props: true,
+
+                            // Prevent users from accessing the edit page for other users if they are not admins.
+                            beforeEnter(to, from) {
+                                const guards = useGuards();
+                                const auth = useAuthStore();
+
+                                console.log(to, auth.userId);
+
+                                if (auth.userId.toString() === to.params.userId) {
+                                    return;
+                                } else if (!guards.mustHaveAdminRights()) {
+                                    return from?.fullPath ?? "/dashboard";
+                                }
+                            }
                         },
                         {
                             path: "creds",
                             name: "profile-creds",
                             component: CredentialsEditModal,
                             props: true,
+
+                            // Prevent users from accessing the password edit page for other users if they are not admins.
+                            beforeEnter(to, from) {
+                                const guards = useGuards();
+                                const auth = useAuthStore();
+
+                                if (auth.userId.toString() === to.params.userId) {
+                                    return;
+                                } else if (!guards.mustHaveAdminRights()) {
+                                    return from?.fullPath ?? "/dashboard";
+                                }
+                            }
                         }
                     ]
                 },
@@ -89,15 +119,29 @@ const router = createRouter({
                                 name: "device-detail",
                                 component: DeviceDetailView,
                                 props: true,
+                            }, {
+                                path: "new",
+                                name: "device-new",
+                                component: NewDeviceView,
+
+                                // Prevent users from creating new devices if they are not admins.
+                                beforeEnter(to, from) {
+                                    const guards = useGuards();
+                                    if (!guards.mustManage()) {
+                                        return from?.fullPath ?? "/dashboard";
+                                    }
+                                }
                             }]
                         },
                         {
                             path: "rooms",
-                            name: "rooms"
+                            name: "rooms",
+                            component: RoomsView
                         },
                         {
                             path: "types",
-                            name: "types"
+                            name: "types",
+                            component: DeviceTypesView
                         }
                     ]
                 }
@@ -149,7 +193,13 @@ router.beforeEach(async (to, from) => {
             return "/email-confirm";
         }
 
-        // Else, we're all good! Continue!
+        // Else, we're all good! Continue! Let's process some logic for other routes in the app
+
+        if (to.name === "tech") {
+            console.log("pouet")
+            // tech isn't a real route, but a parent of devices and rooms.
+            return "/tech/devices";
+        }
     } else if (inArea(to, "tour") && auth.isLoggedIn) {
         // If the user is logged in, redirect them to the dashboard instead.
         return "/dashboard";

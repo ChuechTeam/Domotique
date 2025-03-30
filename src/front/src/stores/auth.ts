@@ -45,7 +45,8 @@ export const useAuthStore = defineStore('auth', {
          */
         role: s => s.user?.profile?.role ?? "RESIDENT",
 
-        canEditOtherUsers: s => s.user?.profile?.level === "EXPERT"
+        canAdminister: s => s.user?.profile?.level === "EXPERT",
+        canManage: s => s.user?.profile?.level === "ADVANCED" || s.user?.profile?.level === "EXPERT",
     },
     actions: {
         /**

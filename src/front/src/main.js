@@ -8,7 +8,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
-import { Dialog, FloatLabel, InputText, Select, Button, InputNumber, Tag, Chip, Card, Textarea, ProgressSpinner, Message } from 'primevue';
+import { Dialog, FloatLabel, InputText, Select, Button, InputNumber, Tag, Chip, Card, Textarea, ProgressSpinner, Message, AutoComplete, ToggleSwitch, IftaLabel, ColorPicker, Popover } from 'primevue';
 import { ToastService } from 'primevue';
 
 import App from './App.vue'
@@ -40,6 +40,11 @@ app.component('Card', Card)
 app.component('Textarea', Textarea)
 app.component('ProgressSpinner', ProgressSpinner)
 app.component('Message', Message)
+app.component('AutoComplete', AutoComplete)
+app.component('ToggleSwitch', ToggleSwitch)
+app.component("IftaLabel", IftaLabel)
+app.component('ColorPicker', ColorPicker)
+app.component('Popover', Popover)
 
 app.use(createPinia())
 app.use(router)

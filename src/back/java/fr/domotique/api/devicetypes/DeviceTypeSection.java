@@ -69,16 +69,20 @@ public class DeviceTypeSection extends Section {
         .summary("Get device types")
         .description("Gets all device types from the database.")
         .optionalQueryParam("ids", int[].class, "The ids of devices to look for. If empty, all device types are returned.")
+        .optionalQueryParam("name", String.class, "The name of the device type to look for. If empty, all device types are returned.")
         .response(200, DeviceTypesResponse.class, "The list of all device types.");
 
     record DeviceTypesResponse(List<CompleteDeviceType> deviceTypes) {}
 
     Future<DeviceTypesResponse> getAll(RoutingContext context) {
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
+        String name = context.queryParams().get("name");
 
         Future<List<DeviceType>> devicesFuture;
         if (!ids.isEmpty()) {
             devicesFuture = server.db().deviceTypes().getAll(ids);
+        } else if (name != null && !name.isEmpty()) {
+            devicesFuture = server.db().deviceTypes().getAllByName(name);
         } else {
             devicesFuture = server.db().deviceTypes().getAll();
         }

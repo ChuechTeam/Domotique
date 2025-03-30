@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { CompleteDevice } from '@/api';
+import { useGuards } from '@/guards';
 import { useRouter } from 'vue-router';
 
 defineProps<{
@@ -7,6 +8,7 @@ defineProps<{
 }>();
 
 const router = useRouter();
+const guards = useGuards();
 
 const emits = defineEmits<{
   (e: 'toggle-power', id: number): void;
@@ -14,6 +16,11 @@ const emits = defineEmits<{
 
 function togglePower(device: CompleteDevice, event: Event) {
   event.stopPropagation(); // Prevent navigation when toggling power
+
+  if (!guards.mustManage()) {
+    return;
+  }
+
   emits('toggle-power', device.id);
 }
 
@@ -30,21 +37,25 @@ function viewDeviceDetails(device: CompleteDevice) {
     <div class="card-header">
       <div class="device-name">
         <h3>{{ device.name }}</h3>
-        <div class="device-type">{{ device.type.name  }}</div>
+        <div class="device-type">{{ device.type.name }}</div>
       </div>
       <div class="power-status" @click="togglePower(device, $event)">
         <span class="status-indicator"></span>
-        <span class="status-text">{{ device.powered ? 'On' : 'Off' }}</span>
+        <span class="status-text">{{ device.powered ? 'ON' : 'OFF' }}</span>
       </div>
     </div>
-    
+
     <div class="card-content">
-      <p v-if="device.description" class="device-description">{{ device.description }}</p>
-      
+      <p class="device-description">{{ device.description }}</p>
+
       <div class="device-info">
         <Tag icon="pi pi-lightbulb" rounded severity="warn">{{ device.energyConsumption.toFixed(2) + ' Wh' }}</Tag>
         <Tag icon="pi pi-home" rounded severity="info" v-if="device.room">{{ device.room.name }}</Tag>
-        <Chip v-if="device.owner" :label="device.owner!.firstName + ' ' + device.owner.lastName" />
+        <Chip v-if="device.owner">
+          <RouterLink :to="{ name: 'profile', params: { userId: device.owner!.id } }"
+            style="text-decoration: none; color: inherit;" @click.stop>{{ device.owner!.firstName + ' ' +
+              device.owner.lastName }}</RouterLink>
+        </Chip>
       </div>
     </div>
   </div>
@@ -62,6 +73,9 @@ function viewDeviceDetails(device: CompleteDevice) {
   cursor: pointer;
 
   --p-chip-padding-y: 0.25rem;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .device-card:hover {
@@ -71,6 +85,12 @@ function viewDeviceDetails(device: CompleteDevice) {
 
 .device-card.powered {
   border-left-color: rgb(16, 110, 101);
+}
+
+.card-content {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -85,9 +105,10 @@ function viewDeviceDetails(device: CompleteDevice) {
   font-size: 1.2rem;
   color: #333;
 }
+
 .device-type {
-    font-size: 0.8rem;
-    opacity: 0.75;
+  font-size: 0.8rem;
+  opacity: 0.75;
 }
 
 .power-status {
@@ -122,6 +143,8 @@ function viewDeviceDetails(device: CompleteDevice) {
   color: #666;
   margin-bottom: 1rem;
   font-size: 0.9rem;
+
+  flex: 1 0 auto;
 }
 
 .device-info {
