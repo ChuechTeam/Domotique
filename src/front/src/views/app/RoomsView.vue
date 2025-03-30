@@ -89,9 +89,12 @@ load(); // Initial load
 <template>
     <div class="rooms-view container-lg">
         <h1 class="header">Salles</h1>
-        
+
         <div class="search-section">
-            <InputText v-model="filters.name" class="search-bar" placeholder="Rechercher une salle" />
+            <IconField class="flex-grow-1">
+                <InputIcon class="pi pi-search" />
+                <InputText v-model="filters.name" fluid placeholder="Rechercher une salle" />
+            </IconField>
             <Button label="Créer" icon="pi pi-plus" class="create-button" @click="openCreateForm" />
         </div>
 
@@ -103,13 +106,9 @@ load(); // Initial load
                 Aucune salle trouvée.
             </div>
             <div v-else class="room-cards">
-                <div 
-                    v-for="room in rooms" 
-                    :key="room.id" 
-                    class="room-card"
+                <div v-for="room in rooms" :key="room.id" class="room-card"
                     :style="{ borderLeft: `6px solid #${room.color.toString(16).padStart(6, '0')}` }"
-                    @click="openEditForm(room)"
-                >
+                    @click="openEditForm(room)">
                     <div class="room-info">
                         <h3 class="room-name">{{ room.name }}</h3>
                         <p v-if="room.owner" class="room-owner">
@@ -125,15 +124,10 @@ load(); // Initial load
         </div>
 
         <!-- Room Form Dialog -->
-        <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ width: '450px' }" 
-                :closable="!loading" :closeOnEscape="!loading">
-            <RoomForm 
-                v-model="formModel" 
-                :roomId="editingRoomId"
-                hide-header
-                @save-success="handleFormSuccess"
-                @cancel="closeForm"
-            />
+        <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ width: '450px' }" :closable="!loading"
+            :closeOnEscape="!loading">
+            <RoomForm v-model="formModel" :roomId="editingRoomId" hide-header @save-success="handleFormSuccess"
+                @cancel="closeForm" />
         </Dialog>
     </div>
 </template>
@@ -158,10 +152,6 @@ load(); // Initial load
     gap: 1rem;
     margin-bottom: 1.5rem;
     align-items: center;
-}
-
-.search-bar {
-    flex-grow: 1;
 }
 
 .room-cards {
@@ -231,7 +221,8 @@ load(); // Initial load
         align-items: stretch;
     }
 
-    .search-bar, .create-button {
+    .search-bar,
+    .create-button {
         width: 100%;
     }
 

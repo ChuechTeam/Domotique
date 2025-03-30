@@ -93,7 +93,10 @@ load(); // Initial load
             <h1 class="header">Modèles</h1>
 
             <div class="search-section">
-                <InputText v-model="filters.name" class="search-bar" placeholder="Rechercher un modèle" />
+                <IconField class="flex-grow-1">
+                    <InputIcon class="pi pi-search" />
+                    <InputText v-model="filters.name" fluid placeholder="Rechercher un modèle" />
+                </IconField>
                 <Button label="Créer" icon="pi pi-plus" class="create-button" @click="openCreateForm" />
             </div>
 

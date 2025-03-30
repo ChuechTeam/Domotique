@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import api, { CompleteDevice } from '@/api';
+import api, { CompleteDevice, DeviceCategory } from '@/api';
 import DeviceCard from '@/components/DeviceCard.vue';
 import FullscreenSpinner from '@/components/FullscreenSpinner.vue';
 import { useGuards } from '@/guards';
+import { deviceCategories, deviceCategoryLabels } from '@/labels';
 import { useAuthStore } from '@/stores/auth';
 import { useGlobalDialogsStore } from '@/stores/globalDialogs';
 import { computed, ref, watch } from 'vue';
@@ -15,6 +16,7 @@ const devices = ref<CompleteDevice[]>([]);
 const filters = ref({
     name: null as string | null,
     powered: null as boolean | null,
+    category: null as DeviceCategory | null,
 });
 const promise = ref<ReturnType<typeof api.devices.getDevices>>(null);
 const searchTimer = ref<ReturnType<typeof setTimeout>>(null);
@@ -28,7 +30,8 @@ function load() {
             const f = filters.value;
             const response = await api.devices.getDevices({
                 name: f.name,
-                powered: f.powered
+                powered: f.powered,
+                category: f.category
             });
             if (thisProm === promise.value) {
                 devices.value = response.devices;
@@ -92,19 +95,29 @@ function createNewDevice() {
 
                 <h3>Filtres</h3>
 
-                <div class="filter-item">
+                <search class="filter-item">
                     <label for="name-filter">Nom</label>
-                    <InputText id="name-filter" v-model="filters.name" placeholder="Rechercher par nom" />
-                </div>
+                    <IconField>
+                        <InputIcon class="pi pi-search" />
+                        <InputText id="name-filter" fluid v-model="filters.name" placeholder="Rechercher par nom" />
+                    </IconField>
+                </search>
 
                 <div class="filter-item">
                     <label for="powered-filter">État</label>
                     <Select id="powered-filter" v-model="filters.powered"
-                        :options="[[null, 'Peu importe'], [true, 'Allumé'], [false, 'Éteint']]"
-                        :option-label="x => x[1]" :option-value="x => x[0]" placeholder="Peu importe" />
+                        :options="[[true, 'Allumé'], [false, 'Éteint']]"
+                        :option-label="x => x[1]" :option-value="x => x[0]" placeholder="Peu importe" show-clear />
                 </div>
 
-                <Button label="Réinitialiser" icon="pi pi-refresh" @click="filters = { name: null, powered: null }"
+                <div class="filter-item">
+                    <label for="category-filter">Catégorie</label>
+                    <Select id="category-filter" v-model="filters.category"
+                        :options="deviceCategories"
+                        :option-label="x => deviceCategoryLabels[x]" placeholder="Peu importe"  show-clear />
+                </div>
+
+                <Button label="Réinitialiser" icon="pi pi-refresh" @click="filters = { name: null, powered: null, category: null }"
                     class="reset-button" />
             </div>
         </div>
@@ -136,7 +149,10 @@ function createNewDevice() {
 
     min-height: 0;
     flex: 1;
-    padding-top: 2rem;
+
+    & .-results, & .-filters {
+        padding-top: 2rem;
+    }
 
     & .-results {
         grid-area: results;

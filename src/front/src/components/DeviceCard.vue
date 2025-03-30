@@ -50,7 +50,9 @@ function viewDeviceDetails(device: CompleteDevice) {
 
       <div class="device-info">
         <Tag icon="pi pi-lightbulb" rounded severity="warn">{{ device.energyConsumption.toFixed(2) + ' Wh' }}</Tag>
-        <Tag icon="pi pi-home" rounded severity="info" v-if="device.room">{{ device.room.name }}</Tag>
+        <Tag icon="pi pi-home" rounded 
+        :style="{'--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff'}" 
+        v-if="device.room">{{ device.room.name }}</Tag>
         <Chip v-if="device.owner">
           <RouterLink :to="{ name: 'profile', params: { userId: device.owner!.id } }"
             style="text-decoration: none; color: inherit;" @click.stop>{{ device.owner!.firstName + ' ' +
