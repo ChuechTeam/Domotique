@@ -20,6 +20,13 @@ import {
     CompleteDeviceTypeToJSON,
     CompleteDeviceTypeToJSONTyped,
 } from './CompleteDeviceType';
+import type { UserProfile } from './UserProfile';
+import {
+    UserProfileFromJSON,
+    UserProfileFromJSONTyped,
+    UserProfileToJSON,
+    UserProfileToJSONTyped,
+} from './UserProfile';
 import type { CompleteRoom } from './CompleteRoom';
 import {
     CompleteRoomFromJSON,
@@ -34,6 +41,12 @@ import {
  * @interface CompleteDevice
  */
 export interface CompleteDevice {
+    /**
+     * 
+     * @type {UserProfile}
+     * @memberof CompleteDevice
+     */
+    owner?: UserProfile;
     /**
      * 
      * @type {number}
@@ -81,7 +94,7 @@ export interface CompleteDevice {
      * @type {CompleteRoom}
      * @memberof CompleteDevice
      */
-    room: CompleteRoom;
+    room?: CompleteRoom;
 }
 
 /**
@@ -94,7 +107,6 @@ export function instanceOfCompleteDevice(value: object): value is CompleteDevice
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('room' in value) || value['room'] === undefined) return false;
     return true;
 }
 
@@ -108,6 +120,7 @@ export function CompleteDeviceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'owner': json['owner'] == null ? undefined : UserProfileFromJSON(json['owner']),
         'energyConsumption': json['energyConsumption'],
         'powered': json['powered'],
         'name': json['name'],
@@ -115,7 +128,7 @@ export function CompleteDeviceFromJSONTyped(json: any, ignoreDiscriminator: bool
         'attributes': json['attributes'],
         'id': json['id'],
         'type': CompleteDeviceTypeFromJSON(json['type']),
-        'room': CompleteRoomFromJSON(json['room']),
+        'room': json['room'] == null ? undefined : CompleteRoomFromJSON(json['room']),
     };
 }
 
@@ -130,6 +143,7 @@ export function CompleteDeviceToJSONTyped(value?: CompleteDevice | null, ignoreD
 
     return {
         
+        'owner': UserProfileToJSON(value['owner']),
         'energyConsumption': value['energyConsumption'],
         'powered': value['powered'],
         'name': value['name'],

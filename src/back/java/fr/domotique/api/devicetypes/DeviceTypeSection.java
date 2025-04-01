@@ -68,12 +68,26 @@ public class DeviceTypeSection extends Section {
     static final RouteDoc GET_DEVICE_TYPES_DOC = new RouteDoc("getDeviceTypes")
         .summary("Get device types")
         .description("Gets all device types from the database.")
+        .optionalQueryParam("ids", int[].class, "The ids of devices to look for. If empty, all device types are returned.")
+        .optionalQueryParam("name", String.class, "The name of the device type to look for. If empty, all device types are returned.")
         .response(200, DeviceTypesResponse.class, "The list of all device types.");
 
     record DeviceTypesResponse(List<CompleteDeviceType> deviceTypes) {}
 
     Future<DeviceTypesResponse> getAll(RoutingContext context) {
-        return server.db().deviceTypes().getAll()
+        List<Integer> ids = readIntListFromQueryParams(context, "ids");
+        String name = context.queryParams().get("name");
+
+        Future<List<DeviceType>> devicesFuture;
+        if (!ids.isEmpty()) {
+            devicesFuture = server.db().deviceTypes().getAll(ids);
+        } else if (name != null && !name.isEmpty()) {
+            devicesFuture = server.db().deviceTypes().getAllByName(name);
+        } else {
+            devicesFuture = server.db().deviceTypes().getAll();
+        }
+
+        return devicesFuture
             .map(deviceTypes -> deviceTypes.stream()
                 .map(CompleteDeviceType::fromDeviceType)
                 .toList())
@@ -97,7 +111,7 @@ public class DeviceTypeSection extends Section {
     // endregion
 
     @ApiDoc("Data for both INSERT and UPDATE operations on a device type.")
-    record DeviceTypeInput(String name, List<AttributeType> attributes) {
+    record DeviceTypeInput(String name, DeviceCategory category, List<AttributeType> attributes) {
         public DeviceTypeInput {
             name = Sanitize.string(name);
         }
@@ -128,6 +142,7 @@ public class DeviceTypeSection extends Section {
         .description("Creates a new device type.")
         .requestBody(DeviceTypeInput.class, new DeviceTypeInput(
             "Smart Watch",
+            DeviceCategory.HEALTH,
             List.of(AttributeType.TEMPERATURE, AttributeType.HUMIDITY)))
         .response(201, CompleteDeviceType.class, "The device type was created successfully.")
         .response(422, ErrorResponse.class, "Some fields are invalid or the device type name already exists.");
@@ -139,7 +154,7 @@ public class DeviceTypeSection extends Section {
         input.validate();
 
         // Create the device type
-        DeviceType deviceType = new DeviceType(0, input.name, input.attributesAsEnumSet());
+        DeviceType deviceType = new DeviceType(0, input.name, input.category, input.attributesAsEnumSet());
 
         server.db().deviceTypes().insert(deviceType).await();
         log.info("Device type created with id {} and name {}", deviceType.getId(), deviceType.getName());
@@ -156,6 +171,7 @@ public class DeviceTypeSection extends Section {
         .pathParam("deviceTypeId", int.class, "The ID of the device type to update.")
         .requestBody(DeviceTypeInput.class, new DeviceTypeInput(
             "Updated Smart Watch",
+            DeviceCategory.HEALTH,
             List.of(AttributeType.TEMPERATURE, AttributeType.HUMIDITY, AttributeType.CALORIES_BURNED)))
         .response(200, CompleteDeviceType.class, "The device type was updated successfully.")
         .response(404, ErrorResponse.class, "Device type not found.")
@@ -181,6 +197,7 @@ public class DeviceTypeSection extends Section {
         // Update device type properties
         deviceType.setName(input.name);
         deviceType.setAttributes(newAttributes);
+        deviceType.setCategory(input.category);
 
         // Submit changes to the database
         server.db().deviceTypes().update(deviceType).await();
@@ -201,7 +218,7 @@ public class DeviceTypeSection extends Section {
             if (!devicesNeedingUpdates.isEmpty()) {
                 // We have some devices to update; begin changing their attributes
                 for (var d : devicesNeedingUpdates) {
-                    DeviceOperations.fixAttributes(d.attributes(), deviceType);
+                    DeviceOperations.fixAttributes(d.attributes(), deviceType, true);
                 }
 
                 // Push the changes to the database

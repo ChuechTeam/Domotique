@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Data for both INSERT and UPDATE operations on a device.
+ * Data for both POST and PUT operations on a device.
  * @export
  * @interface DeviceInput
  */
@@ -60,7 +60,13 @@ export interface DeviceInput {
      * @type {number}
      * @memberof DeviceInput
      */
-    roomId: number;
+    userId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeviceInput
+     */
+    roomId?: number;
 }
 
 /**
@@ -73,7 +79,6 @@ export function instanceOfDeviceInput(value: object): value is DeviceInput {
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('typeId' in value) || value['typeId'] === undefined) return false;
     if (!('attributes' in value) || value['attributes'] === undefined) return false;
-    if (!('roomId' in value) || value['roomId'] === undefined) return false;
     return true;
 }
 
@@ -93,7 +98,8 @@ export function DeviceInputFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'description': json['description'],
         'typeId': json['typeId'],
         'attributes': json['attributes'],
-        'roomId': json['roomId'],
+        'userId': json['userId'] == null ? undefined : json['userId'],
+        'roomId': json['roomId'] == null ? undefined : json['roomId'],
     };
 }
 
@@ -114,6 +120,7 @@ export function DeviceInputToJSONTyped(value?: DeviceInput | null, ignoreDiscrim
         'description': value['description'],
         'typeId': value['typeId'],
         'attributes': value['attributes'],
+        'userId': value['userId'],
         'roomId': value['roomId'],
     };
 }

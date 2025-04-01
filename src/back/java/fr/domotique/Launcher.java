@@ -1,6 +1,9 @@
 package fr.domotique;
 
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.Module;
 import io.vertx.core.*;
+import io.vertx.core.json.jackson.*;
 import io.vertx.launcher.application.*;
 
 /// The main class that just deploys the [MainVerticle]. No need for extraneous console arguments!

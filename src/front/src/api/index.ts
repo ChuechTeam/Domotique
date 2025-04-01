@@ -7,6 +7,17 @@ export type JSErrResponse = Response & { errData: ErrorResponse };
 // Our customized ResponseError; cast to it to get bonus attributes!
 export type DomoResponseError = ResponseError & { response: JSErrResponse };
 
+// Data contained for a validation error within the "data" attribute.
+export type ValidationData<T> = {
+    [k in keyof T]?: k extends (infer U)[] ? ValidationData<U>[] // array -> array of validation data
+                     : (k extends Record<any, any> ? ValidationData<k> : string[]) // // object -> object of validation data; else string array
+} 
+
+// Like ErroResponse, but with validation data
+export type ValidationErrorResponse<T> = ErrorResponse & {
+    data: ValidationData<T>;
+};
+
 // You can add middlewares through this "config" variable: config.middleware.push(...)
 export const config = new Configuration({
     // Make sure the base path is just the origin (i.e. http://domain.name:port part)
@@ -94,6 +105,13 @@ export function findResponseOrThrow(error: Error, includeInternalErrors = false)
     } else {
         throw error;
     }
+}
+
+export function isErr(x: any): x is ErrorResponse {
+    return x && "code" in x && "message" in x && typeof x.message === "string";
+}
+export function isOk<T>(x: T | ErrorResponse): x is T {
+    return !isErr(x);
 }
 
 // All available API modules are there.

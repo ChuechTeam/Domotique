@@ -26,8 +26,12 @@ public class Device {
     /// The [DeviceType] of this device. Required!
     int typeId;
 
-    /// The [Room] in which this device is located. Required!
-    int roomId;
+    /// The [Room] in which this device is located. Can be null.
+    Integer roomId;
+
+    /// The user owning this device, who often has exclusive access to it. Can be `null` for a publicly available
+    /// device.
+    Integer userId;
 
     /// Attributes assigned to this device
     ///
@@ -61,6 +65,7 @@ public class Device {
             r.getString(s.next()),
             r.getInteger(s.next()),
             r.getInteger(s.next()),
+            r.getInteger(s.next()),
             attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
             r.getDouble(s.next())
@@ -70,6 +75,7 @@ public class Device {
         new EntityColumn<>("description", Device::getDescription),
         new EntityColumn<>("typeId", Device::getTypeId),
         new EntityColumn<>("roomId", Device::getRoomId),
+        new EntityColumn<>("userId", Device::getUserId),
         new EntityColumn<>("attributes", x -> attributesToDB(x.attributes)),
         new EntityColumn<>("powered", Device::isPowered),
         new EntityColumn<>("energyConsumption", Device::getEnergyConsumption)

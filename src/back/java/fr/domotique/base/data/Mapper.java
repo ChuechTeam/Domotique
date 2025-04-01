@@ -70,6 +70,14 @@ public abstract class Mapper<T> implements Function<Row, T> {
     public final static class Session {
         int column;
 
+        public Session() {
+            this.column = 0;
+        }
+
+        public Session(int column) {
+            this.column = column;
+        }
+
         public int get() {
             return column;
         }

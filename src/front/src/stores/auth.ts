@@ -6,7 +6,8 @@ import api, {
     LoginInput,
     CompleteUser,
     RegisterInput,
-    UpdateProfileInput
+    PatchProfileInput,
+    UserProfile
 } from "@/api";
 
 /**
@@ -30,7 +31,22 @@ export const useAuthStore = defineStore('auth', {
          * - the user is already logged in
          * - last time the user visited the app, they were logged in
          */
-        isProbablyLoggedIn: s => s.user != null || localStorage.getItem("wasLoggedIn") != null
+        isProbablyLoggedIn: s => s.user != null || localStorage.getItem("wasLoggedIn") != null,
+        /**
+         * The user id of the logged-in user. Null if not logged-in.
+         */
+        userId: s => s.user?.profile?.id ?? null,
+        /**
+         * The level of the logged-in user. "BEGINNER" if not logged-in.
+         */
+        level: s => s.user?.profile?.level ?? "BEGINNER",
+        /**
+         * The role of the logged-in user. "RESIDENT" if not logged-in.
+         */
+        role: s => s.user?.profile?.role ?? "RESIDENT",
+
+        canAdminister: s => s.user?.profile?.level === "EXPERT",
+        canManage: s => s.user?.profile?.level === "ADVANCED" || s.user?.profile?.level === "EXPERT",
     },
     actions: {
         /**
@@ -103,7 +119,7 @@ export const useAuthStore = defineStore('auth', {
          * Register a new user with the given registration information.
          * @param reg the registration information
          */
-        async register(reg: RegisterInput): Promise<ErrorResponse | void> {
+        async register(reg: RegisterInput): Promise<ErrorResponse | undefined> {
             try {
                 this.setUser(await api.users.register({
                     registerInput: reg
@@ -117,15 +133,15 @@ export const useAuthStore = defineStore('auth', {
          * Update the profile of the currently logged in user.
          * @param input the profile data to change
          */
-        async updateProfile(input: UpdateProfileInput): Promise<ErrorResponse | void> {
+        async updateProfile(input: PatchProfileInput): Promise<ErrorResponse | UserProfile> {
             if (!this.isLoggedIn) {
                 throw new Error("Cannot update profile while not being logged in!");
             }
 
             try {
-                this.user.profile = await api.users.updateProfile({
+                return this.user.profile = await api.users.updateProfile({
                     userId: "me",
-                    updateProfileInput: input
+                    patchProfileInput: input
                 });
             } catch (e) {
                 return findErrDataOrThrow(e);
@@ -137,7 +153,7 @@ export const useAuthStore = defineStore('auth', {
          * @param oldPassword the old password
          * @param newPassword the new password (must be good!)
          */
-        async updatePassword(oldPassword: string, newPassword: string): Promise<ErrorResponse | void> {
+        async updatePassword(oldPassword: string, newPassword: string): Promise<ErrorResponse | undefined> {
             if (!this.isLoggedIn) {
                 throw new Error("Cannot update password while not being logged in!");
             }

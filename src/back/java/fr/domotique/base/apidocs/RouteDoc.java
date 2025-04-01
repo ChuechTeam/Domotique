@@ -1,6 +1,5 @@
 package fr.domotique.base.apidocs;
 
-import lombok.*;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.*;
@@ -41,6 +40,9 @@ public class RouteDoc {
 
     /// The content type of the request body.
     String requestBodyType = "application/json";
+    
+    /// True when all properties of the request body should be marked as optional.
+    boolean requestBodyFullyOptional = false;
 
     /// Tags for categorizing this endpoint in documentation.
     final List<String> tags = new ArrayList<>();
@@ -104,6 +106,39 @@ public class RouteDoc {
         this.requestBody = requestBody;
         this.requestBodyType = requestBodyType;
         this.requestBodyExample = requestBodyExample;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody() {
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody) {
+        this.requestBody = requestBody;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, @Nullable Object requestBodyExample) {
+        this.requestBody = requestBody;
+        this.requestBodyExample = requestBodyExample;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, String requestBodyType) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        this.requestBodyFullyOptional = true;
+        return this;
+    }
+    
+    public RouteDoc patchRequestBody(@Nullable Type requestBody, String requestBodyType, @Nullable Object requestBodyExample) {
+        this.requestBody = requestBody;
+        this.requestBodyType = requestBodyType;
+        this.requestBodyExample = requestBodyExample;
+        this.requestBodyFullyOptional = true;
         return this;
     }
 
@@ -179,6 +214,11 @@ public class RouteDoc {
 
     public RouteDoc queryParam(String name, Type valType, String description) {
         params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType));
+        return this;
+    }
+
+    public RouteDoc optionalQueryParam(String name, Type valType, String description) {
+        params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType).required(false));
         return this;
     }
 

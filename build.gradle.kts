@@ -46,6 +46,8 @@ dependencies {
 
     // JSON support
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.18.3")
+    implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 
     // JTE Templating support
     implementation("io.vertx:vertx-web-templ-jte")

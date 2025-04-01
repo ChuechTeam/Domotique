@@ -43,6 +43,11 @@ export interface GetDeviceTypeByIdRequest {
     deviceTypeId: number;
 }
 
+export interface GetDeviceTypesRequest {
+    name?: string;
+    ids?: Array<number>;
+}
+
 export interface UpdateDeviceTypeRequest {
     deviceTypeId: number;
     deviceTypeInput: DeviceTypeInput;
@@ -171,8 +176,16 @@ export class DeviceTypesApi extends runtime.BaseAPI {
      * Gets all device types from the database.
      * Get device types
      */
-    async getDeviceTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeviceTypesResponse>> {
+    async getDeviceTypesRaw(requestParameters: GetDeviceTypesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeviceTypesResponse>> {
         const queryParameters: any = {};
+
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
+
+        if (requestParameters['ids'] != null) {
+            queryParameters['ids'] = requestParameters['ids'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -190,8 +203,8 @@ export class DeviceTypesApi extends runtime.BaseAPI {
      * Gets all device types from the database.
      * Get device types
      */
-    async getDeviceTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DeviceTypesResponse> {
-        const response = await this.getDeviceTypesRaw(initOverrides);
+    async getDeviceTypes(requestParameters: GetDeviceTypesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DeviceTypesResponse> {
+        const response = await this.getDeviceTypesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

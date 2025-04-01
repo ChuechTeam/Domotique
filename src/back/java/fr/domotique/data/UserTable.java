@@ -45,8 +45,26 @@ public class UserTable extends Table {
         """, UserProfile.columnList(null)); // -> "id, firstName, lastName, role, level, etc."
 
     /// Searches all user profile matching the given full name.
-    public Future<List<UserProfile>> getProfilesByFullName(String fullName) {
+    public Future<List<UserProfile>> getAllProfilesByFullName(String fullName) {
         return queryMany(UserProfile.MAP, PROFILE_FN_SQL, fullName, fullName);
+    }
+
+    static final String PROFILE_IDS_SQL = makeModularSQL("""
+        SELECT %s FROM User
+        WHERE id""", UserProfile.columnList(null)); // -> "id, firstName, lastName, role, level, etc."
+
+    public Future<List<UserProfile>> getAllProfiles(Collection<Integer> ids) {
+        if (ids.isEmpty()) {
+            return Future.succeededFuture(Collections.emptyList());
+        }
+
+        var sb = new StringBuilder(PROFILE_IDS_SQL);
+        sb.append(" IN ");
+        paramList(sb, ids.size());
+
+        final String sql = sb.toString();
+
+        return queryMany(UserProfile.MAP, sql, ids.toArray());
     }
 
     /// Creates a user in the database. Doesn't validate anything!

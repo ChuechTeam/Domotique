@@ -20,9 +20,10 @@ import type {
   DeleteUserInput,
   ErrorResponse,
   LoginInput,
+  PatchProfileInput,
   ProfileSearchOutput,
   RegisterInput,
-  UpdateProfileInput,
+  UpgradeInfo,
   UserProfile,
 } from '../models/index';
 import {
@@ -36,12 +37,14 @@ import {
     ErrorResponseToJSON,
     LoginInputFromJSON,
     LoginInputToJSON,
+    PatchProfileInputFromJSON,
+    PatchProfileInputToJSON,
     ProfileSearchOutputFromJSON,
     ProfileSearchOutputToJSON,
     RegisterInputFromJSON,
     RegisterInputToJSON,
-    UpdateProfileInputFromJSON,
-    UpdateProfileInputToJSON,
+    UpgradeInfoFromJSON,
+    UpgradeInfoToJSON,
     UserProfileFromJSON,
     UserProfileToJSON,
 } from '../models/index';
@@ -61,6 +64,10 @@ export interface DeleteUserRequest {
     deleteUserInput: DeleteUserInput;
 }
 
+export interface FindFullUserRequest {
+    userId: number;
+}
+
 export interface FindUserRequest {
     userId: number;
 }
@@ -74,12 +81,13 @@ export interface RegisterRequest {
 }
 
 export interface SearchUsersRequest {
-    fullName: string;
+    fullName?: string;
+    ids?: Array<number>;
 }
 
 export interface UpdateProfileRequest {
     userId: string;
-    updateProfileInput: UpdateProfileInput;
+    patchProfileInput: PatchProfileInput;
 }
 
 /**
@@ -225,6 +233,48 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Gets a user by their ID, and return their public AND private data. Only available for admins.
+     * Get a full user by ID
+     */
+    async findFullUserRaw(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompleteUser>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling findFullUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/users/{userId}/full`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CompleteUserFromJSON(jsonValue));
+    }
+
+    /**
+     * Gets a user by their ID, and return their public AND private data. Only available for admins.
+     * Get a full user by ID
+     */
+    async findFullUser(requestParameters: FindFullUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompleteUser | null | undefined > {
+        const response = await this.findFullUserRaw(requestParameters, initOverrides);
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
+    }
+
+    /**
      * Gets a user by their ID, and return their public data.
      * Get user profile by ID
      */
@@ -264,6 +314,34 @@ export class UsersApi extends runtime.BaseAPI {
             default:
                 return await response.value();
         }
+    }
+
+    /**
+     * Gives the amount of points necessary to reach all levels.
+     * Get level upgrade information
+     */
+    async getLevelInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpgradeInfo>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/users/level-info`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UpgradeInfoFromJSON(jsonValue));
+    }
+
+    /**
+     * Gives the amount of points necessary to reach all levels.
+     * Get level upgrade information
+     */
+    async getLevelInfo(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpgradeInfo> {
+        const response = await this.getLevelInfoRaw(initOverrides);
+        return await response.value();
     }
 
     /**
@@ -398,21 +476,18 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for users by their first name, last name, or email.
-     * Search users
+     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`.
+     * Get users
      */
     async searchUsersRaw(requestParameters: SearchUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProfileSearchOutput>> {
-        if (requestParameters['fullName'] == null) {
-            throw new runtime.RequiredError(
-                'fullName',
-                'Required parameter "fullName" was null or undefined when calling searchUsers().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['fullName'] != null) {
             queryParameters['fullName'] = requestParameters['fullName'];
+        }
+
+        if (requestParameters['ids'] != null) {
+            queryParameters['ids'] = requestParameters['ids'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -428,10 +503,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for users by their first name, last name, or email.
-     * Search users
+     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`.
+     * Get users
      */
-    async searchUsers(requestParameters: SearchUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProfileSearchOutput> {
+    async searchUsers(requestParameters: SearchUsersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProfileSearchOutput> {
         const response = await this.searchUsersRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -448,10 +523,10 @@ export class UsersApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['updateProfileInput'] == null) {
+        if (requestParameters['patchProfileInput'] == null) {
             throw new runtime.RequiredError(
-                'updateProfileInput',
-                'Required parameter "updateProfileInput" was null or undefined when calling updateProfile().'
+                'patchProfileInput',
+                'Required parameter "patchProfileInput" was null or undefined when calling updateProfile().'
             );
         }
 
@@ -466,7 +541,7 @@ export class UsersApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: UpdateProfileInputToJSON(requestParameters['updateProfileInput']),
+            body: PatchProfileInputToJSON(requestParameters['patchProfileInput']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserProfileFromJSON(jsonValue));

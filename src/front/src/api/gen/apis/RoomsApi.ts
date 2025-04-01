@@ -43,6 +43,11 @@ export interface GetRoomByIdRequest {
     roomId: number;
 }
 
+export interface GetRoomsRequest {
+    name?: string;
+    ids?: Array<number>;
+}
+
 export interface UpdateRoomRequest {
     roomId: number;
     roomInput: RoomInput;
@@ -171,8 +176,16 @@ export class RoomsApi extends runtime.BaseAPI {
      * Gets all rooms from the database.
      * Get rooms
      */
-    async getRoomsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoomsResponse>> {
+    async getRoomsRaw(requestParameters: GetRoomsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoomsResponse>> {
         const queryParameters: any = {};
+
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
+
+        if (requestParameters['ids'] != null) {
+            queryParameters['ids'] = requestParameters['ids'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -190,8 +203,8 @@ export class RoomsApi extends runtime.BaseAPI {
      * Gets all rooms from the database.
      * Get rooms
      */
-    async getRooms(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoomsResponse> {
-        const response = await this.getRoomsRaw(initOverrides);
+    async getRooms(requestParameters: GetRoomsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoomsResponse> {
+        const response = await this.getRoomsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -3,6 +3,7 @@ package fr.domotique.base.apidocs;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.introspect.*;
 import com.fasterxml.jackson.databind.type.*;
+import com.fasterxml.jackson.datatype.jdk8.*;
 import io.swagger.v3.core.util.*;
 import io.swagger.v3.oas.models.*;
 import io.swagger.v3.oas.models.examples.*;
@@ -12,8 +13,10 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.*;
 import io.swagger.v3.oas.models.servers.*;
+import io.vertx.core.json.jackson.*;
 import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
+import org.openapitools.jackson.nullable.*;
 
 import java.lang.reflect.*;
 import java.time.*;
@@ -24,6 +27,7 @@ import java.util.function.*;
 public final class DocsGen {
     final Router router;
     final OpenAPI result = new OpenAPI(SpecVersion.V31)
+        .openapi("3.1.0")
         .info(new Info()
             .title("Domotique API")
             .description("API documentation for the Domotique website.")
@@ -33,18 +37,27 @@ public final class DocsGen {
             .description("Local server")))
         .components(new Components().schemas(new HashMap<>()))
         .paths(new Paths());
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper;
 
-    HashMap<Class<?>, String> classToSchemaRef = new HashMap<>();
+    HashMap<ClassKey, String> classToSchemaRef = new HashMap<>();
+
+    static {
+        // Also configure Optional<T> for the Yaml mapper
+        Yaml.mapper().registerModule(new Jdk8Module().configureReadAbsentAsNull(true))
+            .registerModule(new JsonNullableModule());
+
+    }
 
     /// Creates a new doc generation session with the given router. Used internally by [#generate(Router)].
-    private DocsGen(Router router) {
+    private DocsGen(Router router, ObjectMapper mapper) {
         this.router = router;
+        this.mapper = mapper;
     }
 
     /// Generates the OpenAPI documentation in YAML format.
     public static String generate(Router router) {
-        return new DocsGen(router).run();
+        ObjectMapper mapper1 = DatabindCodec.mapper();
+        return new DocsGen(router, mapper1).run();
     }
 
     /// Generates the OpenAPI documentation. Must be only run once.
@@ -111,7 +124,7 @@ public final class DocsGen {
             RequestBody requestBodyOAI = null;
             if (rd.requestBody != null) {
                 // Find the schema, and create a media type for it.
-                Schema<?> schema = schemaForReflect(rd.requestBody);
+                Schema<?> schema = schemaForReflect(rd.requestBody, rd.requestBodyFullyOptional);
                 MediaType media = new MediaType().schema(schema);
 
                 // Add an example if there is one.
@@ -149,7 +162,7 @@ public final class DocsGen {
     }
 
     private static ResponseDoc[] mergeResponses(@Nullable RouteDoc rd,
-                                               ResponseDoc[] activeResponses) {
+                                                ResponseDoc[] activeResponses) {
         if (rd == null) {
             return activeResponses;
         }
@@ -236,14 +249,14 @@ public final class DocsGen {
             .name(pd.name)
             .in(pd.location.toString().toLowerCase())
             .description(pd.desc)
-            .required(true)
-            .schema(schemaForReflect(pd.valueType));
+            .required(pd.required)
+            .schema(schemaForReflect(pd.valueType, false));
     }
 
     private ApiResponse toOpenAPI(ResponseDoc rd) {
         Content content = null;
         if (rd.content != null) {
-            Schema<?> schema = schemaForReflect(rd.content);
+            Schema<?> schema = schemaForReflect(rd.content, false);
             MediaType media = new MediaType().schema(schema);
             if (rd.example != null) {
                 media.addExamples("main", new Example().value(rd.example).summary(rd.description));
@@ -260,70 +273,77 @@ public final class DocsGen {
      ---- Schema generation ----
      */
 
-     /// Map of Java types to their corresponding OpenAPI schemas
-     private static final Map<Class<?>, Supplier<Schema<?>>> SIMPLE_TYPE_SCHEMAS = Map.ofEntries(
-         // Object
-         Map.entry(Object.class, ObjectSchema::new),
+    /// Map of Java types to their corresponding OpenAPI schemas
+    private static final Map<Class<?>, Supplier<Schema<?>>> SIMPLE_TYPE_SCHEMAS = Map.ofEntries(
+        // Object
+        Map.entry(Object.class, ObjectSchema::new),
 
-         // Integer types
-         Map.entry(Integer.class, IntegerSchema::new),
-         Map.entry(int.class, IntegerSchema::new),
-         Map.entry(Long.class, IntegerSchema::new),
-         Map.entry(long.class, IntegerSchema::new),
-         Map.entry(Short.class, IntegerSchema::new),
-         Map.entry(short.class, IntegerSchema::new),
-         Map.entry(Byte.class, IntegerSchema::new),
-         Map.entry(byte.class, IntegerSchema::new),
+        // Integer types
+        Map.entry(Integer.class, IntegerSchema::new),
+        Map.entry(int.class, IntegerSchema::new),
+        Map.entry(Long.class, IntegerSchema::new),
+        Map.entry(long.class, IntegerSchema::new),
+        Map.entry(Short.class, IntegerSchema::new),
+        Map.entry(short.class, IntegerSchema::new),
+        Map.entry(Byte.class, IntegerSchema::new),
+        Map.entry(byte.class, IntegerSchema::new),
 
-         // Floating point types
-         Map.entry(Float.class, NumberSchema::new),
-         Map.entry(float.class, NumberSchema::new),
-         Map.entry(Double.class, NumberSchema::new),
-         Map.entry(double.class, NumberSchema::new),
+        // Floating point types
+        Map.entry(Float.class, NumberSchema::new),
+        Map.entry(float.class, NumberSchema::new),
+        Map.entry(Double.class, NumberSchema::new),
+        Map.entry(double.class, NumberSchema::new),
 
-         // Other basic types
-         Map.entry(String.class, StringSchema::new),
-         Map.entry(Boolean.class, BooleanSchema::new),
-         Map.entry(boolean.class, BooleanSchema::new),
+        // Other basic types
+        Map.entry(String.class, StringSchema::new),
+        Map.entry(Boolean.class, BooleanSchema::new),
+        Map.entry(boolean.class, BooleanSchema::new),
 
-         // Date/time types
-         Map.entry(Instant.class, () -> new StringSchema().format("date-time")),
-         Map.entry(LocalDate.class, () -> new StringSchema().format("date")),
+        // Date/time types
+        Map.entry(Instant.class, () -> new StringSchema().format("date-time")),
+        Map.entry(LocalDate.class, () -> new StringSchema().format("date")),
 
-         // File types
-         Map.entry(FileUpload.class, FileSchema::new)
-     );
+        // File types
+        Map.entry(FileUpload.class, FileSchema::new)
+    );
 
-    private Schema<?> schemaForReflect(Type type) {
+    private Schema<?> schemaForReflect(Type type, boolean optionalVariant) {
         if (type instanceof JavaType t) {
-            return schemaForJackson(t);
+            return schemaForJackson(t, optionalVariant);
         }
 
-        return schemaForJackson(mapper.constructType(type));
+        return schemaForJackson(mapper.constructType(type), optionalVariant);
     }
 
-    private Schema<?> schemaForJackson(JavaType type) {
+    private Schema<?> schemaForJackson(JavaType type, boolean optionalVariant) {
         if (type instanceof SimpleType st) {
             var clazz = st.getRawClass();
 
+            if (clazz == Optional.class || clazz == JsonNullable.class) {
+                // If the type is Optional<T>, we need to get the type of T
+                var innerType = st.getBindings().getBoundType(0);
+                return schemaForJackson(innerType, true);
+            }
+
             // If we've already defined a schema for this class, create a $ref schema.
-            if (classToSchemaRef.containsKey(clazz)) {
-                return new Schema<>().$ref(classToSchemaRef.get(clazz));
+            var key = new ClassKey(clazz, optionalVariant);
+            if (classToSchemaRef.containsKey(key)) {
+                return new Schema<>().$ref(classToSchemaRef.get(key));
             }
 
             // Use the schema mapper to find the appropriate schema
             if (SIMPLE_TYPE_SCHEMAS.containsKey(clazz)) {
                 return SIMPLE_TYPE_SCHEMAS.get(clazz).get();
             } else {
-                String schemaRef = registerNewSchema(clazz);
+                String schemaRef = registerNewSchema(key.clazz, key.optionalVariant);
                 return new Schema<>().$ref(schemaRef);
             }
         } else if (type instanceof ArrayType at) {
-            return new ArraySchema().items(schemaForJackson(at.getContentType()));
+            return new ArraySchema().items(schemaForJackson(at.getContentType(), optionalVariant));
         } else if (type instanceof CollectionType at) {
-            return new ArraySchema().items(schemaForJackson(at.getContentType()));
+            return new ArraySchema().items(schemaForJackson(at.getContentType(), optionalVariant));
         } else if (type instanceof MapType mt) {
-            return new MapSchema().additionalProperties(schemaForJackson(mt.getContentType()));
+            return new MapSchema().additionalProperties(schemaForJackson(mt.getContentType(), optionalVariant));
         }
 
         throw new UnsupportedOperationException("Cannot generate schema for " + type);
@@ -332,11 +352,11 @@ public final class DocsGen {
     /// Registers a new OpenAPI schema for a simple type class (i.e. a POJO, an enum, or a record; not lists or maps).
     ///
     /// This is also where DocAlias'd classes get "flattened" out.
-    private String registerNewSchema(Class<?> clazz) {
+    private String registerNewSchema(Class<?> clazz, boolean optionalVariant) {
         var schemas = result.getComponents().getSchemas();
 
         // Find the documentation name of the class using the DocName annotation.
-        String docsName = getDocsName(clazz);
+        String docsName = getDocsName(clazz, optionalVariant);
         ApiDoc classAnn = clazz.getAnnotation(ApiDoc.class);
         Schema<?> existingSchema;
         Schema<?> newSchema;
@@ -391,9 +411,11 @@ public final class DocsGen {
             // Register all properties
             for (BeanPropertyDefinition rc : beanProps) {
                 // TODO: Fix possible cycles with self referencing classes
-                // Find the name & Schema for the property's type
+                // Find the name & Schema for the property's type. Child properties don't propagate optionality.
                 String propName = rc.getName();
-                Schema<?> propSchema = schemaForJackson(rc.getPrimaryType());
+
+                var type = rc.getPrimaryType();
+                Schema<?> propSchema = schemaForJackson(rc.getPrimaryType(), false);
 
                 // Register the description if we do have one.
                 ApiDoc descAnn = rc.getPrimaryMember().getAnnotation(ApiDoc.class);
@@ -402,7 +424,11 @@ public final class DocsGen {
                 }
 
                 // It's optional if the property annotation is, or if the class annotation has optional == true.
-                if (descAnn == null || !descAnn.optional() && (classAnn == null || !classAnn.optional())) {
+                // Also, don't add it to the required list of it's an Optional<T> type.
+                if ((descAnn == null || !descAnn.optional())
+                    && (classAnn == null || !classAnn.optional())
+                    && !optionalVariant
+                    && (!(type instanceof SimpleType st) || st.getRawClass() != Optional.class && st.getRawClass() != JsonNullable.class)) {
                     requiredProps.add(propName);
                 }
 
@@ -441,9 +467,11 @@ public final class DocsGen {
         }
 
         String reference = "#/components/schemas/" + docsName;
-        classToSchemaRef.put(clazz, reference);
+        classToSchemaRef.put(new ClassKey(clazz, optionalVariant), reference);
         return reference;
     }
+
+    record ClassKey(Class<?> clazz, boolean optionalVariant) {}
 
     private @Nullable Field getExampleField(Class<?> clazz) {
         try {
@@ -453,12 +481,12 @@ public final class DocsGen {
         }
     }
 
-    private String getDocsName(Class<?> clazz) {
+    private String getDocsName(Class<?> clazz, boolean optionalVariant) {
         DocName ann = clazz.getAnnotation(DocName.class);
         if (ann != null) {
-            return ann.value();
+            return ann.value() + (optionalVariant ? "Optional" : "");
         } else {
-            return clazz.getSimpleName();
+            return clazz.getSimpleName() + (optionalVariant ? "Optional" : "");
         }
     }
 }

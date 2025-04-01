@@ -13,14 +13,16 @@ public final class DeviceOperations {
     /// - Adds default values for all attributes that are missing
     ///
     /// The `attributes` map will be updated.
-    public static void fixAttributes(EnumMap<AttributeType, Object> attributes, DeviceType type) {
+    public static void fixAttributes(EnumMap<AttributeType, Object> attributes, DeviceType type, boolean addMissing) {
         // Remove all attributes that are NOT present in the device type
         attributes.keySet().removeIf(key -> !type.getAttributes().contains(key));
 
-        // Add default values for all attributes that are missing
-        for (AttributeType attrType : type.getAttributes()) {
-            if (!attributes.containsKey(attrType)) {
-                attributes.put(attrType, attrType.defaultValue());
+        if (addMissing) {
+            // Add default values for all attributes that are missing
+            for (AttributeType attrType : type.getAttributes()) {
+                if (!attributes.containsKey(attrType)) {
+                    attributes.put(attrType, attrType.defaultValue());
+                }
             }
         }
     }

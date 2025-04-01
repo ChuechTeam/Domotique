@@ -8,6 +8,7 @@ import io.vertx.core.buffer.*;
 import io.vertx.core.internal.*;
 import io.vertx.core.json.*;
 import io.vertx.ext.web.*;
+import org.openapitools.jackson.nullable.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -139,6 +140,18 @@ public abstract class Section {
         }
     }
 
+    /// Parses the boolean of the given value. Returns `null` if either:
+    /// - the value isn't a valid boolean
+    /// - the value is `null`
+    public static Boolean readBooleanOrNull(String value) {
+        try {
+            if (value == null) {return null;}
+            return Boolean.parseBoolean(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /// Parses the unsigned long of the given value. Returns `null` if either:
     /// - the value isn't a valid unsigned long
     /// - the value is `null`
@@ -149,6 +162,19 @@ public abstract class Section {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    public static List<Integer> readIntListFromQueryParams(RoutingContext ctx, String name) {
+        var ids = ctx.queryParam(name);
+        var intIds = new Integer[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            intIds[i] = readIntOrNull(ids.get(i));
+            if (intIds[i] == null) {
+                throw new RequestException("L'identifiant " + ids.get(i) + " n'est pas un entier valide.", 400);
+            }
+        }
+
+        return Arrays.asList(intIds);
     }
 
     /// Reads the body of the request in JSON format, with the given class.
@@ -271,6 +297,15 @@ public abstract class Section {
         });
     }
 
+    /// Takes in a [JsonNullable] and applies a function to its (nullable) value.
+    /// Keeps it undefined if the nullable itself is undefined.
+    protected static <T, U> JsonNullable<U> mapNullable(JsonNullable<T> value, Function<T, U> mapper) {
+        if (value.isPresent()) {
+            return JsonNullable.of(mapper.apply(value.get()));
+        } else {
+            return JsonNullable.undefined();
+        }
+    }
 
     /// Renders an HTML JTE template from the `views/` folder, having the given `name`.
     ///
