@@ -18,21 +18,24 @@ function logout() {
 }
 
 const userLink = computed(() => "/profile/" + auth.user.profile.id);
+const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.profile.lastName[0]);
 </script>
 
 
 <template>
     <div class="app-root">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
-            <RouterLink class="navbar-brand fw-bold" to="/dashboard">Retraités Connectés</RouterLink>
+            <RouterLink class="navbar-brand fw-bold" to="/dashboard"><span>Retraités Connectés</span></RouterLink>
             <div class="d-flex align-items-center gap-3">
-                <RouterLink class="nav-link" to="/tech">Technologie</RouterLink>
-                <RouterLink class="nav-link" to="/profiles">Profils</RouterLink>
-                <RouterLink class="nav-link" to="/themes">Thèmes</RouterLink>
+                <RouterLink class="nav-link mobile-only" to="/dashboard"><span class="pi pi-home"></span><span class="nav-label">Accueil</span></RouterLink>
+                <RouterLink class="nav-link" to="/tech"><span class="pi pi-microchip"></span> <span class="nav-label">Technologie</span></RouterLink>
+                <RouterLink class="nav-link" to="/profiles"><span class="pi pi-user"></span> <span class="nav-label">Profils</span></RouterLink>
+                <RouterLink class="nav-link" to="/themes"><span class="pi pi-box"></span> <span class="nav-label">Thèmes</span></RouterLink>
             </div>
-            <RouterLink class="ms-auto user-pill" :to="userLink">
-                {{ auth.user.profile.firstName + ' ' + auth.user.profile.lastName }}
-            </RouterLink>
+            <Chip class="ms-auto user-icon">
+                <Avatar :label="userLabel" size="medium" shape="circle" />
+                <RouterLink :to="userLink" style="text-decoration: none; color: unset;">{{ auth.user.profile.firstName  }}</RouterLink>
+            </Chip>
         </nav>
         <main class="content">
             <Suspense>
@@ -74,6 +77,11 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
     font-weight: 500;
     color: #333;
     text-decoration: none;
+
+    & .pi {
+        margin-right: 2px;
+        vertical-align: baseline;
+    }
 }
 .nav-link:hover {
     color: #007bff;
@@ -96,6 +104,49 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
     &.router-link-active {
         background-color: #007bff;
         color: white;
+    }
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .app-root {
+        flex-direction: column-reverse;
+    }
+    .navbar-brand {
+        display: none;
+    }
+    .mobile-only {
+        display: block;
+    }
+    .navbar-brand .nav-label {
+        display: none;
+    }
+    .navbar {
+        justify-content: center !important;
+        & > div {
+            gap: 24px !important;
+        }
+        box-shadow: 0px 0px 16px 2px  rgb(0,0,0, 10%) !important;
+    }
+
+    .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .user-icon {
+        display: none;
+    }
+    .navbar .pi {
+        display: block !important; /* hacky */
+        font-size: 2rem;
+        margin: 0.5rem 0;
+    }
+    .navbar {
+        justify-content: flex-start;
     }
 }
 </style>

@@ -12,6 +12,7 @@ import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
+import javax.validation.*;
 import java.time.*;
 import java.util.*;
 
@@ -108,7 +109,7 @@ public class UserSection extends Section {
             "Deveri",
             Gender.FEMALE,
             Role.RESIDENT,
-            "mot2passe"))
+            "mot2passe", null))
         .response(201, CompleteUser.class, "The user was created.")
         .response(422, ErrorResponse.class, """
                 Either:
@@ -125,7 +126,8 @@ public class UserSection extends Section {
                          String lastName,
                          Gender gender,
                          Role role,
-                         String password) {
+                         String password,
+                         @Nullable @ApiDoc(optional = true) String adminCode) {
         public RegisterInput {
             // Sanitize all sensitive strings (not password)
             email = Sanitize.string(email);
@@ -158,6 +160,15 @@ public class UserSection extends Section {
 
             // Validate the password (for registration; login requirements are different)
             UserValidation.password(block, "password", input.password);
+
+            // Ensure that admin registration use the admin code
+            if (input.role == Role.ADMIN) {
+                if (input.adminCode == null || input.adminCode.isBlank()) {
+                    block.addError("adminCode", "Le code d'administrateur est vide.");
+                } else if (!input.adminCode.equals(server.config().adminCode())) {
+                    block.addError("adminCode", "Le code d'administrateur est incorrect.");
+                }
+            }
         }
 
         // Hash the password, and create the User object
@@ -551,7 +562,7 @@ public class UserSection extends Section {
         DeleteUserInput input = readBody(context, DeleteUserInput.class);
 
         // The password must not be blank when deleting our own user
-        if (!isMe) {
+        if (isMe) {
             try (var block = Validation.start()) {
                 Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
             }

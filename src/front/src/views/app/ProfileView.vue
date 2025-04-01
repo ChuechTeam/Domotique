@@ -149,8 +149,10 @@ const getLevelColor = (level) => {
 
             <!-- Action Buttons - Only show for current user -->
             <div v-if="canEdit" class="text-center mt-2">
-                <router-link class="btn btn-primary me-2" :to="{ name: 'profile-edit', params: { userId } }">Edit Profile</router-link>
-                <router-link class="btn btn-outline-secondary" :to="{ name: 'profile-creds', params: { userId } }">Change Password</router-link>
+                <router-link class="btn btn-primary me-2" :to="{ name: 'profile-edit', params: { userId } }">Modifier le profil</router-link>
+                <router-link class="btn btn-outline-secondary" :to="{ name: 'profile-creds', params: { userId } }">Changer le mot de passe</router-link>
+                <router-link class="btn btn-danger" :to="{ name: 'profile-delete', params: { userId } }">Supprimer le compte</router-link>
+
             </div>
         </div>
         <RouterView v-slot="{ Component }">

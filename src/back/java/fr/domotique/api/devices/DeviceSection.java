@@ -63,6 +63,8 @@ public class DeviceSection extends Section {
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
         deviceRoutes.patch("/:deviceId").respond(vt(this::patchDevice)).putMetadata(RouteDoc.KEY, PATCH_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
+
+        deviceRoutes.get("/:deviceId").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
     }
 
     // region GET /api/devices | Get all devices
@@ -131,6 +133,7 @@ public class DeviceSection extends Section {
         return server.db().devices().queryStats(body)
             .map(DeviceStats::new);
     }
+    // endregion
 
     // region GET /api/devices/:deviceId | Get device by ID
     static final RouteDoc GET_DEVICE_DOC = new RouteDoc("getDeviceById")
@@ -396,6 +399,21 @@ public class DeviceSection extends Section {
         log.info("Device deleted with id {}", deviceId);
     }
     // endregion
+
+    static final RouteDoc GEN_REPORT_DOC = new RouteDoc("genReport")
+        .summary("Generate a report for a device")
+        .description("Generates a report for a device.")
+        .pathParam("deviceId", int.class, "The ID of the device to generate the report for.")
+        .response(200, Object.class, "The report was generated successfully.")
+        .response(404, ErrorResponse.class, "Device not found.");
+
+    Object genReport(RoutingContext context) {
+        int deviceId = readIntPathParam(context, "deviceId");
+
+        // TODO!
+
+        return null; // À retirer bien sûr là ça donne R
+    }
 
     /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {

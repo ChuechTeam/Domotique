@@ -53,7 +53,7 @@ load(); // Initial load
                 </div>
             </div>
         </header>
-        <RouterView />
+        <RouterView class="overflow-auto" />
     </div>
 </template>
 <style lang="css" scoped>
@@ -120,6 +120,9 @@ load(); // Initial load
     .header {
         padding: 1rem;
         text-align: center;
+        padding-left: 0;
+        transform: translateY(12px);
+        padding-bottom: calc(1rem + 12px);
     }
     .header .-text {
         display: none;
@@ -130,6 +133,9 @@ load(); // Initial load
     }
     .header .-tabs {
         justify-content: center;
+    }
+    .root {
+        flex-direction: column-reverse;
     }
 }
 </style>

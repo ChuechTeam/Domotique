@@ -171,6 +171,24 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
+        async deleteUser(password: string): Promise<ErrorResponse | undefined> {
+            if (!this.isLoggedIn) {
+                throw new Error("Cannot delete account while not being logged in!");
+            }
+
+            try {
+                await api.users.deleteUser({
+                    userId: "me",
+                    deleteUserInput: {
+                        password
+                    }
+                });
+                this.setUser(null);
+            } catch (e) {
+                return findErrDataOrThrow(e);
+            }
+        },
+
         /**
          * Set the user to the given user. Necessary when login/register/logout; no so much for other actions
          * @param user the user to set

@@ -222,7 +222,7 @@ function createNewDevice() {
 
 .device-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(75vw, 400px), 1fr));
     gap: 1.5rem;
 }
 

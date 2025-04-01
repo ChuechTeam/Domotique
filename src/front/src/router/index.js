@@ -18,6 +18,7 @@ import NewDeviceView from '@/views/app/NewDeviceView.vue';
 import RoomsView from '@/views/app/RoomsView.vue';
 import DeviceTypesView from '@/views/app/DeviceTypesView.vue';
 import { useGuards } from '@/guards';
+import ProfileDeleteModal from '@/views/app/ProfileDeleteModal.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,9 +34,9 @@ const router = createRouter({
                     name: 'home',
                     component: HomeView,
                 },
-                { 
-                    path: "/inscription", 
-                    name: "Inscription", 
+                {
+                    path: "/inscription",
+                    name: "Inscription",
                     component: Inscription,
 
                 }
@@ -99,6 +100,24 @@ const router = createRouter({
                             props: true,
 
                             // Prevent users from accessing the password edit page for other users if they are not admins.
+                            beforeEnter(to, from) {
+                                const guards = useGuards();
+                                const auth = useAuthStore();
+
+                                if (auth.userId.toString() === to.params.userId) {
+                                    return;
+                                } else if (!guards.mustHaveAdminRights()) {
+                                    return from?.fullPath ?? "/dashboard";
+                                }
+                            }
+                        },
+                        {
+                            path: "delete",
+                            name: "profile-delete",
+                            component: ProfileDeleteModal,
+                            props: true,
+
+                            // Prevent users from accessing the profile delete page for other users if they are not admins.
                             beforeEnter(to, from) {
                                 const guards = useGuards();
                                 const auth = useAuthStore();
@@ -204,7 +223,6 @@ router.beforeEach(async (to, from) => {
         // Else, we're all good! Continue! Let's process some logic for other routes in the app
 
         if (to.name === "tech") {
-            console.log("pouet")
             // tech isn't a real route, but a parent of devices and rooms.
             return "/tech/devices";
         }
