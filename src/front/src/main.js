@@ -1,5 +1,6 @@
 // Include styles to be used globally throughout the app
 import './assets/main.css'
+import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

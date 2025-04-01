@@ -19,6 +19,8 @@ import java.util.function.*;
 /// ## Example
 ///
 /// See [EntityInfo]'s example.
+// TODO: Investigate to see if a record (mapper, columns) yields better performance with trusted static final fields,
+//       instead of a seemingly costly anonymous class.
 public abstract class Mapper<T> implements Function<Row, T> {
     protected final int columns;
 
@@ -64,6 +66,7 @@ public abstract class Mapper<T> implements Function<Row, T> {
         return columns;
     }
 
+    /// Basically an integer you can increment. Used to keep track of the current column.
     public final static class Session {
         int column;
 

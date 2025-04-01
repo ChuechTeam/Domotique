@@ -45,3 +45,17 @@ CREATE TABLE Room(
 );
 
 -- rollback drop table `Room`;
+
+-- changeset Evan:add_power_logs
+CREATE TABLE PowerLog(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    deviceId INT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    time DATETIME NOT NULL,
+
+    FOREIGN KEY (deviceId) REFERENCES Device(id) ON DELETE CASCADE,
+    INDEX idx_powerlog_device (deviceId),
+    INDEX idx_powerlog_time (time)
+);
+
+-- rollback drop table `PowerLog`;

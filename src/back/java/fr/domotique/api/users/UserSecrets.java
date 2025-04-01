@@ -8,9 +8,6 @@ public record UserSecrets(
     @ApiDoc("The email address of the user. Must be unique. Is used to log in.")
     String email,
 
-    @ApiDoc("The amount of points the user has accumulated. Never negative.")
-    int points,
-
     @ApiDoc("True when this user's email has been confirmed.")
     boolean emailConfirmed
 ) {
@@ -18,8 +15,8 @@ public record UserSecrets(
     /// Returns `null` when the user is null.
     public static UserSecrets fromUser(User u) {
         if (u == null) {return null;}
-        return new UserSecrets(u.getEmail(), u.getPoints(), u.isEmailConfirmed());
+        return new UserSecrets(u.getEmail(), u.isEmailConfirmed());
     }
 
-    public static final UserSecrets EXAMPLE = new UserSecrets("coucou@email.fr", 1, true);
+    public static final UserSecrets EXAMPLE = new UserSecrets("coucou@email.fr", true);
 }

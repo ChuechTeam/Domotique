@@ -74,8 +74,18 @@ public final class DocsGen {
         String[] tags = mergeTags(rd, inheritedTags);
 
         Router subRouter = route.getSubRouter();
+        String subPath = route.getPath() == null ? "/" : route.getPath();
+
         if (subRouter != null) {
-            String fullPath = normalizePrefix(prefix + route.getPath());
+            String fullPath = normalizePrefix(prefix + subPath);
+
+            // See if the sub router also has documentation, and merge what we can merge!
+            RouteDoc subRd = subRouter.getMetadata(RouteDoc.KEY);
+            if (subRd != null) {
+                responses = mergeResponses(subRd, responses);
+                params = mergeParams(subRd, params);
+                tags = mergeTags(subRd, tags);
+            }
 
             for (Route r : subRouter.getRoutes()) {
                 visitRoute(fullPath, r, responses, params, tags);
@@ -90,7 +100,7 @@ public final class DocsGen {
             //  - the prefix never ends with a slash
             //  - the route path always starts with a slash
             // Concatenating them is safe!
-            String fullPath = prefix + route.getPath();
+            String fullPath = prefix + subPath;
             // Convert the Vert.x path (using :param syntax) to OpenAPI which uses {param} syntax.
             String oaPath = fullPath.replaceAll(":([^/]+)", "{$1}");
 
@@ -117,7 +127,7 @@ public final class DocsGen {
 
             // Create the response object, with all responses from the RouteDoc.
             ApiResponses apiResponses = new ApiResponses();
-            for (ResponseDoc response : rd.responses) {
+            for (ResponseDoc response : responses) {
                 apiResponses.put(Integer.toString(response.getStatus()), toOpenAPI(response));
             }
 
@@ -327,6 +337,7 @@ public final class DocsGen {
 
         // Find the documentation name of the class using the DocName annotation.
         String docsName = getDocsName(clazz);
+        ApiDoc classAnn = clazz.getAnnotation(ApiDoc.class);
         Schema<?> existingSchema;
         Schema<?> newSchema;
 
@@ -390,7 +401,8 @@ public final class DocsGen {
                     propSchema.description(descAnn.value());
                 }
 
-                if (descAnn == null || !descAnn.optional()) {
+                // It's optional if the property annotation is, or if the class annotation has optional == true.
+                if (descAnn == null || !descAnn.optional() && (classAnn == null || !classAnn.optional())) {
                     requiredProps.add(propName);
                 }
 
@@ -410,9 +422,22 @@ public final class DocsGen {
         }
 
         // Register the description of the class if we do have one.
-        ApiDoc descAnn = clazz.getAnnotation(ApiDoc.class);
-        if (descAnn != null) {
-            newSchema.description(descAnn.value());
+        if (classAnn != null) {
+            // Put it in a stringbuilder for later if it's an enum.
+            StringBuilder doc = new StringBuilder(classAnn.value());
+
+            // OpenAPI doesn't support documentation on enums so we'll glue them to the documentation instead.
+            if (clazz.isEnum()) {
+                for (Field f : clazz.getFields()) {
+                    ApiDoc enumDoc = f.getAnnotation(ApiDoc.class);
+                    if (enumDoc != null) {
+                        doc.append("\n- `").append(f.getName()).append("`: ").append(enumDoc.value());
+                    }
+                }
+            }
+
+            // Register the description now
+            newSchema.description(doc.toString());
         }
 
         String reference = "#/components/schemas/" + docsName;
@@ -436,6 +461,4 @@ public final class DocsGen {
             return clazz.getSimpleName();
         }
     }
-
-    record RegisteredSchema(String ref, Schema<?> schema) {}
 }

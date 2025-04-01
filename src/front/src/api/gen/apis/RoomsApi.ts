@@ -222,7 +222,7 @@ export class RoomsApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: `/api/rooms/{roomId}`.replace(`{${"roomId"}}`, encodeURIComponent(String(requestParameters['roomId']))),
-            method: 'POST',
+            method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: RoomInputToJSON(requestParameters['roomInput']),

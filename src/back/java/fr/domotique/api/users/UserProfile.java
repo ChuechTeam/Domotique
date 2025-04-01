@@ -21,6 +21,9 @@ public record UserProfile(
     @ApiDoc("The level of the user.")
     Level level,
 
+    @ApiDoc("The number of points this user has accumulated.")
+    int points,
+
     @ApiDoc("The gender of the user.")
     Gender gender
 ) {
@@ -28,24 +31,25 @@ public record UserProfile(
     /// Returns `null` when the user is null.
     public static UserProfile fromUser(User u) {
         if (u == null) {return null;}
-        return new UserProfile(u.getId(), u.getFirstName(), u.getLastName(), u.getRole(), u.getLevel(), u.getGender());
+        return new UserProfile(u.getId(), u.getFirstName(), u.getLastName(), u.getRole(), u.getLevel(), u.getPoints(), u.getGender());
     }
 
     /// Transforms a SQL row into a UserProfile.
-    public static Mapper<UserProfile> MAP = Mapper.of(6, (r, s) -> new UserProfile(
+    public static Mapper<UserProfile> MAP = Mapper.of(7, (r, s) -> new UserProfile(
         r.getInteger(s.next()),
         r.getString(s.next()),
         r.getString(s.next()),
         Role.fromByte(r.get(Byte.class, s.next())),
         Level.fromByte(r.get(Byte.class, s.next())),
+        r.getInteger(s.next()),
         Gender.fromByte(r.get(Byte.class, s.next()))
     ));
 
     public static String columnList(String tableName) {
-        return QueryUtils.columnList(tableName, "id", "firstName", "lastName", "role", "level", "gender");
+        return QueryUtils.columnList(tableName, "id", "firstName", "lastName", "role", "level", "points", "gender");
     }
 
     /// Example user profile for API documentation.
     public static final UserProfile EXAMPLE = new UserProfile(10, "Juréma", "Deveri",
-        Role.RESIDENT, Level.ADVANCED, Gender.FEMALE);
+        Role.RESIDENT, Level.ADVANCED, 75, Gender.FEMALE);
 }

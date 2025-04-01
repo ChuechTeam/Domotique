@@ -9,4 +9,6 @@
 ///
 /// Usually, as a backend API developer, you shouldn't have to edit code in this package too much. (Except
 /// maybe for [fr.domotique.base.Validation] and [fr.domotique.base.Sanitize] to add common features)
+///
+/// @author Dynamic
 package fr.domotique.base;

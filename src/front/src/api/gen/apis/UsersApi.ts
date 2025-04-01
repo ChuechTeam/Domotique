@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ChangePasswordInput,
   CompleteUser,
+  DeleteUserInput,
   ErrorResponse,
   LoginInput,
   ProfileSearchOutput,
@@ -29,6 +30,8 @@ import {
     ChangePasswordInputToJSON,
     CompleteUserFromJSON,
     CompleteUserToJSON,
+    DeleteUserInputFromJSON,
+    DeleteUserInputToJSON,
     ErrorResponseFromJSON,
     ErrorResponseToJSON,
     LoginInputFromJSON,
@@ -44,12 +47,18 @@ import {
 } from '../models/index';
 
 export interface ChangePasswordRequest {
+    userId: string;
     changePasswordInput: ChangePasswordInput;
 }
 
 export interface ConfirmEmailRequest {
     user: number;
     token: number;
+}
+
+export interface DeleteUserRequest {
+    userId: string;
+    deleteUserInput: DeleteUserInput;
 }
 
 export interface FindUserRequest {
@@ -69,6 +78,7 @@ export interface SearchUsersRequest {
 }
 
 export interface UpdateProfileRequest {
+    userId: string;
     updateProfileInput: UpdateProfileInput;
 }
 
@@ -78,10 +88,17 @@ export interface UpdateProfileRequest {
 export class UsersApi extends runtime.BaseAPI {
 
     /**
-     * Change the password of the currently authenticated user.
+     * Change the password of the given user.
      * Change password
      */
     async changePasswordRaw(requestParameters: ChangePasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling changePassword().'
+            );
+        }
+
         if (requestParameters['changePasswordInput'] == null) {
             throw new runtime.RequiredError(
                 'changePasswordInput',
@@ -96,8 +113,8 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/users/me/password`,
-            method: 'POST',
+            path: `/api/users/{userId}/password`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: ChangePasswordInputToJSON(requestParameters['changePasswordInput']),
@@ -107,7 +124,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Change the password of the currently authenticated user.
+     * Change the password of the given user.
      * Change password
      */
     async changePassword(requestParameters: ChangePasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -161,6 +178,50 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async confirmEmail(requestParameters: ConfirmEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.confirmEmailRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Deletes a user from the app. When a user deletes their account, the password must be given to confirm the deletion.
+     * Delete user
+     */
+    async deleteUserRaw(requestParameters: DeleteUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling deleteUser().'
+            );
+        }
+
+        if (requestParameters['deleteUserInput'] == null) {
+            throw new runtime.RequiredError(
+                'deleteUserInput',
+                'Required parameter "deleteUserInput" was null or undefined when calling deleteUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/users/{userId}`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+            body: DeleteUserInputToJSON(requestParameters['deleteUserInput']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes a user from the app. When a user deletes their account, the password must be given to confirm the deletion.
+     * Delete user
+     */
+    async deleteUser(requestParameters: DeleteUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteUserRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -376,10 +437,17 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the profile of the currently authenticated user.
+     * Update the profile of the currently authenticated user. Each value can be omitted or set to `null` to not change it.
      * Update profile
      */
     async updateProfileRaw(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserProfile>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling updateProfile().'
+            );
+        }
+
         if (requestParameters['updateProfileInput'] == null) {
             throw new runtime.RequiredError(
                 'updateProfileInput',
@@ -394,8 +462,8 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/users/me/profile`,
-            method: 'POST',
+            path: `/api/users/{userId}/profile`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: UpdateProfileInputToJSON(requestParameters['updateProfileInput']),
@@ -405,7 +473,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the profile of the currently authenticated user.
+     * Update the profile of the currently authenticated user. Each value can be omitted or set to `null` to not change it.
      * Update profile
      */
     async updateProfile(requestParameters: UpdateProfileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserProfile> {
