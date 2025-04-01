@@ -1,9 +1,10 @@
 <script setup lang="js">
 import { useAuthStore } from "@/stores/auth.js";
-import {computed, ref} from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/api/index.js";
-import {storeToRefs} from "pinia";
+import { storeToRefs } from "pinia";
+import { ButtonGroup } from "primevue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -21,7 +22,7 @@ const canEdit = computed(() => isCurrentUser.value || auth.user.profile.level ==
 
 let profile;
 if (isCurrentUser.value) {
-    const {user} = storeToRefs(auth);
+    const { user } = storeToRefs(auth);
     profile = computed(() => user.value.profile);
 } else {
     profile = ref(await api.users.findUser({ userId: props.userId }));
@@ -68,8 +69,10 @@ const getLevelColor = (level) => {
                     <div class="row align-items-center">
                         <div class="col-md-3 text-center mb-3 mb-md-0">
                             <div class="profile-avatar">
-                                <div class="avatar-placeholder bg-light rounded-circle d-flex justify-content-center align-items-center">
-                                    <span>{{ profile.firstName?.charAt(0) || '' }}{{ profile.lastName?.charAt(0) || '' }}</span>
+                                <div
+                                    class="avatar-placeholder bg-light rounded-circle d-flex justify-content-center align-items-center">
+                                    <span>{{ profile.firstName?.charAt(0) || '' }}{{ profile.lastName?.charAt(0) || ''
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
@@ -77,8 +80,10 @@ const getLevelColor = (level) => {
                             <h1 class="fs-2 mb-2">{{ profile.firstName }} {{ profile.lastName }}</h1>
                             <div class="d-flex flex-wrap gap-2 mb-3">
                                 <span class="badge bg-primary rounded-pill">{{ profile.gender }}</span>
-                                <span :class="`badge bg-${getRoleColor(profile.role)} rounded-pill`">{{ profile.role }}</span>
-                                <span :class="`badge bg-${getLevelColor(profile.level)} rounded-pill`">{{ profile.level }}</span>
+                                <span :class="`badge bg-${getRoleColor(profile.role)} rounded-pill`">{{ profile.role
+                                    }}</span>
+                                <span :class="`badge bg-${getLevelColor(profile.level)} rounded-pill`">{{ profile.level
+                                    }}</span>
                             </div>
                             <div class="points-container p-2 rounded d-inline-flex align-items-center">
                                 <i class="bi bi-star-fill me-2"></i>
@@ -135,8 +140,9 @@ const getLevelColor = (level) => {
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span class="fw-medium">Points</span>
                                     <div class="progress" style="width: 60%;">
-                                        <div class="progress-bar" role="progressbar" :style="`width: ${Math.min(profile.points, 100)}%`"
-                                             :aria-valuenow="profile.points" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="progress-bar" role="progressbar"
+                                            :style="`width: ${Math.min(profile.points, 100)}%`"
+                                            :aria-valuenow="profile.points" aria-valuemin="0" aria-valuemax="100">
                                             {{ profile.points }}
                                         </div>
                                     </div>
@@ -148,16 +154,21 @@ const getLevelColor = (level) => {
             </div>
 
             <!-- Action Buttons - Only show for current user -->
-            <div v-if="canEdit" class="text-center mt-2">
-                <router-link class="btn btn-primary me-2" :to="{ name: 'profile-edit', params: { userId } }">Modifier le profil</router-link>
-                <router-link class="btn btn-outline-secondary" :to="{ name: 'profile-creds', params: { userId } }">Changer le mot de passe</router-link>
-                <router-link class="btn btn-danger" :to="{ name: 'profile-delete', params: { userId } }">Supprimer le compte</router-link>
+            <div v-if="canEdit" class="actions text-center">
+                <ButtonGroup>
+                    <Button fluid severity="secondary" icon="pi pi-user-edit"
+                        @click="router.push({ name: 'profile-edit', params: { userId } })" label="Modifier le profil"></Button>
+                    <Button fluid severity="secondary" icon="pi pi-key"
+                        @click="router.push({ name: 'profile-creds', params: { userId } })" label="Changer le mot de passe"></Button>
+                    <Button fluid severity="danger" icon="pi pi-trash"
+                        @click="router.push({ name: 'profile-delete', params: { userId } })" label="Supprimer le compte"></Button>
+                </ButtonGroup>
 
             </div>
         </div>
         <RouterView v-slot="{ Component }">
-            <component :is="Component" @profile-update="profileUpdated"/>
-        </RouterView>   
+            <component :is="Component" @profile-update="profileUpdated" />
+        </RouterView>
     </div>
 </template>
 
@@ -190,6 +201,11 @@ const getLevelColor = (level) => {
         width: 100px;
         height: 100px;
         font-size: 2rem;
+    }
+
+    .actions .p-buttongroup {
+        flex-direction: column;
+        width: 100%;
     }
 }
 </style>

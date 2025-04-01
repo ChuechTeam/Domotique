@@ -93,7 +93,9 @@ async function save() {
                     {{ err.message }}
                 </div>
 
-                <p>Attention vous allez supprimer ce compte !</p>
+                <p>Attention, vous allez supprimer ce compte !</p>
+
+                <p>Tous les appareils qui sont associés à ce compte seront toujours présents, mais ne vous appartiendront plus.</p>
 
                 <div class="-password-section" v-if="isCurrentUser">
                     <h3>Inscrire le mot de passe</h3>
@@ -101,7 +103,7 @@ async function save() {
                         <FloatLabel variant="in">
                             <InputText v-model="password" type="password"
                                 :invalid="err?.data?.newPassword?.length > 0" />
-                            <label>Nouveau mot de passe</label>
+                            <label>Confirmation du mot de passe</label>
                             <ValidationErrList :errors="err?.data?.newPassword" />
                         </FloatLabel>
                     </div>
