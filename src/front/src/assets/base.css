@@ -32,6 +32,8 @@ body {
   --color-admin-dark: #aed62c;
   --color-admin-light: #dcffa4;
 
+  --color-calm-background: #fdfdfd;
+
   --gradient-admin: linear-gradient(
     135deg,
     var(--color-admin) 0%,

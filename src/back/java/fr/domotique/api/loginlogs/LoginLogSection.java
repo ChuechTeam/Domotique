@@ -27,13 +27,14 @@ public class LoginLogSection extends Section {
             ctx.next();
         });
 
-        // GET /api/login-logs
+        // GET /api/login-logs?userId
         subRouter.get()
-            .respond(ctx -> server.db().loginLogs().getAllSorted()
+            .respond(ctx -> server.db().loginLogs().getAllSorted(readIntOrNull(ctx.queryParams().get("userId")))
                 .map(LoginLogsResponse::new))
             .putMetadata(RouteDoc.KEY, new RouteDoc("getLoginLogs")
                 .summary("Get all login logs")
                 .description("Returns a list of all login logs in the database")
+                .optionalQueryParam("userId", int.class, "The user id to filter the logs by")
                 .response(200, LoginLogsResponse.class, "The list of login logs"));
     }
 

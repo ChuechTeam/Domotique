@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import api from "@/api/index.js";
 import { storeToRefs } from "pinia";
 import { ButtonGroup } from "primevue";
+import LoginLogs from "@/components/LoginLogs.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -163,7 +164,16 @@ const getLevelColor = (level) => {
                     <Button fluid severity="danger" icon="pi pi-trash"
                         @click="router.push({ name: 'profile-delete', params: { userId } })" label="Supprimer le compte"></Button>
                 </ButtonGroup>
+            </div>
 
+            <div class="logs" v-if="auth.canAdminister">
+                <h2>Historique de connexion</h2>
+                <Suspense>
+                    <LoginLogs :user-id="userId"/>
+                    <template #fallback>
+                        <ProgressSpinner />
+                    </template>
+                </Suspense>
             </div>
         </div>
         <RouterView v-slot="{ Component }">

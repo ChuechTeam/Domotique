@@ -19,6 +19,16 @@ function logout() {
 
 const userLink = computed(() => "/profile/" + auth.user.profile.id);
 const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.profile.lastName[0]);
+
+// A fun hack to refresh Suspense-base components when their props change.
+const routerKey = computed(() => {
+    const func = router.currentRoute.value.meta?.generateKey
+    if (func) {
+        return func()
+    } else {
+        return ""
+    }
+});
 </script>
 
 
@@ -26,11 +36,11 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
     <div class="app-root">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
             <RouterLink class="navbar-brand fw-bold" to="/dashboard"><span>Retraités Connectés</span></RouterLink>
-            <div class="d-flex align-items-center gap-3">
-                <RouterLink class="nav-link mobile-only" to="/dashboard"><span class="pi pi-home"></span><span class="nav-label">Accueil</span></RouterLink>
-                <RouterLink class="nav-link" to="/tech"><span class="pi pi-microchip"></span> <span class="nav-label">Technologie</span></RouterLink>
-                <RouterLink class="nav-link" to="/profiles"><span class="pi pi-user"></span> <span class="nav-label">Profils</span></RouterLink>
-                <RouterLink class="nav-link" to="/themes"><span class="pi pi-box"></span> <span class="nav-label">Thèmes</span></RouterLink>
+            <div class="links">
+                <RouterLink class="nav-link" to="/dashboard"><span class="pi pi-home"></span><span class="nav-label">Accueil</span></RouterLink>
+                <RouterLink class="nav-link" to="/tech"><span class="pi pi-microchip"></span><span class="nav-label">Technologie</span></RouterLink>
+                <RouterLink class="nav-link" to="/profile"><span class="pi pi-user"></span><span class="nav-label">Profils</span></RouterLink>
+                <RouterLink class="nav-link" to="/themes"><span class="pi pi-box"></span><span class="nav-label">Thèmes</span></RouterLink>
             </div>
             <Chip class="ms-auto user-icon">
                 <Avatar :label="userLabel" size="medium" shape="circle" />
@@ -39,8 +49,8 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
         </nav>
         <main class="content">
             <Suspense>
-                <!-- Use $route.params as key so the component reloads when same route but different parameters (userId, deviceId...) -->
-                <RouterView :key="$route.params" />
+                <!-- Use routeKey as key so the component reloads when same route but different parameters (userId, deviceId...) -->
+                <RouterView :key="routerKey" />
                 <template #fallback>
                     <div class="spinner-border mx-auto" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -68,24 +78,51 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
     padding-top: 8px;
     flex: 1;
     overflow: auto;
+
+    &:has(> .no-overflow) {
+        overflow: hidden;
+    }
 }
 .navbar-brand {
     font-size: 1.5rem;
     color: #2c3e50;
 }
+.links {
+    display: flex;
+    justify-content: stretch;
+    flex: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    gap: 8px;
+}
 .nav-link {
     font-weight: 500;
     color: #333;
     text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    flex: 1;
+    text-align: center;
+
+    &:hover {
+        color: #416d3d;
+    }
 
     & .pi {
-        margin-right: 2px;
+        margin-right: 8px;
         vertical-align: baseline;
     }
+
+    &.router-link-active {
+        background-color: #1b8014;
+        color: white;
+        
+        &:hover {
+            color: white;
+        }  
+    }
 }
-.nav-link:hover {
-    color: #007bff;
-}
+
 
 .user-pill {
     display: flex;
@@ -125,13 +162,8 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
         display: none;
     }
     .navbar {
-        justify-content: center !important;
-        & > div {
-            gap: 24px !important;
-        }
-        box-shadow: 0px 0px 16px 2px  rgb(0,0,0, 10%) !important;
+        box-shadow: 0px 0px 16px 2px rgb(0,0,0, 10%) !important;
     }
-
     .nav-link {
         display: flex;
         flex-direction: column;
@@ -144,9 +176,6 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
         display: block !important; /* hacky */
         font-size: 2rem;
         margin: 0.5rem 0;
-    }
-    .navbar {
-        justify-content: flex-start;
     }
 }
 </style>

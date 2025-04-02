@@ -64,7 +64,7 @@ public class DeviceSection extends Section {
         deviceRoutes.patch("/:deviceId").respond(vt(this::patchDevice)).putMetadata(RouteDoc.KEY, PATCH_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
 
-        deviceRoutes.get("/:deviceId").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
+        deviceRoutes.get("/:deviceId/report").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
     }
 
     // region GET /api/devices | Get all devices

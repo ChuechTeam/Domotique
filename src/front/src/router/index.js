@@ -129,7 +129,12 @@ const router = createRouter({
                                 }
                             }
                         }
-                    ]
+                    ],
+                    meta: {
+                        generateKey() {
+                            return router.currentRoute.value.params.userId.toString();
+                        }
+                    }
                 },
                 {
                     path: "/tech",

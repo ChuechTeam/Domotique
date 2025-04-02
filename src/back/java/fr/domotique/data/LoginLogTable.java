@@ -3,6 +3,7 @@ package fr.domotique.data;
 import fr.domotique.base.data.*;
 import io.vertx.core.*;
 import io.vertx.sqlclient.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -13,8 +14,12 @@ public class LoginLogTable extends Table {
         super(client);
     }
 
-    public Future<List<LoginLog>> getAllSorted() {
-        return queryMany(ENTITY.mapper(), "SELECT * FROM LoginLog ORDER BY time DESC");
+    public Future<List<LoginLog>> getAllSorted(@Nullable Integer userId) {
+        if (userId != null) {
+            return queryMany(ENTITY.mapper(), "SELECT * FROM LoginLog WHERE userId = ? ORDER BY time DESC", userId);
+        } else {
+            return queryMany(ENTITY.mapper(), "SELECT * FROM LoginLog ORDER BY time DESC");
+        }
     }
 
     public Future<LoginLog> get(int id) {

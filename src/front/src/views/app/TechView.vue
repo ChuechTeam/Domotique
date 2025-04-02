@@ -42,7 +42,7 @@ load(); // Initial load
 
 </script>
 <template>
-    <div class="root">
+    <div class="root no-overflow">
         <header class="header">
             <div class="-layout container">
                 <div class="-text">Technologie</div>
@@ -61,6 +61,7 @@ load(); // Initial load
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: none;
 }
 
 .header {
