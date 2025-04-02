@@ -95,13 +95,13 @@ function createNewDevice() {
 
                 <h3>Filtres</h3>
 
-                <search class="filter-item">
+                <div class="filter-item">
                     <label for="name-filter">Nom</label>
                     <IconField>
                         <InputIcon class="pi pi-search" />
                         <InputText id="name-filter" fluid v-model="filters.name" placeholder="Rechercher par nom" />
                     </IconField>
-                </search>
+                </div>
 
                 <div class="filter-item">
                     <label for="powered-filter">État</label>
@@ -161,6 +161,7 @@ function createNewDevice() {
         border-left: 1px solid rgba(4, 91, 172, 0.1);
 
         overflow: auto;
+        scrollbar-gutter: stable both-edges;
     }
 
     & .-filters {

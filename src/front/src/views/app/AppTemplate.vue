@@ -17,18 +17,8 @@ function logout() {
     auth.logout()
 }
 
-const userLink = computed(() => "/profile/" + auth.user.profile.id);
+const userLink = computed(() => "/profiles/" + auth.user.profile.id);
 const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.profile.lastName[0]);
-
-// A fun hack to refresh Suspense-base components when their props change.
-const routerKey = computed(() => {
-    const func = router.currentRoute.value.meta?.generateKey
-    if (func) {
-        return func()
-    } else {
-        return ""
-    }
-});
 </script>
 
 
@@ -39,7 +29,7 @@ const routerKey = computed(() => {
             <div class="links">
                 <RouterLink class="nav-link" to="/dashboard"><span class="pi pi-home"></span><span class="nav-label">Accueil</span></RouterLink>
                 <RouterLink class="nav-link" to="/tech"><span class="pi pi-microchip"></span><span class="nav-label">Technologie</span></RouterLink>
-                <RouterLink class="nav-link" to="/profile"><span class="pi pi-user"></span><span class="nav-label">Profils</span></RouterLink>
+                <RouterLink class="nav-link" to="/profiles"><span class="pi pi-user"></span><span class="nav-label">Profils</span></RouterLink>
                 <RouterLink class="nav-link" to="/themes"><span class="pi pi-box"></span><span class="nav-label">Thèmes</span></RouterLink>
             </div>
             <Chip class="ms-auto user-icon">
@@ -49,8 +39,7 @@ const routerKey = computed(() => {
         </nav>
         <main class="content">
             <Suspense>
-                <!-- Use routeKey as key so the component reloads when same route but different parameters (userId, deviceId...) -->
-                <RouterView :key="routerKey" />
+                <RouterView />
                 <template #fallback>
                     <div class="spinner-border mx-auto" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -78,6 +67,9 @@ const routerKey = computed(() => {
     padding-top: 8px;
     flex: 1;
     overflow: auto;
+
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
 
     &:has(> .no-overflow) {
         overflow: hidden;

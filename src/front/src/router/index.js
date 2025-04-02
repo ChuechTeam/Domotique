@@ -5,7 +5,7 @@ import TourHome from "@/views/tour/TourHome.vue";
 import DashboardView from "@/views/app/DashboardView.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
-import ProfileView from "@/views/app/ProfileView.vue";
+import ProfileDetailView from "@/views/app/ProfileDetailView.vue";
 import Inscription from '@/inscription.vue';
 import RadioButton from 'primevue/radiobutton';
 import HomeView from '@/views/tour/HomeView.vue';
@@ -19,6 +19,7 @@ import RoomsView from '@/views/app/RoomsView.vue';
 import DeviceTypesView from '@/views/app/DeviceTypesView.vue';
 import { useGuards } from '@/guards';
 import ProfileDeleteModal from '@/views/app/ProfileDeleteModal.vue';
+import ProfilesView from '@/views/app/ProfilesView.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,71 +69,86 @@ const router = createRouter({
                     }
                 },
                 {
-                    path: "/profile/:userId(\\d+)",
-                    name: "profile",
-                    component: ProfileView,
-                    props: true,
+                    path: "/profiles",
+                    name: "profiles",
+                    component: ProfilesView,
                     children: [
                         {
-                            path: "edit",
-                            name: "profile-edit",
-                            component: ProfileEditModal,
+                            path: ":userId(\\d+)",
+                            name: "profile",
+                            component: ProfileDetailView,
                             props: true,
+                            children: [
+                                {
+                                    path: "edit",
+                                    name: "profile-edit",
+                                    component: ProfileEditModal,
+                                    props: true,
 
-                            // Prevent users from accessing the edit page for other users if they are not admins.
-                            beforeEnter(to, from) {
-                                const guards = useGuards();
-                                const auth = useAuthStore();
+                                    // Prevent users from accessing the edit page for other users if they are not admins.
+                                    beforeEnter(to, from) {
+                                        const guards = useGuards();
+                                        const auth = useAuthStore();
 
-                                console.log(to, auth.userId);
+                                        console.log(to, auth.userId);
 
-                                if (auth.userId.toString() === to.params.userId) {
-                                    return;
-                                } else if (!guards.mustHaveAdminRights()) {
-                                    return from?.fullPath ?? "/dashboard";
+                                        if (auth.userId.toString() === to.params.userId) {
+                                            return;
+                                        } else if (!guards.mustHaveAdminRights()) {
+                                            return from?.fullPath ?? "/dashboard";
+                                        }
+                                    }
+                                },
+                                {
+                                    path: "creds",
+                                    name: "profile-creds",
+                                    component: CredentialsEditModal,
+                                    props: true,
+
+                                    // Prevent users from accessing the password edit page for other users if they are not admins.
+                                    beforeEnter(to, from) {
+                                        const guards = useGuards();
+                                        const auth = useAuthStore();
+
+                                        if (auth.userId.toString() === to.params.userId) {
+                                            return;
+                                        } else if (!guards.mustHaveAdminRights()) {
+                                            return from?.fullPath ?? "/dashboard";
+                                        }
+                                    }
+                                },
+                                {
+                                    path: "delete",
+                                    name: "profile-delete",
+                                    component: ProfileDeleteModal,
+                                    props: true,
+
+                                    // Prevent users from accessing the profile delete page for other users if they are not admins.
+                                    beforeEnter(to, from) {
+                                        const guards = useGuards();
+                                        const auth = useAuthStore();
+
+                                        if (auth.userId.toString() === to.params.userId) {
+                                            return;
+                                        } else if (!guards.mustHaveAdminRights()) {
+                                            return from?.fullPath ?? "/dashboard";
+                                        }
+                                    }
                                 }
-                            }
-                        },
-                        {
-                            path: "creds",
-                            name: "profile-creds",
-                            component: CredentialsEditModal,
-                            props: true,
-
-                            // Prevent users from accessing the password edit page for other users if they are not admins.
-                            beforeEnter(to, from) {
-                                const guards = useGuards();
-                                const auth = useAuthStore();
-
-                                if (auth.userId.toString() === to.params.userId) {
-                                    return;
-                                } else if (!guards.mustHaveAdminRights()) {
-                                    return from?.fullPath ?? "/dashboard";
-                                }
-                            }
-                        },
-                        {
-                            path: "delete",
-                            name: "profile-delete",
-                            component: ProfileDeleteModal,
-                            props: true,
-
-                            // Prevent users from accessing the profile delete page for other users if they are not admins.
-                            beforeEnter(to, from) {
-                                const guards = useGuards();
-                                const auth = useAuthStore();
-
-                                if (auth.userId.toString() === to.params.userId) {
-                                    return;
-                                } else if (!guards.mustHaveAdminRights()) {
-                                    return from?.fullPath ?? "/dashboard";
+                            ],
+                            meta: {
+                                generateKey() {
+                                    return router.currentRoute.value.params.userId.toString();
                                 }
                             }
                         }
                     ],
-                    meta: {
-                        generateKey() {
-                            return router.currentRoute.value.params.userId.toString();
+                    beforeEnter(to, from) {
+                        const auth = useAuthStore();
+
+                        // Prevent users without authorization from querying all users.
+                        if (to.query?.allUsers == "true" && auth.canAdminister) {
+                            return from?.fullPath ?? "/dashboard";
                         }
                     }
                 },

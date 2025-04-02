@@ -42,7 +42,7 @@ public enum AttributeType {
     STEPS("Nombre de pas", Content.NUMBER, (Double x) -> x >= 0),
 
     @ApiDoc("The amount of sleep done since the device was created, in minutes.")
-    LAST_SLEEP_DURATION("Durée du dernier sommeil (minutes)", Content.NUMBER, (Double x) -> x >= 0),
+    LAST_SLEEP_DURATION("Durée du dernier sommeil (minutes)", Content.NUMBER, true, (Double x) -> x >= 0),
 
     @ApiDoc("The maximum VO2 of the user, in mL/kg/min.")
     MAX_VO2("VO2 max (mL/kg/min)", Content.NUMBER, true, (Double x) -> x >= 0),

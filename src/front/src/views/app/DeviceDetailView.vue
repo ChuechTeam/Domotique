@@ -190,7 +190,10 @@ await fetchDevice();
               <div class="attributes-container" v-if="Object.keys(device.attributes).length > 0">
                 <div class="attribute-row" v-for="(value, key) in device.attributes" :key="key">
                   <div class="attribute-key">{{ attributeTypeLabels[key] }}</div>
-                  <div class="attribute-value">{{ formatAttribute(key as any, value) }}</div>
+                  <div class="attribute-value" v-if="value != null">{{ formatAttribute(key as any, value) }}</div>
+                  <div class="attribute-value text-secondary" v-else>
+                    <i class="pi pi-lock"></i> Privé
+                  </div>
                 </div>
               </div>
               <div v-else class="no-attributes">
@@ -332,12 +335,12 @@ await fetchDevice();
 }
 
 .info-label {
-  flex: 0 0 40%;
+  flex: 0 0 60%;
   font-weight: 500;
 }
 
 .info-value {
-  flex: 0 0 60%;
+  flex: 0 0 40%;
 }
 
 .attributes-container {
@@ -356,12 +359,12 @@ await fetchDevice();
 }
 
 .attribute-key {
-  flex: 0 0 40%;
+  flex: 0 0 60%;
   font-weight: 500;
 }
 
 .attribute-value {
-  flex: 0 0 60%;
+  flex: 0 0 40%;
   word-break: break-word;
 }
 

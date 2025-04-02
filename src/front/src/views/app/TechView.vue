@@ -53,7 +53,7 @@ load(); // Initial load
                 </div>
             </div>
         </header>
-        <RouterView class="overflow-auto" />
+        <RouterView class="overflow-auto view" />
     </div>
 </template>
 <style lang="css" scoped>
@@ -62,6 +62,11 @@ load(); // Initial load
     flex-direction: column;
     height: 100%;
     overflow: none;
+}
+
+.view {
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
 }
 
 .header {

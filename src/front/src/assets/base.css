@@ -40,3 +40,7 @@ body {
     var(--color-admin-light) 100%
   );
 }
+
+* {
+  scrollbar-width: thin;
+}

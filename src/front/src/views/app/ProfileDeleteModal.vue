@@ -86,7 +86,7 @@ async function save() {
 </script>
 <template>
     <Dialog class="credentials-modal" v-model:visible="visible" modal @after-hide="dialogClosed"
-        header="Modifier les identifiants">
+        header="Supprimer le compte">
         <template #default>
             <div class="-content">
                 <div v-if="err?.message" :class="{ 'opacity-25': submitting, 'alert': true, 'alert-danger': true }">
@@ -95,7 +95,7 @@ async function save() {
 
                 <p>Attention, vous allez supprimer ce compte !</p>
 
-                <p>Tous les appareils qui sont associés à ce compte seront toujours présents, mais ne vous appartiendront plus.</p>
+                <p>Tous les appareils qui sont associés à ce compte seront toujours présents.</p>
 
                 <div class="-password-section" v-if="isCurrentUser">
                     <h3>Inscrire le mot de passe</h3>

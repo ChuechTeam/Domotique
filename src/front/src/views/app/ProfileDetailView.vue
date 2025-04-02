@@ -6,6 +6,7 @@ import api from "@/api/index.js";
 import { storeToRefs } from "pinia";
 import { ButtonGroup } from "primevue";
 import LoginLogs from "@/components/LoginLogs.vue";
+import LevelBar from "@/components/LevelBar.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -19,7 +20,7 @@ const props = defineProps({
 
 const userId = parseInt(props.userId);
 const isCurrentUser = ref(userId === auth.userId);
-const canEdit = computed(() => isCurrentUser.value || auth.user.profile.level === "EXPERT");
+const canEdit = computed(() => isCurrentUser.value || auth.canAdminister);
 
 let profile;
 if (isCurrentUser.value) {
@@ -90,6 +91,8 @@ const getLevelColor = (level) => {
                                 <i class="bi bi-star-fill me-2"></i>
                                 <span class="fw-bold">{{ profile.points }} points</span>
                             </div>
+
+                            <LevelBar :value="profile.points" class="mt-2 pe-4" />
                         </div>
                     </div>
                 </div>
@@ -166,7 +169,7 @@ const getLevelColor = (level) => {
                 </ButtonGroup>
             </div>
 
-            <div class="logs" v-if="auth.canAdminister">
+            <div class="logs mt-2" v-if="auth.canAdminister">
                 <h2>Historique de connexion</h2>
                 <Suspense>
                     <LoginLogs :user-id="userId"/>

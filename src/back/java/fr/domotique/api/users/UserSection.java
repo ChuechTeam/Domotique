@@ -321,7 +321,8 @@ public class UserSection extends Section {
         .description("""
             Find users by either:
             - a list of ids, using `ids`
-            - their full name, using `fullName`.""")
+            - their full name, using `fullName`.
+            - all users, if you're at least an expert.""")
         .optionalQueryParam("fullName", String.class, "The full name to search for.")
         .optionalQueryParam("ids", Integer[].class, "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
@@ -331,7 +332,8 @@ public class UserSection extends Section {
 
     Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
         // Make sure the user is logged in and has their email confirmed.
-        Authenticator.get(context).requireAuth(Level.BEGINNER);
+        Authenticator auth = Authenticator.get(context);
+        auth.requireAuth(Level.BEGINNER);
 
         // Try doing a by-id search.
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
@@ -341,9 +343,12 @@ public class UserSection extends Section {
 
         String fullName = context.queryParams().get("fullName");
         if (fullName == null || fullName.isBlank()) {
-            throw new RequestException("La recherche est vide.", 400);
+            // When doing a full search, you must be at least an expert.
+            auth.requireAuth(Level.EXPERT);
+            return server.db().users().getAllProfiles().map(ProfileSearchOutput::new);
+        } else {
+            return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
         }
-        return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
     }
     // endregion
 
