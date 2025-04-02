@@ -35,8 +35,8 @@ public class DeviceSection extends Section {
         // Create a sub-router for all device routes
         var deviceRoutes = newSubRouter(router, PATH_PREFIX)
             .putMetadata(RouteDoc.KEY, new RouteDoc().tag("Devices")
-            .response(401, ErrorResponse.class, "You are not logged in.")
-            .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
+                .response(401, ErrorResponse.class, "You are not logged in.")
+                .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
 
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
@@ -83,6 +83,8 @@ public class DeviceSection extends Section {
     record DevicesResponse(List<CompleteDevice> devices) {}
 
     Future<DevicesResponse> getAll(RoutingContext context) {
+        Authenticator authenticator = Authenticator.get(context);
+
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
         if (!ids.isEmpty()) {
             // If we have IDs, we ignore all other parameters
@@ -108,6 +110,14 @@ public class DeviceSection extends Section {
         var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered, category);
 
         return server.db().devices().queryComplete(query)
+            .map(devices -> {
+                // Remove personal data from the devices
+                for (CompleteDevice dev : devices) {
+                    nullifyPersonalData(dev, authenticator);
+                }
+
+                return devices;
+            })
             .map(DevicesResponse::new);
     }
     // endregion
@@ -120,16 +130,27 @@ public class DeviceSection extends Section {
         .response(200, DeviceStats.class, "The device stats.", new DeviceStats(
             List.of(new DeviceStat(1, 80), new DeviceStat(8, 41))
         ))
-        .response(204, "Device not found.");
+        .response(204, "Device not found.")
+        .response(403, ErrorResponse.class, "You don't have permission to access this resource.")
+        .response(422, ErrorResponse.class, "Invalid query.");
 
     record DeviceStats(List<DeviceStat> stats) {}
 
     Future<DeviceStats> getDeviceStats(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
         // TODO: Make it send full entities for room, user, and device.
         var body = readBody(context, DeviceStatsQuery.class);
         if (!body.validQuery()) {
             throw new RequestException("Invalid query.", 422, "INVALID_QUERY");
         }
+
+        // Personal attributes can't be queried. TODO: Instead, add a ownerId = thisUserId to the query.
+        if (body.attribute().isPersonal()
+            && !DeviceOperations.canSeePersonalAttributes(0, auth)) {
+            throw new RequestException("Vous n'avez pas le niveau requis pour voir cet attribut.", 403, "PERSONAL_ATTRIBUTE");
+        }
+
         return server.db().devices().queryStats(body)
             .map(DeviceStats::new);
     }
@@ -144,8 +165,9 @@ public class DeviceSection extends Section {
         .response(204, "Device not found.");
 
     Future<CompleteDevice> getDeviceById(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
         int deviceId = readIntPathParam(context, "deviceId");
-        return server.db().devices().getComplete(deviceId);
+        return server.db().devices().getComplete(deviceId).map(d -> nullifyPersonalData(d, auth));
     }
     // endregion
 
@@ -426,5 +448,13 @@ public class DeviceSection extends Section {
         } else {
             throw new IllegalStateException("Unknown foreign key error: " + ex.getMessage(), ex);
         }
+    }
+
+    private @Nullable CompleteDevice nullifyPersonalData(@Nullable CompleteDevice dev, Authenticator a) {
+        if (dev == null) {
+            return null;
+        }
+        DeviceOperations.nullifyPersonalAttributes(dev.attributes(), dev.ownerId(), a);
+        return dev;
     }
 }

@@ -19,13 +19,35 @@
  * - `ACTIVITY_DURATION`: The total amount of physical activity recorded by the device, during its entire lifetime, in minutes.
  * - `TEMPERATURE`: The total distance traveled by the device, during its entire lifetime, in meters.
  * - `HUMIDITY`: The percentage of humidity at this current point in time.
+ * - `HEART_RATE`: The current beating rate of the heart, in beats per minute.
+ * - `BLOOD_PRESSURE`: The current blood pressure of the user, in mmHg.
+ * - `BLOOD_OXYGEN`: The current blood oxygen level of the user, in percentage.
+ * - `BLOOD_GLUCOSE`: The current blood glucose level of the user, in mg/dL.
+ * - `FAT_PERCENTAGE`: The amount of fat in the body, in percentage.
+ * - `STEPS`: The amount of steps done since the device was created.
+ * - `LAST_SLEEP_DURATION`: The amount of sleep done since the device was created, in minutes.
+ * - `MAX_VO2`: The maximum VO2 of the user, in mL/kg/min.
+ * - `RESPIRATORY_RATE`: The current respiratory rate of the user, in breaths per minute.
+ * - `BODY_TEMPERATURE`: The current body temperature of the user, in °C.
+ * - `BODY_WEIGHT`: The current weight of the user, in kg.
  * @export
  */
 export const AttributeType = {
     CaloriesBurned: 'CALORIES_BURNED',
     ActivityDuration: 'ACTIVITY_DURATION',
     Temperature: 'TEMPERATURE',
-    Humidity: 'HUMIDITY'
+    Humidity: 'HUMIDITY',
+    HeartRate: 'HEART_RATE',
+    BloodPressure: 'BLOOD_PRESSURE',
+    BloodOxygen: 'BLOOD_OXYGEN',
+    BloodGlucose: 'BLOOD_GLUCOSE',
+    FatPercentage: 'FAT_PERCENTAGE',
+    Steps: 'STEPS',
+    LastSleepDuration: 'LAST_SLEEP_DURATION',
+    MaxVo2: 'MAX_VO2',
+    RespiratoryRate: 'RESPIRATORY_RATE',
+    BodyTemperature: 'BODY_TEMPERATURE',
+    BodyWeight: 'BODY_WEIGHT'
 } as const;
 export type AttributeType = typeof AttributeType[keyof typeof AttributeType];
 
