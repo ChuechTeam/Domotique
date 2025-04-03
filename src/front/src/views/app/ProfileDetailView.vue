@@ -7,6 +7,8 @@ import { storeToRefs } from "pinia";
 import { ButtonGroup } from "primevue";
 import LoginLogs from "@/components/LoginLogs.vue";
 import LevelBar from "@/components/LevelBar.vue";
+import { genderLabels, levelLabels, roleLabels } from "@/labels";
+import ProfileDevices from "@/components/ProfileDevices.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -28,6 +30,25 @@ if (isCurrentUser.value) {
     profile = computed(() => user.value.profile);
 } else {
     profile = ref(await api.users.findUser({ userId: props.userId }));
+}
+
+const genderIcon = computed(() => {
+    if (!profile.value) return null;
+    switch (profile.value.gender) {
+        case "MALE":
+            return "pi pi-mars";
+        case "FEMALE":
+            return "pi pi-venus";
+        case "UNDISCLOSED":
+            return "pi pi-asterisk";
+    }
+})
+
+// Generate random background color based on user ID
+function getAvatarColor(id) {
+    // Simple hash function based on user ID
+    const hash = Math.abs(id * 31) % 360;
+    return `hsl(${hash}, 70%, 70%)`;
 }
 
 function profileUpdated(np) {
@@ -67,113 +88,57 @@ const getLevelColor = (level) => {
 
         <div v-else class="profile-container">
             <!-- Profile Header -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-3 text-center mb-3 mb-md-0">
-                            <div class="profile-avatar">
-                                <div
-                                    class="avatar-placeholder bg-light rounded-circle d-flex justify-content-center align-items-center">
-                                    <span>{{ profile.firstName?.charAt(0) || '' }}{{ profile.lastName?.charAt(0) || ''
-                                        }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-9">
-                            <h1 class="fs-2 mb-2">{{ profile.firstName }} {{ profile.lastName }}</h1>
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <span class="badge bg-primary rounded-pill">{{ profile.gender }}</span>
-                                <span :class="`badge bg-${getRoleColor(profile.role)} rounded-pill`">{{ profile.role
-                                    }}</span>
-                                <span :class="`badge bg-${getLevelColor(profile.level)} rounded-pill`">{{ profile.level
-                                    }}</span>
-                            </div>
-                            <div class="points-container p-2 rounded d-inline-flex align-items-center">
-                                <i class="bi bi-star-fill me-2"></i>
-                                <span class="fw-bold">{{ profile.points }} points</span>
-                            </div>
-
-                            <LevelBar :value="profile.points" class="mt-2 pe-5" />
-                        </div>
+            <header class="header">
+                <Avatar :label="profile.firstName[0] + profile.lastName[0]"
+                    :style="{ 'background-color': getAvatarColor(profile.id) }" shape="circle" class="avatar"></Avatar>
+                <div class="infos">
+                    <div class="full-name">{{ profile.firstName + ' ' + profile.lastName }}</div>
+                    <div class="tags">
+                        <Tag :value="roleLabels[profile.role]" severity="info" icon="pi pi-crown" />
+                        <Tag :value="levelLabels[profile.level]" severity="success" icon="pi pi-trophy" class="ms-2" />
+                        <Tag :value="genderLabels[profile.gender]" severity="secondary" :icon="genderIcon"
+                            class="ms-2" style="--p-tag-secondary-background: rgb(222, 222, 222)" />
                     </div>
+                    <LevelBar :value="profile.points" class="pe-2" />
                 </div>
-            </div>
+            </header>
 
             <!-- Profile Details -->
-            <div class="row">
-                <!-- Personal Info -->
-                <div class="col-12 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-header bg-white">
-                            <h2 class="fs-5 mb-0">Personal Information</h2>
+            <div class="devices prof-item">
+                <h2>Appareils de {{  profile.firstName  }}</h2>
+                <Suspense>
+                    <ProfileDevices :user-id="userId" />
+                    <template #fallback>
+                        <div class="flex justify-content-center">
+                            <ProgressSpinner />
                         </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="fw-medium">Full Name</span>
-                                    <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="fw-medium">Gender</span>
-                                    <span>{{ profile.gender }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="fw-medium">ID</span>
-                                    <span>{{ profile.id }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+                    </template>
+                </Suspense>
+            </div>
 
-                <!-- User Status -->
-                <div class="col-12 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-header bg-white">
-                            <h2 class="fs-5 mb-0">User Status</h2>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="fw-medium">Role</span>
-                                    <span :class="`badge bg-${getRoleColor(profile.role)}`">{{ profile.role }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="fw-medium">Tech Level</span>
-                                    <span :class="`badge bg-${getLevelColor(profile.level)}`">{{ profile.level }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span class="fw-medium">Points</span>
-                                    <div class="progress" style="width: 60%;">
-                                        <div class="progress-bar" role="progressbar"
-                                            :style="`width: ${Math.min(profile.points, 100)}%`"
-                                            :aria-valuenow="profile.points" aria-valuemin="0" aria-valuemax="100">
-                                            {{ profile.points }}
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            <div class="rooms prof-item">
+                <h2>Salles de {{ profile.firstName }}</h2>
             </div>
 
             <!-- Action Buttons - Only show for current user -->
             <div v-if="canEdit" class="actions text-center">
                 <ButtonGroup>
                     <Button fluid severity="secondary" icon="pi pi-user-edit"
-                        @click="router.push({ name: 'profile-edit', params: { userId } })" label="Modifier le profil"></Button>
+                        @click="router.push({ name: 'profile-edit', params: { userId } })"
+                        label="Modifier le profil"></Button>
                     <Button fluid severity="secondary" icon="pi pi-key"
-                        @click="router.push({ name: 'profile-creds', params: { userId } })" label="Changer le mot de passe"></Button>
+                        @click="router.push({ name: 'profile-creds', params: { userId } })"
+                        label="Changer le mot de passe"></Button>
                     <Button fluid severity="danger" icon="pi pi-trash"
-                        @click="router.push({ name: 'profile-delete', params: { userId } })" label="Supprimer le compte"></Button>
+                        @click="router.push({ name: 'profile-delete', params: { userId } })"
+                        label="Supprimer le compte"></Button>
                 </ButtonGroup>
             </div>
 
-            <div class="logs mt-2" v-if="auth.canAdminister">
+            <div class="logs prof-item mt-2" v-if="auth.canAdminister">
                 <h2>Historique de connexion</h2>
                 <Suspense>
-                    <LoginLogs :user-id="userId"/>
+                    <LoginLogs :user-id="userId" />
                     <template #fallback>
                         <ProgressSpinner />
                     </template>
@@ -187,8 +152,52 @@ const getLevelColor = (level) => {
 </template>
 
 <style scoped>
-.profile-avatar {
-    padding: 10px;
+.avatar {
+    width: 10rem;
+    height: 10rem;
+    font-size: 5rem;
+}
+
+.profile-container {
+    border-radius: 16px;
+    background-color: #fbfbfb;
+    padding-bottom: 16px;
+    /* overflow: hidden; */
+}
+
+.header {
+    background-color: #f6f6f6;
+    /* background-color: white; */
+    /* box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); */
+
+    padding: 40px;
+
+    border-bottom: none;
+
+    border-radius: 16px 16px 0 0;
+
+    margin-bottom: 1rem;
+
+    display: flex;
+
+    gap: 40px;
+
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.prof-item {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.infos {
+    flex-grow: 1;
+    min-width: min(80vw, 300px);
+}
+
+.full-name {
+    font-size: 2.5em;
 }
 
 .avatar-placeholder {

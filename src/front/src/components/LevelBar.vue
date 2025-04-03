@@ -202,4 +202,18 @@ const progressPercentage = computed(() => {
     border-color: var(--tick-line-col-dim);
     opacity: 1.0;
 }
+
+@media (max-width: 768px) {
+    .tick-content {
+        font-size: 0.7em;
+
+        & .pi {
+            display: none;
+        }
+    }
+
+    .points {
+        font-size: 0.8em;
+    }
+}
 </style>
