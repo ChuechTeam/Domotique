@@ -55,28 +55,6 @@ watch(filters, () => {
 }, { deep: true });
 load(); // Initial load
 
-async function togglePower(id: number) {
-    try {
-        // Find the device in our list
-        const device = devices.value.find(d => d.id === id);
-        if (!device) return;
-
-        // Update the device via API
-        await api.devices.patchDevice({
-            deviceId: id,
-            devicePatchInput: {
-                powered: !device.powered
-            }
-        });
-
-        // Update the local device data with the new state
-        device.powered = !device.powered
-    } catch (error) {
-        console.error('Failed to toggle device power:', error);
-        // You might want to add error handling/notification here
-    }
-}
-
 function createNewDevice() {
     if (!guards.mustManage()) {
         return;
@@ -89,7 +67,7 @@ function createNewDevice() {
     <div class="box container-lg" v-if="$route.name === 'devices'">
         <div class="-filters">
             <div class="filter-section">
-                <Button v-slot="sp" @click="createNewDevice">
+                <Button @click="createNewDevice">
                     Créer un appareil
                 </Button>
 
@@ -127,7 +105,7 @@ function createNewDevice() {
                 Aucun appareil trouvé.
             </div>
             <div v-else class="device-grid">
-                <DeviceCard v-for="device in devices" :key="device.id" :device="device" @toggle-power="togglePower" />
+                <DeviceCard v-for="(device, k) in devices" :key="device.id" v-model="devices[k]" />
             </div>
         </div>
     </div>

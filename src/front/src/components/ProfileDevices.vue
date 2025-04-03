@@ -24,10 +24,10 @@ const toggleDevicePower = async (device) => {
                 powered: !device.powered
             }
         });
-        
+
         // Update local device state
         device.powered = !device.powered;
-        
+
         toast.add({
             severity: 'success',
             summary: 'Appareil mis à jour',
@@ -101,16 +101,14 @@ await loadDevices();
 <template>
     <div class="devices-container">
         <ProgressSpinner v-if="loading" />
-        
+
         <div v-else-if="devices.length === 0" class="empty-state">
             <i class="pi pi-mobile text-5xl mb-3 text-gray-400"></i>
             <p class="text-lg text-gray-600">Aucun appareil trouvé</p>
         </div>
-        
+
         <div v-else class="grid">
-            <div v-for="d in devices" :key="d.id">
-                <DeviceCard :device="d" />
-            </div>
+            <DeviceCard v-for="d, k in devices" :key="d.id" :device="d" v-model="devices[k]" />
         </div>
     </div>
 </template>
@@ -118,43 +116,6 @@ await loadDevices();
 <style scoped>
 .devices-container {
     min-height: 200px;
-}
-
-.device-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.device-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-}
-
-.device-header {
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px 6px 0 0;
-}
-
-.device-icon {
-    font-size: 3rem;
-    color: white;
-}
-
-.device-description {
-    min-height: 40px;
-    max-height: 60px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.device-energy {
-    font-weight: 500;
-    color: var(--orange-600);
 }
 
 .empty-state {

@@ -106,7 +106,7 @@ function handleSaveSuccess(result: CompleteDevice) {
 
 // Return to devices list
 function backToList() {
-  router.push({ name: 'devices' });
+  router.back();
 }
 
 // Initialize component

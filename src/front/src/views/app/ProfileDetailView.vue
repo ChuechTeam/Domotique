@@ -105,7 +105,7 @@ const getLevelColor = (level) => {
 
             <!-- Profile Details -->
             <div class="devices prof-item">
-                <h2>Appareils de {{  profile.firstName  }}</h2>
+                <h2 class="mb-3">Appareils de {{  profile.firstName  }}</h2>
                 <Suspense>
                     <ProfileDevices :user-id="userId" />
                     <template #fallback>
@@ -116,9 +116,9 @@ const getLevelColor = (level) => {
                 </Suspense>
             </div>
 
-            <div class="rooms prof-item">
+            <!-- <div class="rooms prof-item">
                 <h2>Salles de {{ profile.firstName }}</h2>
-            </div>
+            </div> (TODO) -->
 
             <!-- Action Buttons - Only show for current user -->
             <div v-if="canEdit" class="actions text-center">
