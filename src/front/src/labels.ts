@@ -91,7 +91,7 @@ export const attributeTypeContents: Record<AttributeType, NumberConstructor | St
 export const attributeTypeFormats = {
     "ACTIVITY_DURATION": {suffix: " min"},
     "HUMIDITY": {suffix: " %"},
-    "TEMPERATURE": {suffix: "°C"},
+    "TEMPERATURE": {suffix: " °C"},
     "CALORIES_BURNED": {suffix: " kcal"},
     "HEART_RATE": {suffix: " bpm"},
     "BLOOD_PRESSURE": {suffix: " mmHg"},
@@ -102,7 +102,7 @@ export const attributeTypeFormats = {
     "LAST_SLEEP_DURATION": {suffix: " min"},
     "MAX_VO2": {suffix: " mL/kg/min"},
     "RESPIRATORY_RATE": {suffix: "/min"},
-    "BODY_TEMPERATURE": {suffix: "°C"},
+    "BODY_TEMPERATURE": {suffix: " °C"},
     "BODY_WEIGHT": {suffix: " kg"}
 }
 
@@ -119,7 +119,7 @@ export function formatAttribute(type: AttributeType, val: any) {
         case "HUMIDITY":
             return `${val} %`
         case "TEMPERATURE":
-            return `${val}°C`
+            return `${val} °C`
         case "HEART_RATE":
             return `${val} bpm`
         case "BLOOD_PRESSURE":
@@ -139,7 +139,7 @@ export function formatAttribute(type: AttributeType, val: any) {
         case "RESPIRATORY_RATE":
             return `${val}/min`
         case "BODY_TEMPERATURE":
-            return `${val}°C`
+            return `${val} °C`
         case "BODY_WEIGHT":
             return `${val} kg`
     }

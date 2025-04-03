@@ -30,9 +30,10 @@ if (isCurrentUser.value) {
     profile = ref(await api.users.findUser({ userId: props.userId }));
 }
 
-function profileUpdated(profile) {
+function profileUpdated(np) {
+    console.log(profile);
     if (!isCurrentUser.value) {
-        profile.value = profile;
+        profile.value = np;
     }
 }
 
@@ -92,7 +93,7 @@ const getLevelColor = (level) => {
                                 <span class="fw-bold">{{ profile.points }} points</span>
                             </div>
 
-                            <LevelBar :value="profile.points" class="mt-2 pe-4" />
+                            <LevelBar :value="profile.points" class="mt-2 pe-5" />
                         </div>
                     </div>
                 </div>

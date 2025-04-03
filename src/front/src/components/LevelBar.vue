@@ -1,17 +1,21 @@
 <template>
-    <div class="w-100">
-        <div class="level-bar-container">
-            <div class="graduations">
-                <div class="graduation" v-for="i in graduationCount" :key="i"
-                    :style="{ left: ((i - 1) / graduationCount * 100) + '%' }"></div>
-            </div>
-            <div class="level-bar" :style="{ width: progressPercentage + '%' }"></div>
-            <div class="tick" v-for="(value, key) in info" :key="key"
-                :style="{ left: Math.min(99.67, (value / maxVal) * 100) + '%' }">
-                <div class="tick-content">
-                    <div class="tick-label">{{ levelLabels[key] }}</div>
-                    <div class="tick-value">
-                        <div>{{ value }}</div>
+    <div class="root">
+        <div class="bar-row">
+            <div class="points">{{ value }}</div>
+            <div class="level-bar-container">
+                <div class="graduations">
+                    <div class="graduation" v-for="i in graduationCount" :key="i"
+                        :style="{ left: ((i - 1) / graduationCount * 100) + '%' }"></div>
+                </div>
+                <div class="level-bar" :style="{ width: progressPercentage + '%' }"></div>
+                <div class="tick" v-for="(value, key) in info" :key="key"
+                    :style="{ left: Math.min(99.9, (value / maxVal) * 100) + '%' }"
+                    :class="{ '-done': value <= props.value }">
+                    <div class="tick-content">
+                        <div class="tick-label"><span v-if="value <= props.value" class="pi pi-check me-1"></span>{{ levelLabels[key] }}</div>
+                        <div class="tick-value">
+                            <div class="tick-value-box">{{ value }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,19 +55,54 @@ const progressPercentage = computed(() => {
 </script>
 
 <style scoped>
+.root {
+    width: 100%;
+
+    --tick-line-col: rgb(250, 217, 73);
+    --tick-line-col-dim: rgb(128, 91, 24);
+
+    --bar-height: 22px;
+}
+
+.points {
+    background-color: var(--tick-line-col);
+
+    text-align: center;
+    min-width: 8ch;
+    border-radius: 4px;
+
+    margin-right: -12px;
+    padding-right: 6px;
+
+    height: calc(var(--bar-height) + 6px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+}
+
+.bar-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    margin-top: 3.5em;
+    margin-bottom: 1.5em;
+}
+
 .level-bar-container {
     width: 100%;
-    height: 20px;
+    height: var(--bar-height);
     background-color: #d4d4d4;
     border-radius: 4px;
 
-    margin-top: 3.5rem;
-    margin-bottom: 1.5rem;
+    border: 3px solid var(--tick-line-col);
+    box-sizing: content-box;
 
     position: relative;
     overflow: visible;
-
-    --tick-line-col: rgb(250, 217, 73);
 }
 
 .graduations {
@@ -104,7 +143,9 @@ const progressPercentage = computed(() => {
     top: -5px;
     z-index: 10;
     border-left: 3px solid var(--tick-line-col);
-    height: 30px;
+    height: 41px;
+
+    width: max-content;
 }
 
 .tick-label {
@@ -121,6 +162,7 @@ const progressPercentage = computed(() => {
 .tick-content {
     transform: translateX(-50%);
     position: relative;
+    height: 100%;
 }
 
 .tick-value {
@@ -132,16 +174,32 @@ const progressPercentage = computed(() => {
     position: absolute;
 
     display: flex;
+}
 
-    &>* {
-        margin: 0 auto;
+.tick-value-box {
+    margin: 0 auto;
 
-        background-color: var(--tick-line-col);
-        padding: 1px 6px;
-        min-width: 6ch;
-        text-align: center;
+    background-color: var(--tick-line-col);
+    padding: 1px 6px;
+    min-width: 6ch;
+    text-align: center;
 
-        border-radius: 6px;
-    }
+    border-radius: 6px;
+}
+
+.tick.-done .tick-value-box {
+    background-color: var(--tick-line-col-dim);
+    color: white;
+}
+
+.tick.-done .tick-label {
+    background-color: var(--tick-line-col-dim);
+    border-color: var(--tick-line-col-dim);
+    color: rgba(255, 255, 255, 90%);
+}
+
+.tick.-done {
+    border-color: var(--tick-line-col-dim);
+    opacity: 1.0;
 }
 </style>

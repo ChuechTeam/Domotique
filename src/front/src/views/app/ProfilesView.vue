@@ -29,7 +29,7 @@ const promise = ref<ReturnType<typeof api.users.searchUsers>>(null);
 const searchTimer = ref<ReturnType<typeof setTimeout>>(null);
 
 const loading = computed(() => promise.value != null || searchTimer.value != null);
-const searchEmpty = computed(() => filters.value.fullName === null || filters.value.fullName === "");
+const searchEmpty = computed(() => filters.value.fullName === null || filters.value.fullName.trim() === "");
 const canSearchAllUsers = computed(() => auth.canAdminister);
 
 function load() {
@@ -38,7 +38,7 @@ function load() {
         return;
     }
 
-    const apiInput: SearchUsersRequest = allUsersMode ? {} : {
+    const apiInput: SearchUsersRequest = allUsersMode.value ? {} : {
         fullName: filters.value.fullName || undefined
     };
 
@@ -200,6 +200,7 @@ load(); // Initial load
     justify-content: center;
     display: flex;
     align-items: center;
+    min-height: 2.5em;
 }
 
 .profile-card {
