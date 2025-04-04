@@ -12,6 +12,7 @@ import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
+import javax.validation.*;
 import java.time.*;
 import java.util.*;
 
@@ -108,7 +109,7 @@ public class UserSection extends Section {
             "Deveri",
             Gender.FEMALE,
             Role.RESIDENT,
-            "mot2passe"))
+            "mot2passe", null))
         .response(201, CompleteUser.class, "The user was created.")
         .response(422, ErrorResponse.class, """
                 Either:
@@ -125,7 +126,8 @@ public class UserSection extends Section {
                          String lastName,
                          Gender gender,
                          Role role,
-                         String password) {
+                         String password,
+                         @Nullable @ApiDoc(optional = true) String adminCode) {
         public RegisterInput {
             // Sanitize all sensitive strings (not password)
             email = Sanitize.string(email);
@@ -158,6 +160,15 @@ public class UserSection extends Section {
 
             // Validate the password (for registration; login requirements are different)
             UserValidation.password(block, "password", input.password);
+
+            // Ensure that admin registration use the admin code
+            if (input.role == Role.ADMIN) {
+                if (input.adminCode == null || input.adminCode.isBlank()) {
+                    block.addError("adminCode", "Le code d'administrateur est vide.");
+                } else if (!input.adminCode.equals(server.config().adminCode())) {
+                    block.addError("adminCode", "Le code d'administrateur est incorrect.");
+                }
+            }
         }
 
         // Hash the password, and create the User object
@@ -310,7 +321,8 @@ public class UserSection extends Section {
         .description("""
             Find users by either:
             - a list of ids, using `ids`
-            - their full name, using `fullName`.""")
+            - their full name, using `fullName`.
+            - all users, if you're at least an expert.""")
         .optionalQueryParam("fullName", String.class, "The full name to search for.")
         .optionalQueryParam("ids", Integer[].class, "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
@@ -320,7 +332,8 @@ public class UserSection extends Section {
 
     Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
         // Make sure the user is logged in and has their email confirmed.
-        Authenticator.get(context).requireAuth(Level.BEGINNER);
+        Authenticator auth = Authenticator.get(context);
+        auth.requireAuth(Level.BEGINNER);
 
         // Try doing a by-id search.
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
@@ -330,9 +343,12 @@ public class UserSection extends Section {
 
         String fullName = context.queryParams().get("fullName");
         if (fullName == null || fullName.isBlank()) {
-            throw new RequestException("La recherche est vide.", 400);
+            // When doing a full search, you must be at least an expert.
+            auth.requireAuth(Level.EXPERT);
+            return server.db().users().getAllProfiles().map(ProfileSearchOutput::new);
+        } else {
+            return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
         }
-        return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
     }
     // endregion
 
@@ -551,7 +567,7 @@ public class UserSection extends Section {
         DeleteUserInput input = readBody(context, DeleteUserInput.class);
 
         // The password must not be blank when deleting our own user
-        if (!isMe) {
+        if (isMe) {
             try (var block = Validation.start()) {
                 Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
             }

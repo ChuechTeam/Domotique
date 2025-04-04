@@ -99,7 +99,7 @@ public class DeviceTable extends Table {
             args.add(completeQuery.roomId);
         }
         if (completeQuery.userId != null) {
-            sql.append("\nAND r.userId = ?");
+            sql.append("\nAND d.userId = ?");
             args.add(completeQuery.userId);
         }
         if (completeQuery.powered != null) {

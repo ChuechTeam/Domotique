@@ -67,6 +67,14 @@ public class UserTable extends Table {
         return queryMany(UserProfile.MAP, sql, ids.toArray());
     }
 
+    static final String PROFILES_SQL = makeModularSQL("""
+        SELECT %s FROM User
+        """, UserProfile.columnList(null)); // -> "id, firstName, lastName, role, level, etc."
+
+    public Future<List<UserProfile>> getAllProfiles() {
+        return queryMany(UserProfile.MAP, PROFILES_SQL);
+    }
+
     /// Creates a user in the database. Doesn't validate anything!
     ///
     /// @param user the user to create, must have an id of 0

@@ -45,4 +45,5 @@ open module fr.domotique.web {
     // Lombok :D
     requires static lombok;
     requires org.openapitools.jackson.nullable;
+    requires com.google.protobuf;
 }

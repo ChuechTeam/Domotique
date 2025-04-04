@@ -42,7 +42,7 @@ load(); // Initial load
 
 </script>
 <template>
-    <div class="root">
+    <div class="root no-overflow">
         <header class="header">
             <div class="-layout container">
                 <div class="-text">Technologie</div>
@@ -53,7 +53,7 @@ load(); // Initial load
                 </div>
             </div>
         </header>
-        <RouterView />
+        <RouterView class="overflow-auto view" />
     </div>
 </template>
 <style lang="css" scoped>
@@ -61,6 +61,12 @@ load(); // Initial load
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: none;
+}
+
+.view {
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
 }
 
 .header {
@@ -120,6 +126,9 @@ load(); // Initial load
     .header {
         padding: 1rem;
         text-align: center;
+        padding-left: 0;
+        transform: translateY(12px);
+        padding-bottom: calc(1rem + 12px);
     }
     .header .-text {
         display: none;
@@ -130,6 +139,9 @@ load(); // Initial load
     }
     .header .-tabs {
         justify-content: center;
+    }
+    .root {
+        flex-direction: column-reverse;
     }
 }
 </style>

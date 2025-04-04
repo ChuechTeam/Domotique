@@ -69,6 +69,12 @@ export interface RegisterInput {
      * @type {string}
      * @memberof RegisterInput
      */
+    adminCode?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RegisterInput
+     */
     email: string;
 }
 
@@ -102,6 +108,7 @@ export function RegisterInputFromJSONTyped(json: any, ignoreDiscriminator: boole
         'password': json['password'],
         'role': RoleFromJSON(json['role']),
         'gender': GenderFromJSON(json['gender']),
+        'adminCode': json['adminCode'] == null ? undefined : json['adminCode'],
         'email': json['email'],
     };
 }
@@ -122,6 +129,7 @@ export function RegisterInputToJSONTyped(value?: RegisterInput | null, ignoreDis
         'password': value['password'],
         'role': RoleToJSON(value['role']),
         'gender': GenderToJSON(value['gender']),
+        'adminCode': value['adminCode'],
         'email': value['email'],
     };
 }

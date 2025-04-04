@@ -55,28 +55,6 @@ watch(filters, () => {
 }, { deep: true });
 load(); // Initial load
 
-async function togglePower(id: number) {
-    try {
-        // Find the device in our list
-        const device = devices.value.find(d => d.id === id);
-        if (!device) return;
-
-        // Update the device via API
-        await api.devices.patchDevice({
-            deviceId: id,
-            devicePatchInput: {
-                powered: !device.powered
-            }
-        });
-
-        // Update the local device data with the new state
-        device.powered = !device.powered
-    } catch (error) {
-        console.error('Failed to toggle device power:', error);
-        // You might want to add error handling/notification here
-    }
-}
-
 function createNewDevice() {
     if (!guards.mustManage()) {
         return;
@@ -89,19 +67,19 @@ function createNewDevice() {
     <div class="box container-lg" v-if="$route.name === 'devices'">
         <div class="-filters">
             <div class="filter-section">
-                <Button v-slot="sp" @click="createNewDevice">
+                <Button @click="createNewDevice">
                     Créer un appareil
                 </Button>
 
                 <h3>Filtres</h3>
 
-                <search class="filter-item">
+                <div class="filter-item">
                     <label for="name-filter">Nom</label>
                     <IconField>
                         <InputIcon class="pi pi-search" />
                         <InputText id="name-filter" fluid v-model="filters.name" placeholder="Rechercher par nom" />
                     </IconField>
-                </search>
+                </div>
 
                 <div class="filter-item">
                     <label for="powered-filter">État</label>
@@ -127,7 +105,7 @@ function createNewDevice() {
                 Aucun appareil trouvé.
             </div>
             <div v-else class="device-grid">
-                <DeviceCard v-for="device in devices" :key="device.id" :device="device" @toggle-power="togglePower" />
+                <DeviceCard v-for="(device, k) in devices" :key="device.id" v-model="devices[k]" />
             </div>
         </div>
     </div>
@@ -161,6 +139,7 @@ function createNewDevice() {
         border-left: 1px solid rgba(4, 91, 172, 0.1);
 
         overflow: auto;
+        scrollbar-gutter: stable both-edges;
     }
 
     & .-filters {
@@ -222,7 +201,7 @@ function createNewDevice() {
 
 .device-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(75vw, 400px), 1fr));
     gap: 1.5rem;
 }
 

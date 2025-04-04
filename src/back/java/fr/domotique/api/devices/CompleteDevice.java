@@ -43,4 +43,8 @@ public record CompleteDevice(
     public static String columnList(String tableName) {
         return QueryUtils.columnList(tableName, "id", "name", "description", "attributes", "powered", "energyConsumption");
     }
+
+    public Integer ownerId() {
+        return owner == null ? null : owner.id();
+    }
 }

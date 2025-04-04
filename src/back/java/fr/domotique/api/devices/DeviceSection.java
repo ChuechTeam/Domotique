@@ -35,8 +35,8 @@ public class DeviceSection extends Section {
         // Create a sub-router for all device routes
         var deviceRoutes = newSubRouter(router, PATH_PREFIX)
             .putMetadata(RouteDoc.KEY, new RouteDoc().tag("Devices")
-            .response(401, ErrorResponse.class, "You are not logged in.")
-            .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
+                .response(401, ErrorResponse.class, "You are not logged in.")
+                .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
 
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
@@ -63,6 +63,8 @@ public class DeviceSection extends Section {
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
         deviceRoutes.patch("/:deviceId").respond(vt(this::patchDevice)).putMetadata(RouteDoc.KEY, PATCH_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
+
+        deviceRoutes.get("/:deviceId/report").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
     }
 
     // region GET /api/devices | Get all devices
@@ -81,6 +83,8 @@ public class DeviceSection extends Section {
     record DevicesResponse(List<CompleteDevice> devices) {}
 
     Future<DevicesResponse> getAll(RoutingContext context) {
+        Authenticator authenticator = Authenticator.get(context);
+
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
         if (!ids.isEmpty()) {
             // If we have IDs, we ignore all other parameters
@@ -106,6 +110,14 @@ public class DeviceSection extends Section {
         var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered, category);
 
         return server.db().devices().queryComplete(query)
+            .map(devices -> {
+                // Remove personal data from the devices
+                for (CompleteDevice dev : devices) {
+                    nullifyPersonalData(dev, authenticator);
+                }
+
+                return devices;
+            })
             .map(DevicesResponse::new);
     }
     // endregion
@@ -118,19 +130,31 @@ public class DeviceSection extends Section {
         .response(200, DeviceStats.class, "The device stats.", new DeviceStats(
             List.of(new DeviceStat(1, 80), new DeviceStat(8, 41))
         ))
-        .response(204, "Device not found.");
+        .response(204, "Device not found.")
+        .response(403, ErrorResponse.class, "You don't have permission to access this resource.")
+        .response(422, ErrorResponse.class, "Invalid query.");
 
     record DeviceStats(List<DeviceStat> stats) {}
 
     Future<DeviceStats> getDeviceStats(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
         // TODO: Make it send full entities for room, user, and device.
         var body = readBody(context, DeviceStatsQuery.class);
         if (!body.validQuery()) {
             throw new RequestException("Invalid query.", 422, "INVALID_QUERY");
         }
+
+        // Personal attributes can't be queried. TODO: Instead, add a ownerId = thisUserId to the query.
+        if (body.attribute().isPersonal()
+            && !DeviceOperations.canSeePersonalAttributes(0, auth)) {
+            throw new RequestException("Vous n'avez pas le niveau requis pour voir cet attribut.", 403, "PERSONAL_ATTRIBUTE");
+        }
+
         return server.db().devices().queryStats(body)
             .map(DeviceStats::new);
     }
+    // endregion
 
     // region GET /api/devices/:deviceId | Get device by ID
     static final RouteDoc GET_DEVICE_DOC = new RouteDoc("getDeviceById")
@@ -141,8 +165,9 @@ public class DeviceSection extends Section {
         .response(204, "Device not found.");
 
     Future<CompleteDevice> getDeviceById(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
         int deviceId = readIntPathParam(context, "deviceId");
-        return server.db().devices().getComplete(deviceId);
+        return server.db().devices().getComplete(deviceId).map(d -> nullifyPersonalData(d, auth));
     }
     // endregion
 
@@ -364,7 +389,7 @@ public class DeviceSection extends Section {
                     new PowerLog(device.getId(), status, LocalDateTime.now())
                 ).await();
             }
-
+6
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();
         } catch (ForeignException e) {
@@ -397,6 +422,40 @@ public class DeviceSection extends Section {
     }
     // endregion
 
+    static final RouteDoc GEN_REPORT_DOC = new RouteDoc("genReport")
+        .summary("Generate a report for a device")
+        .description("Generates a report for a device.")
+        .pathParam("deviceId", int.class, "The ID of the device to generate the report for.")
+        .response(200, Object.class, "The report was generated successfully.")
+        .response(404, ErrorResponse.class, "Device not found.");
+
+    Object genReport(RoutingContext context) {
+        int deviceId = readIntPathParam(context, "deviceId");
+
+        Object genReport(RoutingContext context) {
+            int deviceId = readIntPathParam(context, "deviceId");
+
+
+            CompleteDevice device = server.db().devices().getComplete(deviceId).await();
+            if (device == null) {
+                throw new RequestException("Appareil introuvable.", 404, "DEVICE_NOT_FOUND");
+            }
+
+            Map<String, Object> report = new HashMap<>();
+            report.put("deviceId", device.getId());
+            report.put("name", device.getName());
+            report.put("powered", device.isPowered());
+            report.put("energyConsumption", device.getEnergyConsumption());
+
+            String efficiencyStatus = device.getEnergyConsumption() > 200 ? "Inefficient" : "Normal";
+            boolean needsMaintenance = !device.isPowered() && device.getEnergyConsumption() > 50;
+
+            report.put("efficiencyStatus", efficiencyStatus);
+            report.put("needsMaintenance", needsMaintenance);
+
+            return report;
+        }
+
     /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {
         if (ex.getMessage().contains(DeviceTable.ROOM_FK)) {
@@ -408,5 +467,13 @@ public class DeviceSection extends Section {
         } else {
             throw new IllegalStateException("Unknown foreign key error: " + ex.getMessage(), ex);
         }
+    }
+
+    private @Nullable CompleteDevice nullifyPersonalData(@Nullable CompleteDevice dev, Authenticator a) {
+        if (dev == null) {
+            return null;
+        }
+        DeviceOperations.nullifyPersonalAttributes(dev.attributes(), dev.ownerId(), a);
+        return dev;
     }
 }

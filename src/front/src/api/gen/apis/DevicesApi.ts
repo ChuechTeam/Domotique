@@ -51,6 +51,10 @@ export interface DeleteDeviceRequest {
     deviceId: number;
 }
 
+export interface GenReportRequest {
+    deviceId: number;
+}
+
 export interface GetDeviceByIdRequest {
     deviceId: number;
 }
@@ -149,6 +153,41 @@ export class DevicesApi extends runtime.BaseAPI {
      */
     async deleteDevice(requestParameters: DeleteDeviceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteDeviceRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Generates a report for a device.
+     * Generate a report for a device
+     */
+    async genReportRaw(requestParameters: GenReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+        if (requestParameters['deviceId'] == null) {
+            throw new runtime.RequiredError(
+                'deviceId',
+                'Required parameter "deviceId" was null or undefined when calling genReport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/devices/{deviceId}/report`.replace(`{${"deviceId"}}`, encodeURIComponent(String(requestParameters['deviceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Generates a report for a device.
+     * Generate a report for a device
+     */
+    async genReport(requestParameters: GenReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.genReportRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

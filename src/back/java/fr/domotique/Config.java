@@ -38,13 +38,15 @@ import java.util.*;
 /// @param sendGridToken `domotique.sendGridToken`: the SendGrid token to send emails; a null or blank value will default
 ///                                                 to the [Console email sender][fr.domotique.email.ConsoleEmail]
 /// @param sendGridEmail `domotique.sendGridEmail`: the email to send emails from, must be SendGrid "Single Sender Verification"
+/// @param adminCode `domotique.adminCode`: the code used to create a new admin account (default is "retraitons")
 /// @author Dynamic
 public record Config(
         String databaseUri,
         int port,
         boolean isDevelopment,
         @Nullable String sendGridToken,
-        @Nullable String sendGridEmail
+        @Nullable String sendGridEmail,
+        String adminCode
 ) {
     // The logger to log stuff about configuration loading.
     private static final Logger log = LoggerFactory.getLogger(Config.class);
@@ -54,6 +56,7 @@ public record Config(
     private static final String PORT_PROP = "domotique.port";
     private static final String SENDGRID_TOKEN_PROP = "domotique.sendGridToken";
     private static final String SENDGRID_EMAIL_PROP = "domotique.sendGridEmail";
+    private static final String ADMIN_CODE_PROP = "domotique.adminCode";
 
     // Constructor to check every value of the configuration.
     public Config {
@@ -114,8 +117,9 @@ public record Config(
         }
         String sendGridToken = props.getProperty(SENDGRID_TOKEN_PROP);
         String sendGridEmail = props.getProperty(SENDGRID_EMAIL_PROP);
+        String adminCode = props.getProperty(ADMIN_CODE_PROP, "retraitons");
 
-        return new Config(dbUri, intPort, isDevelopment, sendGridToken, sendGridEmail);
+        return new Config(dbUri, intPort, isDevelopment, sendGridToken, sendGridEmail, adminCode);
     }
 
     private static boolean tryLoadStream(Properties props, InputStream is, String fileName) {
