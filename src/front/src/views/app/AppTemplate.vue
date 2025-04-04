@@ -31,7 +31,8 @@ const userLink = computed(() => "/profile/" + auth.user.profile.id);
                 <RouterLink class="nav-link" to="/themes">Thèmes</RouterLink>
             </div>
             <RouterLink class="ms-auto user-pill" :to="userLink">
-                {{ auth.user.profile.firstName + ' ' + auth.user.profile.lastName }}
+                {{ auth.user?.profile?.firstName + ' ' + auth.user?.profile?.lastName || 'Utilisateur' }}
+
             </RouterLink>
         </nav>
         <main class="content">

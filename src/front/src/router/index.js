@@ -33,6 +33,13 @@ const router = createRouter({
                 }
             ],
         },
+        // --- LOGIN ROUTES ---
+        {
+            path: '/login',
+            name: 'login',
+            component: () => import('@/views/AuthView.vue'),
+        },    
+        
         // --- LOGGED-IN ROUTES ---
         {
             path: '/',
@@ -182,10 +189,10 @@ router.beforeEach(async (to, from) => {
             // The user is not logged in! Double check for sure...
             const err = await auth.fetchUser()
             if (err != null) {
-                // Yup. Not authenticated. Redirect to '/'
+      // Yup. Not authenticated. Redirect to '/'
                 return "/";
             }
-        }
+       }
 
         // Now that we have the user, we must make sure that they have confirmed their email.
         // If it's not the case, redirect them to the email confirmation page.
