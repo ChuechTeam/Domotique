@@ -389,7 +389,7 @@ public class DeviceSection extends Section {
                     new PowerLog(device.getId(), status, LocalDateTime.now())
                 ).await();
             }
-
+6
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();
         } catch (ForeignException e) {
@@ -432,10 +432,29 @@ public class DeviceSection extends Section {
     Object genReport(RoutingContext context) {
         int deviceId = readIntPathParam(context, "deviceId");
 
-        // TODO!
+        Object genReport(RoutingContext context) {
+            int deviceId = readIntPathParam(context, "deviceId");
 
-        return null; // À retirer bien sûr là ça donne R
-    }
+
+            CompleteDevice device = server.db().devices().getComplete(deviceId).await();
+            if (device == null) {
+                throw new RequestException("Appareil introuvable.", 404, "DEVICE_NOT_FOUND");
+            }
+
+            Map<String, Object> report = new HashMap<>();
+            report.put("deviceId", device.getId());
+            report.put("name", device.getName());
+            report.put("powered", device.isPowered());
+            report.put("energyConsumption", device.getEnergyConsumption());
+
+            String efficiencyStatus = device.getEnergyConsumption() > 200 ? "Inefficient" : "Normal";
+            boolean needsMaintenance = !device.isPowered() && device.getEnergyConsumption() > 50;
+
+            report.put("efficiencyStatus", efficiencyStatus);
+            report.put("needsMaintenance", needsMaintenance);
+
+            return report;
+        }
 
     /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {
