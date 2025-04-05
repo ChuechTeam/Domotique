@@ -20,6 +20,13 @@ import {
     LoginLogToJSON,
     LoginLogToJSONTyped,
 } from './LoginLog';
+import type { UserProfile } from './UserProfile';
+import {
+    UserProfileFromJSON,
+    UserProfileFromJSONTyped,
+    UserProfileToJSON,
+    UserProfileToJSONTyped,
+} from './UserProfile';
 
 /**
  * 
@@ -33,6 +40,12 @@ export interface LoginLogsResponse {
      * @memberof LoginLogsResponse
      */
     logs: Array<LoginLog>;
+    /**
+     * 
+     * @type {Array<UserProfile>}
+     * @memberof LoginLogsResponse
+     */
+    users: Array<UserProfile>;
 }
 
 /**
@@ -40,6 +53,7 @@ export interface LoginLogsResponse {
  */
 export function instanceOfLoginLogsResponse(value: object): value is LoginLogsResponse {
     if (!('logs' in value) || value['logs'] === undefined) return false;
+    if (!('users' in value) || value['users'] === undefined) return false;
     return true;
 }
 
@@ -54,6 +68,7 @@ export function LoginLogsResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'logs': ((json['logs'] as Array<any>).map(LoginLogFromJSON)),
+        'users': ((json['users'] as Array<any>).map(UserProfileFromJSON)),
     };
 }
 
@@ -69,6 +84,7 @@ export function LoginLogsResponseToJSONTyped(value?: LoginLogsResponse | null, i
     return {
         
         'logs': ((value['logs'] as Array<any>).map(LoginLogToJSON)),
+        'users': ((value['users'] as Array<any>).map(UserProfileToJSON)),
     };
 }
 

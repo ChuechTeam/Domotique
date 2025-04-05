@@ -30,6 +30,8 @@
  * - `RESPIRATORY_RATE`: The current respiratory rate of the user, in breaths per minute.
  * - `BODY_TEMPERATURE`: The current body temperature of the user, in °C.
  * - `BODY_WEIGHT`: The current weight of the user, in kg.
+ * - `BATTERY_LEVEL`: The amount of battery left in percent.
+ * - `BODY_HEIGHT`: The height of your body in centimeters.
  * @export
  */
 export const AttributeType = {
@@ -47,7 +49,9 @@ export const AttributeType = {
     MaxVo2: 'MAX_VO2',
     RespiratoryRate: 'RESPIRATORY_RATE',
     BodyTemperature: 'BODY_TEMPERATURE',
-    BodyWeight: 'BODY_WEIGHT'
+    BodyWeight: 'BODY_WEIGHT',
+    BatteryLevel: 'BATTERY_LEVEL',
+    BodyHeight: 'BODY_HEIGHT'
 } as const;
 export type AttributeType = typeof AttributeType[keyof typeof AttributeType];
 

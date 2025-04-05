@@ -92,20 +92,25 @@ const getLevelColor = (level) => {
                 <Avatar :label="profile.firstName[0] + profile.lastName[0]"
                     :style="{ 'background-color': getAvatarColor(profile.id) }" shape="circle" class="avatar"></Avatar>
                 <div class="infos">
-                    <div class="full-name">{{ profile.firstName + ' ' + profile.lastName }}</div>
-                    <div class="tags">
-                        <Tag :value="roleLabels[profile.role]" severity="info" icon="pi pi-crown" />
-                        <Tag :value="levelLabels[profile.level]" severity="success" icon="pi pi-trophy" class="ms-2" />
-                        <Tag :value="genderLabels[profile.gender]" severity="secondary" :icon="genderIcon"
-                            class="ms-2" style="--p-tag-secondary-background: rgb(222, 222, 222)" />
+                    <div class="detail" style="grid-area: name;">
+                        <div class="full-name">{{ profile.firstName + ' ' + profile.lastName }}</div>
+                        <div class="tags">
+                            <Tag :value="roleLabels[profile.role]" severity="info" icon="pi pi-crown" />
+                            <Tag :value="levelLabels[profile.level]" severity="success" icon="pi pi-trophy"
+                                class="ms-2" />
+                            <Tag :value="genderLabels[profile.gender]" severity="secondary" :icon="genderIcon"
+                                class="ms-2" style="--p-tag-secondary-background: rgb(222, 222, 222)" />
+                        </div>
                     </div>
-                    <LevelBar :value="profile.points" class="pe-2" />
+                    <Button class="ms-auto details-actions" severity="danger" style="grid-area: actions;" label="Déconnexion"
+                        icon="pi pi-sign-out" @click="auth.logout" v-if="auth.userId == profile.id" />
+                    <LevelBar :value="profile.points" class="pe-2" style="grid-area: level;" />
                 </div>
             </header>
 
             <!-- Profile Details -->
             <div class="devices prof-item">
-                <h2 class="mb-3">Appareils de {{  profile.firstName  }}</h2>
+                <h2 class="mb-3">Appareils de {{ profile.firstName }}</h2>
                 <Suspense>
                     <ProfileDevices :user-id="userId" />
                     <template #fallback>
@@ -182,7 +187,6 @@ const getLevelColor = (level) => {
 
     gap: 40px;
 
-    flex-wrap: wrap;
     justify-content: center;
 }
 
@@ -193,7 +197,30 @@ const getLevelColor = (level) => {
 
 .infos {
     flex-grow: 1;
-    min-width: min(80vw, 300px);
+
+    display: grid;
+
+    grid-template: "name actions" "level level";
+    align-items: center;
+}
+
+@media (max-width: 1024px) {
+    .infos {
+        grid-template: "name" "level" "actions";
+    }
+
+    .details-actions {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+
+        & .avatar {
+            align-self: center;
+        }
+    }
 }
 
 .full-name {

@@ -1,7 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ActionLogFlags';
+export * from './ActionLogOperation';
+export * from './ActionLogTarget';
+export * from './ActionLogsResponse';
+export * from './AttributeRange';
 export * from './AttributeType';
 export * from './ChangePasswordInput';
+export * from './CompleteActionLog';
 export * from './CompleteDevice';
 export * from './CompleteDeviceType';
 export * from './CompleteRoom';
@@ -20,10 +26,13 @@ export * from './DeviceTypesResponse';
 export * from './DevicesResponse';
 export * from './ErrorResponse';
 export * from './Gender';
+export * from './HealthStatus';
+export * from './HealthValue';
 export * from './Level';
 export * from './LoginInput';
 export * from './LoginLog';
 export * from './LoginLogsResponse';
+export * from './MyHealthOutput';
 export * from './PatchProfileInput';
 export * from './ProfileSearchOutput';
 export * from './RegisterInput';

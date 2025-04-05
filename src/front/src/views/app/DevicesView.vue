@@ -4,8 +4,6 @@ import DeviceCard from '@/components/DeviceCard.vue';
 import FullscreenSpinner from '@/components/FullscreenSpinner.vue';
 import { useGuards } from '@/guards';
 import { deviceCategories, deviceCategoryLabels } from '@/labels';
-import { useAuthStore } from '@/stores/auth';
-import { useGlobalDialogsStore } from '@/stores/globalDialogs';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -48,6 +46,24 @@ function load() {
     promise.value = thisProm;
 }
 
+function removeDeletedDevice(id: number) {
+    for (let i = 0; i < devices.value.length; i++) {
+        if (devices.value[i].id === id) {
+            devices.value.splice(i, 1);
+            return;
+        }
+    }
+}
+
+function updateEditedDevice(device: CompleteDevice) {
+    for (let i = 0; i < devices.value.length; i++) {
+        if (devices.value[i].id === device.id) {
+            devices.value[i] = device;
+            return;
+        }
+    }
+}
+
 watch(filters, () => {
     // Trigger refresh when changing filters.
     clearTimeout(searchTimer.value);
@@ -64,60 +80,63 @@ function createNewDevice() {
 }
 </script>
 <template>
-    <div class="box container-lg" v-if="$route.name === 'devices'">
-        <div class="-filters">
-            <div class="filter-section">
-                <Button @click="createNewDevice">
-                    Créer un appareil
-                </Button>
+    <div>
+        <div class="box container-lg" v-if="$route.name === 'devices'">
+            <div class="-filters">
+                <div class="filter-section">
+                    <Button @click="createNewDevice" icon="pi pi-plus" label="Créer un appareil" />
 
-                <h3>Filtres</h3>
+                    <h3>Filtres</h3>
 
-                <div class="filter-item">
-                    <label for="name-filter">Nom</label>
-                    <IconField>
-                        <InputIcon class="pi pi-search" />
-                        <InputText id="name-filter" fluid v-model="filters.name" placeholder="Rechercher par nom" />
-                    </IconField>
+                    <div class="filter-item">
+                        <label for="name-filter">Nom</label>
+                        <IconField>
+                            <InputIcon class="pi pi-search" />
+                            <InputText id="name-filter" fluid v-model="filters.name" placeholder="Rechercher par nom" />
+                        </IconField>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="powered-filter">État</label>
+                        <Select id="powered-filter" v-model="filters.powered"
+                            :options="[[true, 'Allumé'], [false, 'Éteint']]" :option-label="x => x[1]"
+                            :option-value="x => x[0]" placeholder="Peu importe" show-clear />
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="category-filter">Catégorie</label>
+                        <Select id="category-filter" v-model="filters.category" :options="deviceCategories"
+                            :option-label="x => deviceCategoryLabels[x]" placeholder="Peu importe" show-clear />
+                    </div>
+
+                    <Button label="Réinitialiser" icon="pi pi-refresh"
+                        @click="filters = { name: null, powered: null, category: null }" class="reset-button" />
                 </div>
-
-                <div class="filter-item">
-                    <label for="powered-filter">État</label>
-                    <Select id="powered-filter" v-model="filters.powered"
-                        :options="[[true, 'Allumé'], [false, 'Éteint']]"
-                        :option-label="x => x[1]" :option-value="x => x[0]" placeholder="Peu importe" show-clear />
+            </div>
+            <div class="-results">
+                <div v-if="loading">
+                    <FullscreenSpinner />
                 </div>
-
-                <div class="filter-item">
-                    <label for="category-filter">Catégorie</label>
-                    <Select id="category-filter" v-model="filters.category"
-                        :options="deviceCategories"
-                        :option-label="x => deviceCategoryLabels[x]" placeholder="Peu importe"  show-clear />
+                <div v-else-if="devices.length === 0" class="no-results">
+                    Aucun appareil trouvé.
                 </div>
-
-                <Button label="Réinitialiser" icon="pi pi-refresh" @click="filters = { name: null, powered: null, category: null }"
-                    class="reset-button" />
+                <div v-else class="device-grid">
+                    <DeviceCard v-for="(device, k) in devices" :key="device.id" v-model="devices[k]" />
+                </div>
             </div>
         </div>
-        <div class="-results">
-            <div v-if="loading"><FullscreenSpinner/></div>
-            <div v-else-if="devices.length === 0" class="no-results">
-                Aucun appareil trouvé.
-            </div>
-            <div v-else class="device-grid">
-                <DeviceCard v-for="(device, k) in devices" :key="device.id" v-model="devices[k]" />
-            </div>
-        </div>
+        <RouterView v-slot="{ Component }">
+            <Suspense v-if="Component">
+                <template #default>
+                    <component :is="Component" @device-deleted="removeDeletedDevice"
+                        @device-edited="updateEditedDevice" />
+                </template>
+                <template #fallback>
+                    <FullscreenSpinner />
+                </template>
+            </Suspense>
+        </RouterView>
     </div>
-    <RouterView v-else v-slot="{ Component }">
-        <Suspense>
-            <component :is="Component" />
-
-            <template #fallback>
-                <FullscreenSpinner />
-            </template>
-        </Suspense>
-    </RouterView>
 </template>
 <style lang="css" scoped>
 .box {
@@ -128,7 +147,8 @@ function createNewDevice() {
     min-height: 0;
     flex: 1;
 
-    & .-results, & .-filters {
+    & .-results,
+    & .-filters {
         padding-top: 2rem;
     }
 
@@ -175,6 +195,13 @@ function createNewDevice() {
             padding: 0;
             overflow: unset;
         }
+
+        & .-filters {
+            padding: 0;
+            border: none;
+        }
+
+        padding-top: 1rem;
     }
 
     .filter-section {

@@ -198,6 +198,14 @@ public class UserSection extends Section {
             // Report that registration to the log (-> the console)
             log.info("User registered with id {} and email {}", user.getId(), user.getEmail());
 
+            // Log this action in the action log
+            server.db().actionLogs().insert(new ActionLog(
+                user.getId(), // User logs their own creation
+                user.getId(),
+                ActionLogTarget.USER,
+                ActionLogOperation.CREATE
+            )).await();
+
             // Log the user in, and send a HTTP 201 Created status code.
             auth.login(user);
 
@@ -463,6 +471,14 @@ public class UserSection extends Section {
         // Update the user in the database.
         server.db().users().update(user).await();
 
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            user.getId(),
+            ActionLogTarget.USER,
+            ActionLogOperation.UPDATE
+        )).await();
+
         // Done! Return the public data of the user.
         return UserProfile.fromUser(user);
     }
@@ -524,6 +540,15 @@ public class UserSection extends Section {
 
         // Update user in database (synchronously using await)
         server.db().users().update(user).await();
+
+        // Log this action with PASSWORD_CHANGED flag
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            user.getId(),
+            ActionLogTarget.USER,
+            ActionLogOperation.UPDATE,
+            EnumSet.of(ActionLogFlags.PASSWORD_CHANGED)
+        )).await();
 
         // Finally, log it to the console!
         log.info("User {}'s password was successfully changed (initiator: {})", user.getId(), auth.getUserId());
@@ -598,6 +623,14 @@ public class UserSection extends Section {
         //   - Rooms owned by this user:    the owner will be set to NULL
         //   - Login logs about this user:  the logs will be deleted
         server.db().users().delete(userId).await();
+
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            userId,
+            ActionLogTarget.USER,
+            ActionLogOperation.DELETE
+        )).await();
 
         // If we deleted ourselves, log out of the app now.
         if (isMe) {
@@ -691,6 +724,15 @@ public class UserSection extends Section {
                             context.redirect("/?confirmResult=ok");
                         })
                         .onFailure(ex -> context.redirect("/?confirmResult=err"));
+
+                    // Write that down!
+                    server.db().actionLogs().insert(new ActionLog(
+                        u.getId(),
+                        u.getId(),
+                        ActionLogTarget.USER,
+                        ActionLogOperation.UPDATE,
+                        EnumSet.of(ActionLogFlags.EMAIL_CONFIRMED)
+                    )).await();
                 } else {
                     // Nope, redirect to the home page with an error
                     context.redirect("/?confirmResult=err");

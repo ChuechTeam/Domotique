@@ -7,7 +7,9 @@ import { attributeTypeLabels, deviceCategoryLabels, formatAttribute } from '@/la
 import DeviceForm from '@/components/DeviceForm.vue';
 import FullscreenSpinner from '@/components/FullscreenSpinner.vue';
 import { useGuards } from '@/guards';
+import { useAuthStore } from '@/stores/auth';
 
+const auth = useAuthStore();
 const guards = useGuards();
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +22,29 @@ const deviceId = computed(() => parseInt(route.params.deviceId as string));
 const device = ref<CompleteDevice | null>(null);
 const isEditing = ref(false);
 const error = ref<any>(null);
+const deleteModalVisible = ref(false);
+const deleteModalPromise = ref(null);
+
+// Direct: can delete directly
+// RequestedByOther: deletion requested by other user
+// RequestedByMe: deletion requested by me
+// NotRequested: deletion not requested
+type DelState = "DIRECT" | "REQUESTED_BY_OTHER" | "REQUESTED_BY_ME" | "NOT_REQUESTED";
+
+const deletionState = computed<DelState>(() => {
+  if (auth.canAdminister) {
+    return "DIRECT";
+  } else if (device.value.deletionRequestedBy == null) {
+    return "NOT_REQUESTED"
+  } else {
+    return device.value.deletionRequestedBy.id === auth.userId ? "REQUESTED_BY_ME" : "REQUESTED_BY_OTHER";
+  }
+});
+
+const emit = defineEmits<{
+  'device-deleted': [number]
+  'device-edited': [CompleteDevice]
+}>();
 
 // Edit form model
 const editForm = ref<any>(null);
@@ -66,6 +91,7 @@ async function togglePower() {
     });
 
     device.value.powered = !device.value.powered;
+    emit('device-edited', result);
     toast.add({
       severity: 'success',
       summary: 'État changé',
@@ -81,6 +107,92 @@ async function togglePower() {
       life: 3000
     });
   }
+}
+
+async function onDeleteClick() {
+  const d = device.value;
+  if (d == null) return;
+
+  switch (deletionState.value) {
+    case "DIRECT":
+      deleteModalVisible.value = true;
+      break;
+    case "REQUESTED_BY_ME":
+      await removeDeletionRequest();
+      break;
+    case "REQUESTED_BY_OTHER":
+      break;
+    case "NOT_REQUESTED":
+      await api.devices.patchDevice({
+        deviceId: deviceId.value,
+        devicePatchInput: {
+          deletionRequestedById: auth.userId
+        }
+      });
+      d.deletionRequestedBy = auth.user.profile;
+      emit('device-edited', d);
+
+      toast.add({
+        severity: 'success',
+        summary: 'Demande de suppression envoyée',
+        detail: 'La demande de suppression a été envoyée. Un administrateur la traitera bientôt.',
+        life: 5000
+      });
+      break;
+  }
+}
+
+async function removeDeletionRequest() {
+  const d = device.value;
+  if (d == null) return;
+
+  await api.devices.patchDevice({
+    deviceId: deviceId.value,
+    devicePatchInput: {
+      deletionRequestedById: null
+    }
+  });
+  d.deletionRequestedBy = null;
+
+  emit('device-edited', d);
+
+  toast.add({
+    severity: 'success',
+    summary: 'Suppression annulée',
+    detail: 'La demande de suppression a bien été annulée.',
+    life: 5000
+  });
+}
+
+function deleteDevice() {
+  if (deleteModalPromise.value) return;
+
+  async function inner() {
+    try {
+      await api.devices.deleteDevice({ deviceId: deviceId.value });
+      toast.add({
+        severity: 'success',
+        summary: 'Appareil supprimé',
+        detail: 'L\'appareil a été supprimé avec succès',
+        life: 3000
+      });
+      emit('device-deleted', deviceId.value);
+      router.back();
+    } catch (e) {
+      const data = findErrData(e);
+      const errMsg = data?.message || 'Une erreur est survenue lors de la suppression de l\'appareil';
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur lors de la suppression',
+        detail: errMsg,
+        life: 5000
+      })
+    } finally {
+      deleteModalVisible.value = false;
+    }
+  }
+
+  deleteModalPromise.value = inner();
 }
 
 // Start editing mode
@@ -102,6 +214,8 @@ function cancelEdit() {
 function handleSaveSuccess(result: CompleteDevice) {
   device.value = result;
   isEditing.value = false;
+
+  emit('device-edited', result);
 }
 
 // Return to devices list
@@ -131,10 +245,18 @@ await fetchDevice();
     <div v-else class="device-content">
       <!-- Top actions bar -->
       <div class="action-bar">
-        <Button icon="pi pi-arrow-left" label="Retour" @click="backToList" />
+        <Button icon="pi pi-arrow-left" class="back-button" label="Retour" @click="backToList" />
         <div class="action-buttons" v-if="!isEditing">
-          <Button icon="pi pi-power-off" :class="device.powered ? 'p-button-success' : 'p-button-secondary'"
+          <Button icon="pi pi-power-off" class="power-button" :class="device.powered ? 'p-button-success' : 'p-button-secondary'"
             @click="togglePower" />
+          <Button :icon="deletionState == 'DIRECT' || deletionState == 'NOT_REQUESTED' ? 'pi pi-trash' :
+            deletionState == 'REQUESTED_BY_ME' ? 'pi pi-times' : 'pi pi-user-check'" :label="({
+              DIRECT: 'Supprimer',
+              REQUESTED_BY_ME: 'Annuler la demande',
+              REQUESTED_BY_OTHER: 'Demande envoyée',
+              NOT_REQUESTED: 'Demander la suppression'
+            } as Record<DelState, string>)[deletionState]" :disabled="deletionState === 'REQUESTED_BY_OTHER'"
+            severity="danger" v-if="auth.canManage" @click="onDeleteClick()" />
           <Button icon="pi pi-pencil" label="Modifier" @click="startEdit" />
         </div>
       </div>
@@ -203,6 +325,19 @@ await fetchDevice();
           </Card>
         </div>
 
+
+        <div v-if="device.deletionRequestedBy != null" severity="error" class="del-request">
+          <p> Demande de suppression envoyée par <RouterLink
+              :to="{ name: 'profile', params: { userId: device.deletionRequestedBy.id } }">
+              {{ device.deletionRequestedBy.firstName }} {{ device.deletionRequestedBy.lastName }}</RouterLink>
+          </p>
+
+          <button class="del-ignore" v-if="auth.canAdminister" @click="removeDeletionRequest">
+            <div class="pi pi-times me-1"></div>
+            <div>Ignorer</div>
+          </button>
+        </div>
+
         <div>
           <h2>Historique d'activité</h2>
           <p>Bientôt j'espère</p>
@@ -222,6 +357,12 @@ await fetchDevice();
         </Suspense>
       </div>
     </div>
+
+    <!-- Delete Modal -->
+    <Dialog modal v-model:visible="deleteModalVisible" header="Supprimer l'appareil" style="max-width: 450px;">
+      <p>Êtes-vous sûr de vouloir supprimer cet appareil ?</p>
+      <Button severity="danger" icon="pi pi-trash" label="Supprimer" fluid @click="deleteDevice" />
+    </Dialog>
   </div>
 </template>
 
@@ -261,6 +402,53 @@ await fetchDevice();
   }
 }
 
+.del-request {
+  margin: 1.0rem 0;
+  text-align: center;
+  background-color: rgb(190, 0, 0);
+  border: 1px solid rgb(190, 0, 0);
+  color: white;
+
+  overflow: hidden;
+
+  border-radius: 16px;
+
+  & a {
+    color: rgb(255, 220, 208);
+    text-decoration: none;
+  }
+
+  & p {
+    padding: 1.25rem;
+    font-size: 1.5em;
+    margin: 0;
+  }
+}
+
+.del-ignore {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid white;
+  background-color: rgb(191, 55, 55);
+  color: white;
+
+  padding: 0.5rem;
+  font-size: 1.25em;
+  /* border-radius: 0 0 16px 16px; */
+
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+
+  &:hover {
+    /* border: 1px solid rgb(190, 0, 0); */
+    background-color: white;
+    color: black;
+  }
+}
+
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -271,6 +459,34 @@ await fetchDevice();
 .action-buttons {
   display: flex;
   gap: 0.5rem;
+}
+
+.power-button {
+  min-width: 128px;
+}
+
+@media (max-width: 768px) {
+  .action-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    & > * {
+      width: 100%;
+    }
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+
+    & > * {
+      flex: 1 0 auto;
+    }
+  }
+
+  .power-button {
+    flex: 1;
+    min-width: 64px;
+  }
 }
 
 .device-image {

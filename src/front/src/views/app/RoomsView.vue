@@ -19,7 +19,7 @@ const loading = computed(() => promise.value != null);
 // Form management
 const showForm = ref(false);
 const formModel = ref<RoomFormModel>(defaultRoomFormModel());
-const editingRoomId = ref<number | undefined>(undefined);
+const editingRoomId = ref<number | null>(null);
 const dialogHeader = computed(() => editingRoomId.value ? 'Modifier la salle' : 'Nouvelle salle');
 
 function load() {
@@ -51,7 +51,7 @@ function openCreateForm() {
     }
 
     formModel.value = defaultRoomFormModel();
-    editingRoomId.value = undefined;
+    editingRoomId.value = null;
     showForm.value = true;
 }
 
@@ -87,48 +87,50 @@ load(); // Initial load
 </script>
 
 <template>
-    <div class="rooms-view container-lg">
-        <h1 class="header">Salles</h1>
+    <div class="rooms-view">
+        <div class="container-lg pb-3">
+            <h1 class="sub-page-title pb-3">Salles</h1>
 
-        <div class="search-section">
-            <IconField class="flex-grow-1">
-                <InputIcon class="pi pi-search" />
-                <InputText v-model="filters.name" fluid placeholder="Rechercher une salle" />
-            </IconField>
-            <Button label="Créer" icon="pi pi-plus" class="create-button" @click="openCreateForm" />
-        </div>
+            <div class="search-section">
+                <IconField class="flex-grow-1">
+                    <InputIcon class="pi pi-search" />
+                    <InputText v-model="filters.name" fluid placeholder="Rechercher une salle" />
+                </IconField>
+                <Button label="Créer" icon="pi pi-plus" class="create-button" @click="openCreateForm" />
+            </div>
 
-        <div class="rooms-list">
-            <div v-if="loading" class="loading-container">
-                <FullscreenSpinner />
-            </div>
-            <div v-else-if="rooms.length === 0" class="no-results">
-                Aucune salle trouvée.
-            </div>
-            <div v-else class="room-cards">
-                <div v-for="room in rooms" :key="room.id" class="room-card"
-                    :style="{ borderLeft: `6px solid #${room.color.toString(16).padStart(6, '0')}` }"
-                    @click="openEditForm(room)">
-                    <div class="room-info">
-                        <h3 class="room-name">{{ room.name }}</h3>
-                        <p v-if="room.owner" class="room-owner">
-                            Occupant: {{ room.owner.firstName }} {{ room.owner.lastName }}
-                        </p>
-                        <p v-else class="room-owner empty">Aucun occupant</p>
-                    </div>
-                    <div class="room-actions">
-                        <Button icon="pi pi-chevron-right" class="p-button-text" />
+            <div class="rooms-list">
+                <div v-if="loading" class="loading-container">
+                    <FullscreenSpinner />
+                </div>
+                <div v-else-if="rooms.length === 0" class="no-results">
+                    Aucune salle trouvée.
+                </div>
+                <div v-else class="room-cards">
+                    <div v-for="room in rooms" :key="room.id" class="room-card"
+                        :style="{ borderLeft: `6px solid #${room.color.toString(16).padStart(6, '0')}` }"
+                        @click="openEditForm(room)">
+                        <div class="room-info">
+                            <h3 class="room-name">{{ room.name }}</h3>
+                            <p v-if="room.owner" class="room-owner">
+                                Occupant: {{ room.owner.firstName }} {{ room.owner.lastName }}
+                            </p>
+                            <p v-else class="room-owner empty">Aucun occupant</p>
+                        </div>
+                        <div class="room-actions">
+                            <Button icon="pi pi-chevron-right" class="p-button-text" />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Room Form Dialog -->
-        <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ width: '450px' }" :closable="!loading"
-            :closeOnEscape="!loading">
-            <RoomForm v-model="formModel" :roomId="editingRoomId" hide-header @save-success="handleFormSuccess"
-                @cancel="closeForm" />
-        </Dialog>
+            <!-- Room Form Dialog -->
+            <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ 'width': 'min(97vw, 450px)' }"
+                :closable="!loading" :closeOnEscape="!loading">
+                <RoomForm v-model="formModel" :roomId="editingRoomId" hide-header @save-success="handleFormSuccess"
+                    @cancel="closeForm" />
+            </Dialog>
+        </div>
     </div>
 </template>
 
@@ -136,15 +138,8 @@ load(); // Initial load
 .rooms-view {
     display: flex;
     flex-direction: column;
-    padding: 1rem;
     height: 100%;
     overflow-y: auto;
-}
-
-.header {
-    margin: 2rem 0;
-    text-align: center;
-    font-size: 3rem;
 }
 
 .search-section {

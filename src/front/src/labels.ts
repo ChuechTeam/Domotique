@@ -1,4 +1,4 @@
-import { AttributeType, DeviceCategory, Gender, Level, Role } from "./api";
+import { ActionLogOperation, ActionLogTarget, AttributeType, DeviceCategory, Gender, Level, Role } from "./api";
 
 // Gender enum -> Display name
 export const genderLabels: Record<Gender, string> = {
@@ -62,7 +62,9 @@ export const attributeTypeLabels: Record<AttributeType, string> = {
     "MAX_VO2": "VO2 max",
     "RESPIRATORY_RATE": "Fréquence respiratoire",
     "BODY_TEMPERATURE": "Température corporelle",
-    "BODY_WEIGHT": "Poids"
+    "BODY_WEIGHT": "Poids",
+    "BATTERY_LEVEL": "Batterie restante",
+    "BODY_HEIGHT": "Taille",
 }
 
 // All attribute type enum values
@@ -84,26 +86,30 @@ export const attributeTypeContents: Record<AttributeType, NumberConstructor | St
     "MAX_VO2": Number,
     "RESPIRATORY_RATE": Number,
     "BODY_TEMPERATURE": Number,
-    "BODY_WEIGHT": Number
+    "BODY_WEIGHT": Number,
+    "BATTERY_LEVEL": Number,
+    "BODY_HEIGHT": Number,
 } as const;
 
 // https://primevue.org/inputnumber/#prefixsuffix
-export const attributeTypeFormats = {
-    "ACTIVITY_DURATION": {suffix: " min"},
-    "HUMIDITY": {suffix: " %"},
-    "TEMPERATURE": {suffix: " °C"},
-    "CALORIES_BURNED": {suffix: " kcal"},
-    "HEART_RATE": {suffix: " bpm"},
-    "BLOOD_PRESSURE": {suffix: " mmHg"},
-    "BLOOD_OXYGEN": {suffix: " %"},
-    "BLOOD_GLUCOSE": {suffix: " mg/dL"},
-    "FAT_PERCENTAGE": {suffix: " %"},
-    "STEPS": {suffix: ""},
-    "LAST_SLEEP_DURATION": {suffix: " min"},
-    "MAX_VO2": {suffix: " mL/kg/min"},
-    "RESPIRATORY_RATE": {suffix: "/min"},
-    "BODY_TEMPERATURE": {suffix: " °C"},
-    "BODY_WEIGHT": {suffix: " kg"}
+export const attributeTypeFormats: Record<AttributeType, any> = {
+    "ACTIVITY_DURATION": { suffix: " min" },
+    "HUMIDITY": { suffix: " %" },
+    "TEMPERATURE": { suffix: " °C" },
+    "CALORIES_BURNED": { suffix: " kcal" },
+    "HEART_RATE": { suffix: " bpm" },
+    "BLOOD_PRESSURE": { suffix: " mmHg" },
+    "BLOOD_OXYGEN": { suffix: " %" },
+    "BLOOD_GLUCOSE": { suffix: " mg/dL" },
+    "FAT_PERCENTAGE": { suffix: " %" },
+    "STEPS": { suffix: " pas" },
+    "LAST_SLEEP_DURATION": { suffix: " min" },
+    "MAX_VO2": { suffix: " mL/kg/min" },
+    "RESPIRATORY_RATE": { suffix: "/min" },
+    "BODY_TEMPERATURE": { suffix: " °C" },
+    "BODY_WEIGHT": { suffix: " kg" },
+    "BATTERY_LEVEL": { suffix: " %" },
+    "BODY_HEIGHT": { suffix: " cm" }
 }
 
 export function formatAttribute(type: AttributeType, val: any) {
@@ -131,7 +137,7 @@ export function formatAttribute(type: AttributeType, val: any) {
         case "FAT_PERCENTAGE":
             return `${val} %`
         case "STEPS":
-            return `${val}`
+            return `${val} pas`
         case "LAST_SLEEP_DURATION":
             return `${val} min`
         case "MAX_VO2":
@@ -142,5 +148,25 @@ export function formatAttribute(type: AttributeType, val: any) {
             return `${val} °C`
         case "BODY_WEIGHT":
             return `${val} kg`
+        case "BATTERY_LEVEL":
+            return `${val} %`
+        case "BODY_HEIGHT":
+            return `${val} cm`
     }
 }
+
+export const actionLogOperationLabels: Record<ActionLogOperation, string> = {
+    "CREATE": "Création",
+    "UPDATE": "Modification",
+    "DELETE": "Suppression",
+} as const;
+export const actionLogOperations = Object.values(ActionLogOperation)
+
+export const actionLogTargetLabels: Record<ActionLogTarget, string> = {
+    "DEVICE": "Appareil",
+    "USER": "Utilisateur",
+    "DEVICE_TYPE": "Modèle",
+    "ROOM": "Salle"
+} as const;
+
+export const actionLogTargets = Object.values(ActionLogTarget)

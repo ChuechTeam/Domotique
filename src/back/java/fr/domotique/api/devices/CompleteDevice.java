@@ -20,12 +20,14 @@ public record CompleteDevice(
     double energyConsumption,
     CompleteDeviceType type,
     @ApiDoc(optional = true) CompleteRoom room,
-    @ApiDoc(optional = true) UserProfile owner
+    @ApiDoc(optional = true) UserProfile owner,
+    @ApiDoc(optional = true) UserProfile deletionRequestedBy
 ) {
     public static final Mapper<CompleteDevice> MAP = Mapper.of(
         6
         + CompleteDeviceType.MAP.getColumns()
         + CompleteRoom.MAP.getColumns()
+        + UserProfile.MAP.getColumns()
         + UserProfile.MAP.getColumns(),
         (r, s) -> new CompleteDevice(
             r.getInteger(s.next()),
@@ -36,6 +38,7 @@ public record CompleteDevice(
             r.getDouble(s.next()),
             CompleteDeviceType.MAP.apply(r, s),
             CompleteRoom.MAP.apply(r, s),
+            UserProfile.MAP.apply(r, s),
             UserProfile.MAP.apply(r, s)
         )
     );

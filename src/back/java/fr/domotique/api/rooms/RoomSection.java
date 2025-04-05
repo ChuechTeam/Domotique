@@ -144,6 +144,15 @@ public class RoomSection extends Section {
             server.db().rooms().create(room).await();
             log.info("Room created with id {} and name {}", room.getId(), room.getName());
 
+            // Log this action in the action log
+            Authenticator auth = Authenticator.get(context);
+            server.db().actionLogs().insert(new ActionLog(
+                auth.getUserId(),
+                room.getId(),
+                ActionLogTarget.ROOM,
+                ActionLogOperation.CREATE
+            )).await();
+
             context.response().setStatusCode(201);
             return server.db().rooms().getComplete(room.getId()).await();
         } catch (ForeignException ex) {
@@ -183,6 +192,16 @@ public class RoomSection extends Section {
         try {
             server.db().rooms().update(room).await();
             log.info("Room updated with id {} and name {}", room.getId(), room.getName());
+            
+            // Log this action in the action log
+            Authenticator auth = Authenticator.get(context);
+            server.db().actionLogs().insert(new ActionLog(
+                auth.getUserId(),
+                room.getId(),
+                ActionLogTarget.ROOM,
+                ActionLogOperation.UPDATE
+            )).await();
+            
             return server.db().rooms().getComplete(roomId).await();
         } catch (ForeignException ex) {
             throw new RequestException("Le propriétaire de la salle n'existe pas.", 422, "OWNER_NOT_FOUND");
@@ -210,6 +229,16 @@ public class RoomSection extends Section {
         // Delete room
         // TODO: What happens for devices with this room?
         server.db().rooms().delete(roomId).await();
+        
+        // Log this action in the action log
+        Authenticator auth = Authenticator.get(context);
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            roomId,
+            ActionLogTarget.ROOM,
+            ActionLogOperation.DELETE
+        )).await();
+        
         log.info("Room deleted with id {}", roomId);
     }
     // endregion

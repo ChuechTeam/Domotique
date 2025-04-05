@@ -141,3 +141,30 @@ ALTER TABLE DeviceType
 -- rollback ALTER TABLE DeviceType
 -- rollback     DROP category,
 -- rollback     DROP INDEX idx_device_type_category;
+
+-- changeset dynamic:addDeletionRequestedById
+
+ALTER TABLE Device
+    ADD deletionRequestedById INT NULL AFTER energyConsumption,
+    ADD CONSTRAINT fk_device_deletion_requested_by FOREIGN KEY (deletionRequestedById) REFERENCES User(id) ON DELETE SET NULL;
+
+-- rollback ALTER TABLE Device
+-- rollback     DROP deletionRequestedById,
+-- rollback     DROP FOREIGN KEY fk_device_deletion_requested_by;
+
+-- changeset dynamic:add_action_log
+
+CREATE TABLE ActionLog(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    userId INT NULL,
+    targetId INT NOT NULL,
+    targetType TINYINT NOT NULL,
+    operation TINYINT NOT NULL,
+    flags BIGINT NOT NULL,
+    time DATETIME NOT NULL,
+
+    FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+    INDEX idx_actionlog_user(userId),
+    INDEX idx_actionlog_target(targetId),
+    INDEX idx_actionlog_time(time)
+);

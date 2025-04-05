@@ -1,12 +1,13 @@
 <template>
-    <div class="dashboard-container">
+  <div class="scrollable-page">
+    <div class="container-lg pt-5 pb-3">
       <header class="dashboard-header">
         <h1>Bienvenue, {{ user.prenom }} 👋</h1>
         <p>Vous êtes connecté(e) en tant que <strong>{{ user.role }}</strong>.</p>
       </header>
   
       <!-- Section profil -->
-      <section class="profile-card">
+      <section class="profile-card mb-4">
         <h2>Votre profil</h2>
         <ul>
           <li><strong>Nom :</strong> {{ user.nom }}</li>
@@ -26,13 +27,16 @@
           <option>Inactif</option>
         </select>
   
-        <div class="object-card" v-for="obj in filteredObjects" :key="obj.id">
-          <h3>{{ obj.nom }}</h3>
-          <p>{{ obj.description }}</p>
-          <p><strong>État :</strong> {{ obj.etat }}</p>
+        <div class="d-flex flex-column gap-3">
+          <div class="object-card" v-for="obj in filteredObjects" :key="obj.id">
+            <h3>{{ obj.nom }}</h3>
+            <p>{{ obj.description }}</p>
+            <p><strong>État :</strong> {{ obj.etat }}</p>
+          </div>
         </div>
       </section>
     </div>
+  </div>
   </template>
   
   <script setup>
@@ -73,13 +77,6 @@
   </script>
   
   <style scoped>
-  .dashboard-container {
-    max-width: 900px;
-    margin: 3rem auto;
-    padding: 2rem;
-    font-family: 'Segoe UI', sans-serif;
-  }
-  
   .dashboard-header {
     text-align: center;
     margin-bottom: 2rem;
@@ -89,7 +86,6 @@
     background: #f4f4f4;
     border-radius: 12px;
     padding: 1.5rem;
-    margin-bottom: 2rem;
   }
   
   .profile-card ul {
@@ -115,7 +111,6 @@
     padding: 1rem;
     border: 1px solid #ddd;
     border-radius: 8px;
-    margin-bottom: 1rem;
   }
   </style>
   

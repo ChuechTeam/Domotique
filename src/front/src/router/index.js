@@ -20,6 +20,13 @@ import DeviceTypesView from '@/views/app/DeviceTypesView.vue';
 import { useGuards } from '@/guards';
 import ProfileDeleteModal from '@/views/app/ProfileDeleteModal.vue';
 import ProfilesView from '@/views/app/ProfilesView.vue';
+import AdminView from '@/views/app/AdminView.vue';
+import AdminActionsView from '@/views/app/AdminActionsView.vue';
+import AdminLoginsView from '@/views/app/AdminLoginsView.vue';
+import ThemeView from '@/views/app/ThemeView.vue';
+import HealthThemeView from '@/views/app/HealthThemeView.vue';
+import EnergyThemeView from '@/views/app/EnergyThemeView.vue';
+import SportThemeView from '@/views/app/SportThemeView.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -199,6 +206,54 @@ const router = createRouter({
                             component: DeviceTypesView
                         }
                     ]
+                },
+                {
+                    path: "/admin",
+                    name: "admin",
+                    component: AdminView,
+                    props: true,
+                    children: [
+                        {
+                            path: "actions",
+                            name: "admin-actions",
+                            component: AdminActionsView
+                        },
+                        {
+                            path: "logins",
+                            name: "admin-logins",
+                            component: AdminLoginsView
+                        }
+                    ],
+                    // Prevent users from accessing admin section if they don't have admin rights
+                    beforeEnter(to, from) {
+                        const guards = useGuards();
+                        if (!guards.mustHaveAdminRights()) {
+                            return from?.fullPath ?? "/dashboard";
+                        }
+                    }
+                },
+                {
+                    path: "/themes",
+                    name: "themes",
+                    component: ThemeView,
+                    props: true,
+                    children: [
+                        {
+                            path: "health",
+                            name: "health-theme",
+                            component: HealthThemeView
+                        },
+                        {
+                            path: "energy",
+                            name: "energy-theme",
+                            component: EnergyThemeView
+                        },
+                        {
+                            path: "sport",
+                            name: "sport-theme",
+                            component: SportThemeView
+                        }
+                    ]
                 }
             ]
         },
@@ -253,6 +308,12 @@ router.beforeEach(async (to, from) => {
         if (to.name === "tech") {
             // tech isn't a real route, but a parent of devices and rooms.
             return "/tech/devices";
+        } else if (to.name === "admin") {
+            // Same for admin
+            return "/admin/actions";
+        } else if (to.name === "themes") {
+            // Same for themes
+            return "/themes/health";
         }
     } else if (inArea(to, "tour") && auth.isLoggedIn) {
         // If the user is logged in, redirect them to the dashboard instead.

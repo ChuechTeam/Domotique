@@ -114,69 +114,65 @@ load(); // Initial load
 </script>
 
 <template>
-    <div class="profiles-view container-lg" v-if="router.currentRoute.value.name === 'profiles'">
-        <h1 class="header">Profils</h1>
+    <div class="scrollable-page">
+        <div class="profiles-view container-lg" v-if="router.currentRoute.value.name === 'profiles'">
+            <h1 class="sub-page-title">Profils</h1>
 
-        <div class="search-section">
-            <IconField class="flex-grow-1" v-if="!allUsersMode">
-                <InputIcon class="pi pi-search" />
-                <InputText v-model="filters.fullName" fluid placeholder="Rechercher un profil" />
-            </IconField>
-            <Button v-if="!allUsersMode && canSearchAllUsers" label="Tous les profils"
-                @click="allUsersMode = true" icon="pi pi-users" />
-            <Button v-if="allUsersMode" icon="pi pi-arrow-left" label="Retour" @click="allUsersMode = false" />
-            <div v-if="allUsersMode" class="all-users-box">Consultation de tous les profils</div>
-        </div>
+            <div class="search-section">
+                <IconField class="flex-grow-1" v-if="!allUsersMode">
+                    <InputIcon class="pi pi-search" />
+                    <InputText v-model="filters.fullName" fluid placeholder="Rechercher un profil" />
+                </IconField>
+                <Button v-if="!allUsersMode && canSearchAllUsers" label="Tous les profils" @click="allUsersMode = true"
+                    icon="pi pi-users" />
+                <Button v-if="allUsersMode" icon="pi pi-arrow-left" label="Retour" @click="allUsersMode = false" />
+                <div v-if="allUsersMode" class="all-users-box">Consultation de tous les profils</div>
+            </div>
 
-        <div class="profiles-list">
-            <div v-if="loading" class="loading-container">
-                <FullscreenSpinner />
-            </div>
-            <div v-else-if="profiles.length === 0 && !searchEmpty" class="no-results">
-                Aucun profil trouvé.
-            </div>
-            <div v-else-if="profiles.length === 0" class="text-center">
-                <div class="pi pi-search mb-4" style="font-size: 6em;"></div>
-                <div style="font-size: 2em;">Commencez à chercher un profil en tapant dans la barre de recherche
-                    ci-dessus !</div>
-            </div>
-            <div v-else class="profile-cards">
-                <div v-for="profile in profiles" :key="profile.id" class="profile-card" @click="viewProfile(profile)">
-                    <Avatar class="avatar" :label="getInitials(profile)"
-                        :style="{ backgroundColor: getAvatarColor(profile) }" />
-                    <div class="profile-info">
-                        <h3 class="profile-name">{{ profile.firstName }} {{ profile.lastName }}</h3>
-                        <div class="profile-details">
-                            <Badge :value="roleLabels[profile.role]" severity="info" class="profile-badge" />
-                            <Badge :value="levelLabels[profile.level]" severity="success" class="profile-badge" />
-                            <Badge :value="genderLabels[profile.gender]" severity="warning" class="profile-badge" />
+            <div class="profiles-list">
+                <div v-if="loading" class="loading-container">
+                    <FullscreenSpinner />
+                </div>
+                <div v-else-if="profiles.length === 0 && !searchEmpty" class="no-results">
+                    Aucun profil trouvé.
+                </div>
+                <div v-else-if="profiles.length === 0" class="text-center">
+                    <div class="pi pi-search mb-4" style="font-size: 6em;"></div>
+                    <div style="font-size: 2em;">Commencez à chercher un profil en tapant dans la barre de recherche
+                        ci-dessus !</div>
+                </div>
+                <div v-else class="profile-cards">
+                    <div v-for="profile in profiles" :key="profile.id" class="profile-card"
+                        @click="viewProfile(profile)">
+                        <Avatar class="avatar" :label="getInitials(profile)"
+                            :style="{ backgroundColor: getAvatarColor(profile) }" />
+                        <div class="profile-info">
+                            <h3 class="profile-name">{{ profile.firstName }} {{ profile.lastName }}</h3>
+                            <div class="profile-details">
+                                <Badge :value="roleLabels[profile.role]" severity="info" class="profile-badge" />
+                                <Badge :value="levelLabels[profile.level]" severity="success" class="profile-badge" />
+                                <Badge :value="genderLabels[profile.gender]" severity="warning" class="profile-badge" />
+                            </div>
+                            <div class="profile-points">
+                                <i class="pi pi-star" style="color: gold;"></i> {{ profile.points }} points
+                            </div>
                         </div>
-                        <div class="profile-points">
-                            <i class="pi pi-star" style="color: gold;"></i> {{ profile.points }} points
+                        <div class="profile-actions">
+                            <Button icon="pi pi-chevron-right" class="p-button-text" />
                         </div>
-                    </div>
-                    <div class="profile-actions">
-                        <Button icon="pi pi-chevron-right" class="p-button-text" />
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Use routeKey as key so the component reloads when same route but different parameters (userId, deviceId...) -->
+        <RouterView :key="routerKey" />
     </div>
-    <!-- Use routeKey as key so the component reloads when same route but different parameters (userId, deviceId...) -->
-    <RouterView v-else :key="routerKey" />
 </template>
 
 <style lang="css" scoped>
 .profiles-view {
     display: flex;
     flex-direction: column;
-    padding: 1rem;
-}
-
-.header {
-    margin: 2rem 0;
-    text-align: center;
-    font-size: 3rem;
 }
 
 .search-section {

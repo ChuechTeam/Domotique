@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import api, { CompleteDevice } from '@/api';
 import { useGuards } from '@/guards';
+import { deviceCategoryLabels } from '@/labels';
 import { useToast } from 'primevue';
 import { useRouter } from 'vue-router';
 
@@ -68,11 +69,18 @@ function viewDeviceDetails(device: CompleteDevice) {
         <Tag icon="pi pi-home" rounded
           :style="{ '--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff' }"
           v-if="device.room">{{ device.room.name }}</Tag>
+          <Chip :label="deviceCategoryLabels[device.type.category]" />
         <Chip v-if="device.owner">
+          <i class="pi pi-user"></i>
           <RouterLink :to="{ name: 'profile', params: { userId: device.owner!.id } }"
             style="text-decoration: none; color: inherit;" @click.stop>{{ device.owner!.firstName + ' ' +
               device.owner.lastName }}</RouterLink>
         </Chip>
+      </div>
+
+      <div class="del-request" v-if="device.deletionRequestedBy != null">
+        <i class="pi pi-trash me-2"></i>Suppression demandée par 
+        {{ device.deletionRequestedBy.firstName + ' ' + device.deletionRequestedBy.lastName }}
       </div>
     </div>
   </div>
@@ -93,6 +101,10 @@ function viewDeviceDetails(device: CompleteDevice) {
 
   display: flex;
   flex-direction: column;
+
+  &:has(.del-request) {
+    padding-bottom: 0;
+  }
 }
 
 .device-card:hover {
@@ -102,6 +114,16 @@ function viewDeviceDetails(device: CompleteDevice) {
 
 .device-card.powered {
   border-left-color: rgb(16, 110, 101);
+}
+
+.del-request {
+  background-color: rgb(190, 0, 0);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  padding: 0.5rem;
+
+  margin-top: 1rem;
+  text-align: center;
 }
 
 .card-content {

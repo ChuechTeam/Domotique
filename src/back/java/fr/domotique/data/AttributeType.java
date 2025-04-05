@@ -54,7 +54,13 @@ public enum AttributeType {
     BODY_TEMPERATURE("Température corporelle (°C)", Content.NUMBER, true, (Double x) -> x >= 0),
 
     @ApiDoc("The current weight of the user, in kg.")
-    BODY_WEIGHT("Poids (kg)", Content.NUMBER, true, (Double x) -> x >= 0);
+    BODY_WEIGHT("Poids (kg)", Content.NUMBER, true, (Double x) -> x >= 0),
+
+    @ApiDoc("The amount of battery left in percent.")
+    BATTERY_LEVEL("Batterie restante (%)", Content.NUMBER, (Double x) -> x >= 0 && x <= 100),
+
+    @ApiDoc("The height of your body in centimeters.")
+    BODY_HEIGHT("Taille (cm)", Content.NUMBER, true, (Double x) -> x >= 0);
 
     /// The displayed name of the attribute.
     public final String name;

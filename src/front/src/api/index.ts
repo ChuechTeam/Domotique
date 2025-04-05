@@ -1,4 +1,4 @@
-import {Configuration, ResponseError, RoomsApi, UsersApi, LoginLogsApi, UserEventsApi, DevicesApi, DeviceTypesApi} from "./gen";
+import {Configuration, ResponseError, RoomsApi, UsersApi, LoginLogsApi, UserEventsApi, DevicesApi, DeviceTypesApi, ActionLogsApi, HealthApi} from "./gen";
 import type {ErrorResponse} from "./gen";
 
 // A classic fetch Response, with a bonus attribute: "errData", containing the error JSON if any.
@@ -30,12 +30,21 @@ export const config = new Configuration({
         // to access the error data in json form.
         async post(ctx) {
             if (ctx.response.status >= 400 && ctx.response.status < 500) {
+                const responseClone = ctx.response.clone();
+
                 const resp = ctx.response as JSErrResponse;
                 try {
-                    resp.errData = (await ctx.response.json()) ?? defaultErrorResponse;
+                    resp.errData = (await responseClone.json()) ?? defaultErrorResponse;
                 } catch (e) {
                     console.error("Failed to read JSON error response into errData. Using default error data", e);
                     resp.errData = defaultErrorResponse;
+                }
+
+                const cloneFunc = resp.clone;
+                resp.clone = () => {
+                    const cloned = cloneFunc.call(resp) as JSErrResponse;
+                    cloned.errData = resp.errData;
+                    return cloned;
                 }
 
                 return resp;
@@ -127,7 +136,9 @@ export default {
     devices: new DevicesApi(config),
     deviceTypes: new DeviceTypesApi(config),
     loginLogs: new LoginLogsApi(config),
-    userEvents: new UserEventsApi(config)
+    userEvents: new UserEventsApi(config),
+    actionLogs: new ActionLogsApi(config),
+    health: new HealthApi(config),
 };
 
 // Export everything from the generated API (types, mainly)

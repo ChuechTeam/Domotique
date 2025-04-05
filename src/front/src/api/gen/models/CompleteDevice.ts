@@ -95,6 +95,12 @@ export interface CompleteDevice {
      * @memberof CompleteDevice
      */
     room?: CompleteRoom;
+    /**
+     * 
+     * @type {UserProfile}
+     * @memberof CompleteDevice
+     */
+    deletionRequestedBy?: UserProfile;
 }
 
 /**
@@ -129,6 +135,7 @@ export function CompleteDeviceFromJSONTyped(json: any, ignoreDiscriminator: bool
         'id': json['id'],
         'type': CompleteDeviceTypeFromJSON(json['type']),
         'room': json['room'] == null ? undefined : CompleteRoomFromJSON(json['room']),
+        'deletionRequestedBy': json['deletionRequestedBy'] == null ? undefined : UserProfileFromJSON(json['deletionRequestedBy']),
     };
 }
 
@@ -152,6 +159,7 @@ export function CompleteDeviceToJSONTyped(value?: CompleteDevice | null, ignoreD
         'id': value['id'],
         'type': CompleteDeviceTypeToJSON(value['type']),
         'room': CompleteRoomToJSON(value['room']),
+        'deletionRequestedBy': UserProfileToJSON(value['deletionRequestedBy']),
     };
 }
 
