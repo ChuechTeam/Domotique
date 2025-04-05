@@ -131,6 +131,9 @@ export default {
           motDePasse: this.motDePasse,
           motDePasseAdmin: this.motDePasseAdmin
         });
+       setTimeout(() => {
+      this.$router.push("/login");
+  },  1500); // redirige après 1,5 seconde
       }
     },
   },

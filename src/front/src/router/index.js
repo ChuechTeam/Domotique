@@ -6,7 +6,7 @@ import DashboardView from "@/views/app/DashboardView.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileDetailView from "@/views/app/ProfileDetailView.vue";
-import Inscription from '@/inscription.vue';
+import InscriptionView from '@/inscription.vue';
 import RadioButton from 'primevue/radiobutton';
 import HomeView from '@/views/tour/HomeView.vue';
 import ProfileEditModal from "@/views/app/ProfileEditModal.vue";
@@ -43,11 +43,10 @@ const router = createRouter({
                     component: HomeView,
                 },
                 {
-                    path: "/inscription",
-                    name: "Inscription",
-                    component: Inscription,
-
-                }
+                    path: '/register',
+                    name: 'register',
+                    component: InscriptionView
+                  }
             ],
         },
         // --- LOGIN ROUTES ---
