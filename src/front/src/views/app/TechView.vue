@@ -1,59 +1,46 @@
 <script lang="ts" setup>
-import api, { CompleteDevice, GetDevicesRequest } from '@/api';
-import { ref, watch } from 'vue';
+import SubNavbar from '@/components/SubNavbar.vue';
+import { onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+const links = [
+    { name: 'Appareils', to: { name: 'devices' } },
+    { name: 'Salles', to: { name: 'rooms' } },
+    { name: 'Modèles', to: { name: 'types' } }
+];
 
-const devices = ref<CompleteDevice[]>([]);
-const filters = ref({
-    name: null as string | null,
-    powered: null as boolean | null,
-});
-const promise = ref<ReturnType<typeof api.devices.getDevices>>(null);
-const searchTimer = ref<ReturnType<typeof setTimeout>>(null);
+const dir = ref(1);
 
-function load() {
-    let thisProm: any;
-    async function fetchFromAPI() {
-        try {
-            const f = filters.value;
-            const response = await api.devices.getDevices({
-                name: f.name,
-                powered: f.powered
-            });
-            if (thisProm === promise.value) {
-                devices.value = response.devices;
-            }
-        } catch (e) {
-            // todo
-        } finally {
-            if (thisProm === promise.value) {
-                promise.value = null;
-            }
+function inArea(route: any, area: string) {
+    return route.matched.some(x => x.name === area);
+}
+const router = useRouter();
+
+// Set the right direction (left or right) based on the route change
+const removeListener = router.beforeResolve((to, from) => {
+    const fromIdx = links.findIndex(l => inArea(from, l.to.name));
+    const toIdx = links.findIndex(l => inArea(to, l.to.name));
+    if (fromIdx !== -1 && toIdx !== -1) {
+        if (fromIdx < toIdx) {
+            // link on the right
+            dir.value = 1;
+        } else {
+            // link on the left
+            dir.value = -1;
         }
     }
-    thisProm = fetchFromAPI()
-    promise.value = thisProm;
-}
-
-watch(filters, () => {
-    clearTimeout(searchTimer.value);
-    searchTimer.value = setTimeout(load, 150);
-}, { deep: true });
-load(); // Initial load
-
+})
+onUnmounted(removeListener);
 </script>
 <template>
-    <div class="root">
-        <header class="header">
-            <div class="-layout container">
-                <div class="-text">Technologie</div>
-                <div class="-tabs">
-                    <RouterLink class="-tab" to="/tech/devices">Appareils</RouterLink>
-                    <RouterLink class="-tab" to="/tech/rooms">Salles</RouterLink>
-                    <RouterLink class="-tab" to="/tech/types">Modèles</RouterLink>
-                </div>
-            </div>
-        </header>
-        <RouterView />
+    <div class="root no-padding no-overflow">
+        <SubNavbar title="Technologie" :items="links" />
+        <div style="position: relative; flex-grow: 1;">
+            <RouterView v-slot="{ Component }">
+                <Transition name="slide">
+                    <component :is="Component" class="view overflow-auto flex-grow-1 h-100" />
+                </Transition>
+            </RouterView>
+        </div>
     </div>
 </template>
 <style lang="css" scoped>
@@ -61,75 +48,25 @@ load(); // Initial load
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
+    overflow: none;
+
+    --anim-duration: 0.33s;
+    --anim-direction: v-bind(dir);
 }
 
-.header {
-    background: linear-gradient(-75deg, rgb(16, 110, 101), rgb(4, 91, 172));
-    box-shadow: 0px 2px 16px rgb(4, 91, 172);
-    color: white;
-    z-index: 1;
+.view {
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
 
-    padding: 1rem 4rem;
-    margin: 0 12px;
-    border-radius: 12px;
-
-    & .-layout {
-        display: flex;
-        flex-direction: row;
-        gap: 32px;
-    }
-
-    align-items: center;
-
-    & .-text {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    & .-tabs {
-        max-width: 1600px;
-        width: 100%;
-        margin-left: auto;
-        display: flex;
-
-        gap: 16px;
-    }
-
-    & .-tab {
-        color: white;
-
-        --tcol: rgba(255, 255, 255, 10%);
-        border: 1px solid var(--tcol);
-
-        text-decoration: none;
-        border-radius: 8px;
-        padding: 5px 8px;
-
-        &.router-link-active {
-            font-weight: bold;
-
-            background: var(--tcol);
-
-            /* color: black; */
-            /* background: rgb(195, 238, 234); */
-        }
-    }
+    position: absolute;
+    left: 0;
+    right: 0;
 }
 
-@media (max-width: 768px) {
-    .header {
-        padding: 1rem;
-        text-align: center;
-    }
-    .header .-text {
-        display: none;
-    }
-    .header .-layout {
-        flex-direction: column;
-        gap: 16px;
-    }
-    .header .-tabs {
-        justify-content: center;
+@media (max-width: 1024px) {
+    .root {
+        flex-direction: column-reverse;
     }
 }
 </style>

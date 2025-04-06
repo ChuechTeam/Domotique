@@ -56,6 +56,9 @@ public class Device {
     /// Energy consumption in Watts of this device while powered on
     double energyConsumption;
 
+    /// The user who last requested the deletion of this device.
+    Integer deletionRequestedById;
+
     /// Information associating the SQL database table to the Java class
     public static final EntityInfo<Device> ENTITY = new EntityInfo<>(
         Device.class,
@@ -68,7 +71,8 @@ public class Device {
             r.getInteger(s.next()),
             attributesFromDB(r.getJsonArray(s.next())),
             r.getBoolean(s.next()),
-            r.getDouble(s.next())
+            r.getDouble(s.next()),
+            r.getInteger(s.next())
         ),
         new EntityColumn<>("id", Device::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("name", Device::getName),
@@ -78,7 +82,8 @@ public class Device {
         new EntityColumn<>("userId", Device::getUserId),
         new EntityColumn<>("attributes", x -> attributesToDB(x.attributes)),
         new EntityColumn<>("powered", Device::isPowered),
-        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption)
+        new EntityColumn<>("energyConsumption", Device::getEnergyConsumption),
+        new EntityColumn<>("deletionRequestedById", Device::getDeletionRequestedById)
     );
 
     public static JsonArray attributesToDB(EnumMap<AttributeType, Object> attributes) {

@@ -245,12 +245,21 @@ public final class DocsGen {
     }
 
     private Parameter toOpenAPI(ParamDoc pd) {
+        Schema<?> schema = schemaForReflect(pd.valueType, false);
+        if (pd.valueType == String.class) {
+            if (pd.format == ParamDoc.Format.DATE) {
+                schema.format("date");
+            } else if (pd.format == ParamDoc.Format.DATE_TIME) {
+                schema.format("date-time");
+            }
+        }
+
         return new Parameter()
             .name(pd.name)
             .in(pd.location.toString().toLowerCase())
             .description(pd.desc)
             .required(pd.required)
-            .schema(schemaForReflect(pd.valueType, false));
+            .schema(schema);
     }
 
     private ApiResponse toOpenAPI(ResponseDoc rd) {

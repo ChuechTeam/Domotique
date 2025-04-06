@@ -157,6 +157,15 @@ public class DeviceTypeSection extends Section {
         DeviceType deviceType = new DeviceType(0, input.name, input.category, input.attributesAsEnumSet());
 
         server.db().deviceTypes().insert(deviceType).await();
+
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            Authenticator.get(context).getUserId(),
+            deviceType.getId(),
+            ActionLogTarget.DEVICE_TYPE,
+            ActionLogOperation.CREATE
+        )).await();
+
         log.info("Device type created with id {} and name {}", deviceType.getId(), deviceType.getName());
 
         context.response().setStatusCode(201);
@@ -201,6 +210,15 @@ public class DeviceTypeSection extends Section {
 
         // Submit changes to the database
         server.db().deviceTypes().update(deviceType).await();
+
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            Authenticator.get(context).getUserId(),
+            deviceType.getId(),
+            ActionLogTarget.DEVICE_TYPE,
+            ActionLogOperation.UPDATE
+        )).await();
+
         log.info("Device type updated with id {} and name {}", deviceType.getId(), deviceType.getName());
 
         // Okay... But what happens if the attributes changed?
@@ -245,16 +263,25 @@ public class DeviceTypeSection extends Section {
         // Get the device type
         DeviceType deviceType = server.db().deviceTypes().get(deviceTypeId).await();
         if (deviceType == null) {
-            throw new RequestException("Ce type d'appareil n'existe pas.", 404, "NOT_FOUND");
+            throw new RequestException("Ce modèle n'existe pas.", 404, "NOT_FOUND");
         }
 
         // See if we have any devices depending on it.
         if (server.db().devices().hasAnyWithDeviceType(deviceType.getId()).await()) {
-            throw new RequestException("Il reste encore des appareils avec ce type.", 422, "DEVICES_WITH_TYPE");
+            throw new RequestException("Il reste encore des appareils avec ce modèle.", 422, "DEVICES_WITH_TYPE");
         }
 
         // Delete it!
         server.db().deviceTypes().delete(deviceTypeId).await();
+
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            Authenticator.get(context).getUserId(),
+            deviceTypeId,
+            ActionLogTarget.DEVICE_TYPE,
+            ActionLogOperation.DELETE
+        )).await();
+
         log.info("Device type deleted with id {}", deviceTypeId);
     }
     // endregion

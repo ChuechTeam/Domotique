@@ -141,3 +141,59 @@ ALTER TABLE DeviceType
 -- rollback ALTER TABLE DeviceType
 -- rollback     DROP category,
 -- rollback     DROP INDEX idx_device_type_category;
+
+-- changeset dynamic:addDeletionRequestedById
+
+ALTER TABLE Device
+    ADD deletionRequestedById INT NULL AFTER energyConsumption,
+    ADD CONSTRAINT fk_device_deletion_requested_by FOREIGN KEY (deletionRequestedById) REFERENCES User(id) ON DELETE SET NULL;
+
+-- rollback ALTER TABLE Device
+-- rollback     DROP deletionRequestedById,
+-- rollback     DROP FOREIGN KEY fk_device_deletion_requested_by;
+
+-- changeset dynamic:add_action_log
+
+CREATE TABLE ActionLog(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    userId INT NULL,
+    targetId INT NOT NULL,
+    targetType TINYINT NOT NULL,
+    operation TINYINT NOT NULL,
+    flags BIGINT NOT NULL,
+    time DATETIME NOT NULL,
+
+    FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+    INDEX idx_actionlog_user(userId),
+    INDEX idx_actionlog_target(targetId),
+    INDEX idx_actionlog_time(time)
+);
+
+-- rollback drop table `ActionLog`;
+
+-- changeset dynamic:add_consumption_to_powerlog
+
+ALTER TABLE PowerLog
+    ADD energyConsumption DOUBLE NOT NULL DEFAULT 0 AFTER status;
+
+UPDATE PowerLog p
+JOIN Device d on d.id = p.deviceId
+SET p.energyConsumption = d.energyConsumption
+WHERE p.status = 'POWER_ON' OR p.status = 'POWER_OFF';
+
+-- rollback ALTER TABLE PowerLog
+-- rollback     DROP energyConsumption;
+
+-- changeset dynamic:add_invite_codes
+
+CREATE TABLE InviteCode(
+    id VARCHAR(16) PRIMARY KEY NOT NULL,
+    usagesLeft INT NOT NULL CHECK ( usagesLeft > 0 ),
+    role TINYINT NOT NULL, -- Role enum
+    creatorId INT NULL,
+    createdAt DATETIME NOT NULL,
+
+    CONSTRAINT fk_invite_code_creator FOREIGN KEY (creatorId) REFERENCES User(id) ON DELETE SET NULL
+)
+
+-- rollback drop table `InviteCode`;

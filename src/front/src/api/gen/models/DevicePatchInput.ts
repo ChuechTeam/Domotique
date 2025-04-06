@@ -48,6 +48,12 @@ export interface DevicePatchInput {
      * @type {number}
      * @memberof DevicePatchInput
      */
+    deletionRequestedById?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DevicePatchInput
+     */
     typeId?: number;
     /**
      * 
@@ -90,6 +96,7 @@ export function DevicePatchInputFromJSONTyped(json: any, ignoreDiscriminator: bo
         'powered': json['powered'] == null ? undefined : json['powered'],
         'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
+        'deletionRequestedById': json['deletionRequestedById'] == null ? undefined : json['deletionRequestedById'],
         'typeId': json['typeId'] == null ? undefined : json['typeId'],
         'attributes': json['attributes'] == null ? undefined : json['attributes'],
         'userId': json['userId'] == null ? undefined : json['userId'],
@@ -112,6 +119,7 @@ export function DevicePatchInputToJSONTyped(value?: DevicePatchInput | null, ign
         'powered': value['powered'],
         'name': value['name'],
         'description': value['description'],
+        'deletionRequestedById': value['deletionRequestedById'],
         'typeId': value['typeId'],
         'attributes': value['attributes'],
         'userId': value['userId'],

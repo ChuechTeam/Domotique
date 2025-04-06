@@ -12,6 +12,7 @@ import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
+import javax.validation.*;
 import java.time.*;
 import java.util.*;
 
@@ -108,7 +109,7 @@ public class UserSection extends Section {
             "Deveri",
             Gender.FEMALE,
             Role.RESIDENT,
-            "mot2passe"))
+            "mot2passe", null))
         .response(201, CompleteUser.class, "The user was created.")
         .response(422, ErrorResponse.class, """
                 Either:
@@ -125,7 +126,8 @@ public class UserSection extends Section {
                          String lastName,
                          Gender gender,
                          Role role,
-                         String password) {
+                         String password,
+                         @Nullable @ApiDoc(optional = true) String adminCode) {
         public RegisterInput {
             // Sanitize all sensitive strings (not password)
             email = Sanitize.string(email);
@@ -158,6 +160,15 @@ public class UserSection extends Section {
 
             // Validate the password (for registration; login requirements are different)
             UserValidation.password(block, "password", input.password);
+
+            // Ensure that admin registration use the admin code
+            if (input.role == Role.ADMIN) {
+                if (input.adminCode == null || input.adminCode.isBlank()) {
+                    block.addError("adminCode", "Le code d'administrateur est vide.");
+                } else if (!input.adminCode.equals(server.config().adminCode())) {
+                    block.addError("adminCode", "Le code d'administrateur est incorrect.");
+                }
+            }
         }
 
         // Hash the password, and create the User object
@@ -186,6 +197,14 @@ public class UserSection extends Section {
 
             // Report that registration to the log (-> the console)
             log.info("User registered with id {} and email {}", user.getId(), user.getEmail());
+
+            // Log this action in the action log
+            server.db().actionLogs().insert(new ActionLog(
+                user.getId(), // User logs their own creation
+                user.getId(),
+                ActionLogTarget.USER,
+                ActionLogOperation.CREATE
+            )).await();
 
             // Log the user in, and send a HTTP 201 Created status code.
             auth.login(user);
@@ -310,7 +329,8 @@ public class UserSection extends Section {
         .description("""
             Find users by either:
             - a list of ids, using `ids`
-            - their full name, using `fullName`.""")
+            - their full name, using `fullName`.
+            - all users, if you're at least an expert.""")
         .optionalQueryParam("fullName", String.class, "The full name to search for.")
         .optionalQueryParam("ids", Integer[].class, "A list of identifiers of users to find.")
         .response(200, ProfileSearchOutput.class, "The list of users matching the query.")
@@ -320,7 +340,8 @@ public class UserSection extends Section {
 
     Future<ProfileSearchOutput> searchUsers(RoutingContext context) {
         // Make sure the user is logged in and has their email confirmed.
-        Authenticator.get(context).requireAuth(Level.BEGINNER);
+        Authenticator auth = Authenticator.get(context);
+        auth.requireAuth(Level.BEGINNER);
 
         // Try doing a by-id search.
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
@@ -330,9 +351,12 @@ public class UserSection extends Section {
 
         String fullName = context.queryParams().get("fullName");
         if (fullName == null || fullName.isBlank()) {
-            throw new RequestException("La recherche est vide.", 400);
+            // When doing a full search, you must be at least an expert.
+            auth.requireAuth(Level.EXPERT);
+            return server.db().users().getAllProfiles().map(ProfileSearchOutput::new);
+        } else {
+            return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
         }
-        return server.db().users().getAllProfilesByFullName(fullName).map(ProfileSearchOutput::new);
     }
     // endregion
 
@@ -447,6 +471,14 @@ public class UserSection extends Section {
         // Update the user in the database.
         server.db().users().update(user).await();
 
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            user.getId(),
+            ActionLogTarget.USER,
+            ActionLogOperation.UPDATE
+        )).await();
+
         // Done! Return the public data of the user.
         return UserProfile.fromUser(user);
     }
@@ -509,6 +541,15 @@ public class UserSection extends Section {
         // Update user in database (synchronously using await)
         server.db().users().update(user).await();
 
+        // Log this action with PASSWORD_CHANGED flag
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            user.getId(),
+            ActionLogTarget.USER,
+            ActionLogOperation.UPDATE,
+            EnumSet.of(ActionLogFlags.PASSWORD_CHANGED)
+        )).await();
+
         // Finally, log it to the console!
         log.info("User {}'s password was successfully changed (initiator: {})", user.getId(), auth.getUserId());
     }
@@ -551,7 +592,7 @@ public class UserSection extends Section {
         DeleteUserInput input = readBody(context, DeleteUserInput.class);
 
         // The password must not be blank when deleting our own user
-        if (!isMe) {
+        if (isMe) {
             try (var block = Validation.start()) {
                 Validation.nonBlank(block, "password", input.password, "Le mot de passe est vide.");
             }
@@ -582,6 +623,14 @@ public class UserSection extends Section {
         //   - Rooms owned by this user:    the owner will be set to NULL
         //   - Login logs about this user:  the logs will be deleted
         server.db().users().delete(userId).await();
+
+        // Log this action
+        server.db().actionLogs().insert(new ActionLog(
+            auth.getUserId(),
+            userId,
+            ActionLogTarget.USER,
+            ActionLogOperation.DELETE
+        )).await();
 
         // If we deleted ourselves, log out of the app now.
         if (isMe) {
@@ -675,6 +724,15 @@ public class UserSection extends Section {
                             context.redirect("/?confirmResult=ok");
                         })
                         .onFailure(ex -> context.redirect("/?confirmResult=err"));
+
+                    // Write that down!
+                    server.db().actionLogs().insert(new ActionLog(
+                        u.getId(),
+                        u.getId(),
+                        ActionLogTarget.USER,
+                        ActionLogOperation.UPDATE,
+                        EnumSet.of(ActionLogFlags.EMAIL_CONFIRMED)
+                    )).await();
                 } else {
                     // Nope, redirect to the home page with an error
                     context.redirect("/?confirmResult=err");

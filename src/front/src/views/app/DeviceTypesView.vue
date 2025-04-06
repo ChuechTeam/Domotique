@@ -89,8 +89,8 @@ load(); // Initial load
 
 <template>
     <div class="device-types-view">
-        <div class="container-lg"> <!-- Need this div so scroll is placed to the edge of the screen -->
-            <h1 class="header">Modèles</h1>
+        <div class="container-lg pb-3"> <!-- Need this div so scroll is placed to the edge of the screen -->
+            <h1 class="sub-page-title">Modèles</h1>
 
             <div class="search-section">
                 <IconField class="flex-grow-1">
@@ -132,7 +132,7 @@ load(); // Initial load
         </div>
 
         <!-- Device Type Form Dialog -->
-        <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ width: '450px' }" :closable="!loading"
+        <Dialog v-model:visible="showForm" :header="dialogHeader" modal :style="{ 'width': 'min(97vw, 450px)' }" :closable="!loading"
             :closeOnEscape="!loading">
             <DeviceTypeForm v-model="formModel" :typeId="editingTypeId" hide-header @save-success="handleFormSuccess"
                 @cancel="closeForm" />
@@ -144,9 +144,7 @@ load(); // Initial load
 .device-types-view {
     display: flex;
     flex-direction: column;
-    padding: 1rem;
     height: 100%;
-
 }
 
 .header {

@@ -20,6 +20,8 @@ public class ParamDoc {
     String desc = "";
     /// The data type of this parameter
     Type valueType = String.class;
+    /// The format of the parameter (e.g., date, date-time)
+    Format format = Format.NONE;
     /// Whether this parameter is required or optional
     boolean required = true;
 
@@ -31,5 +33,10 @@ public class ParamDoc {
         QUERY,
         /// As a header parameter: `Authorization: Bearer ...`
         HEADER
+    }
+    public enum Format {
+        NONE,
+        DATE,
+        DATE_TIME,
     }
 }

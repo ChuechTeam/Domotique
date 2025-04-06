@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 
-export const useGlobalDialogsStore = defineStore('levelInfo', {
+export const useGlobalDialogsStore = defineStore('globalDialogs', {
     state() {
         return {
             levelTooLow: false

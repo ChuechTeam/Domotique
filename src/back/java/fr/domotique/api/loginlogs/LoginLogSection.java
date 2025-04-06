@@ -1,12 +1,14 @@
 package fr.domotique.api.loginlogs;
 
 import fr.domotique.*;
+import fr.domotique.api.users.*;
 import fr.domotique.base.*;
 import fr.domotique.base.apidocs.*;
 import fr.domotique.data.*;
 import io.vertx.ext.web.*;
 
 import java.util.*;
+import java.util.stream.*;
 
 public class LoginLogSection extends Section {
     public LoginLogSection(Server server) {
@@ -27,15 +29,21 @@ public class LoginLogSection extends Section {
             ctx.next();
         });
 
-        // GET /api/login-logs
+        // GET /api/login-logs?userId
         subRouter.get()
-            .respond(ctx -> server.db().loginLogs().getAllSorted()
-                .map(LoginLogsResponse::new))
+            .respond(ctx ->
+                server.db().loginLogs().getAllSorted(readIntOrNull(ctx.queryParams().get("userId")))
+                    .compose(logs -> {
+                        var userIds = logs.stream().map(LoginLog::getUserId).collect(Collectors.toSet());
+                        return server.db().users().getAllProfiles(userIds)
+                            .map(users -> new LoginLogsResponse(logs, users));
+                    }))
             .putMetadata(RouteDoc.KEY, new RouteDoc("getLoginLogs")
                 .summary("Get all login logs")
                 .description("Returns a list of all login logs in the database")
+                .optionalQueryParam("userId", int.class, "The user id to filter the logs by")
                 .response(200, LoginLogsResponse.class, "The list of login logs"));
     }
 
-    record LoginLogsResponse(List<LoginLog> logs) {}
+    record LoginLogsResponse(List<LoginLog> logs, List<UserProfile> users) {}
 }

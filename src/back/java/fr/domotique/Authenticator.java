@@ -89,7 +89,7 @@ public class Authenticator {
     }
 
     /// Contains necessary information about a user authorization, stored in a session.
-    record SessionData(int userId, Level level, Role role, boolean emailConfirmed) {}
+    public record SessionData(int userId, Level level, Role role, boolean emailConfirmed) {}
 
     /// Creates a new authenticator for the current request, that will request the user from the database.
     public static Future<Authenticator> create(RoutingContext ctx, Server server) {
@@ -234,6 +234,11 @@ public class Authenticator {
     /// Returns the currently logged-in user id. Returns 0 if no user is logged.
     public int getUserId() {
         return session == null ? 0 : session.userId;
+    }
+
+    /// Returns the session of the currently logged user. If logged out, returns `null`.
+    public @Nullable SessionData getSession() {
+        return session;
     }
 
     /// Returns the currently logged-in user from the database.

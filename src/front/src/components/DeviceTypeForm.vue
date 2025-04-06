@@ -27,6 +27,11 @@ const showHeader = computed(() => props.hideHeader !== true);
 const isSaving = ref(false);
 const validationErrors = ref<ValidationErrorResponse<DeviceTypeFormModel> | null>(null);
 const attrPopover = useTemplateRef<InstanceType<typeof Popover>>("attrPopover");
+// Popover to delete the device type
+const deletePopover = useTemplateRef<InstanceType<typeof Popover>>("deletePopover");
+const deletePromise = ref<Promise<any> | null>(null);
+const deleteErr = ref<string | null>(null);
+
 const emit = defineEmits<{
     'update:modelValue': [value: DeviceTypeFormModel];
     'save-success': [value: CompleteDeviceType];
@@ -84,6 +89,32 @@ async function saveDeviceType() {
     } finally {
         isSaving.value = false;
     }
+}
+
+// Delete device type
+function deleteDeviceType() {
+    if (!model.value || deletePromise.value || isNew) return;
+
+    deleteErr.value = null;
+    deletePromise.value = null;
+
+    deletePromise.value = api.deviceTypes.deleteDeviceType({ deviceTypeId: props.typeId! })
+        .then(() => {
+            toast.add({
+                severity: 'success',
+                summary: 'Modèle supprimé',
+                detail: 'Le modèle a été supprimé avec succès',
+                life: 3000
+            });
+            emit('save-success', null);
+        })
+        .catch(err => {
+            console.error('Failed to delete device type:', err);
+            deleteErr.value = findErrData(err)?.message ?? 'Une erreur est survenue lors de la suppression';
+        })
+        .finally(() => {
+            deletePromise.value = null;
+        });
 }
 
 function cancelEdit() {
@@ -164,6 +195,17 @@ if (props.typeId) {
             </div>
 
             <div class="form-actions">
+                <Button v-if="!isNew" type="button" label="Supprimer" icon="pi pi-trash" class="me-auto" severity="danger"
+                    @click="deletePopover.toggle($event)" />
+                <Popover ref="deletePopover">
+                    <p>Voulez-vous vraiment supprimer ce modèle ?</p>
+                    <Message v-if="deleteErr" severity="error">{{ deleteErr }}</Message>
+                    <div class="d-flex gap-2 mt-2">
+                        <Button label="Annuler" severity="secondary" class="px-4" @click="deletePopover.hide()" />
+                        <Button label="Supprimer le modèle" fluid severity="danger" @click="deleteDeviceType"
+                            :disabled="deletePromise != null" v-if="!isNew" />
+                    </div>
+                </Popover>
                 <Button type="button" label="Annuler" class="p-button-outlined" @click="cancelEdit"
                     :disabled="isSaving" />
                 <Button type="submit" label="Enregistrer" icon="pi pi-check" :loading="isSaving" />

@@ -1,27 +1,43 @@
 <script lang="ts" setup>
-import { CompleteDevice } from '@/api';
+import api, { CompleteDevice } from '@/api';
 import { useGuards } from '@/guards';
+import { deviceCategoryLabels } from '@/labels';
+import { useToast } from 'primevue';
 import { useRouter } from 'vue-router';
 
-defineProps<{
-  device: CompleteDevice;
-}>();
+const device = defineModel<CompleteDevice>();
 
 const router = useRouter();
 const guards = useGuards();
+const toast = useToast();
 
-const emits = defineEmits<{
-  (e: 'toggle-power', id: number): void;
-}>();
-
-function togglePower(device: CompleteDevice, event: Event) {
+async function togglePower(event: Event) {
   event.stopPropagation(); // Prevent navigation when toggling power
 
   if (!guards.mustManage()) {
     return;
   }
 
-  emits('toggle-power', device.id);
+  try {
+    // Update the device via API
+    await api.devices.patchDevice({
+      deviceId: device.value.id,
+      devicePatchInput: {
+        powered: !device.value.powered
+      }
+    });
+
+    // Update the local device data with the new state
+    device.value.powered = !device.value.powered
+  } catch (error) {
+    console.error('Failed to toggle device power:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de changer l\'état de l\'appareil.',
+      life: 3000
+    });
+  }
 }
 
 function viewDeviceDetails(device: CompleteDevice) {
@@ -39,7 +55,7 @@ function viewDeviceDetails(device: CompleteDevice) {
         <h3>{{ device.name }}</h3>
         <div class="device-type">{{ device.type.name }}</div>
       </div>
-      <div class="power-status" @click="togglePower(device, $event)">
+      <div class="power-status" @click="togglePower($event)">
         <span class="status-indicator"></span>
         <span class="status-text">{{ device.powered ? 'ON' : 'OFF' }}</span>
       </div>
@@ -50,14 +66,21 @@ function viewDeviceDetails(device: CompleteDevice) {
 
       <div class="device-info">
         <Tag icon="pi pi-lightbulb" rounded severity="warn">{{ device.energyConsumption.toFixed(2) + ' Wh' }}</Tag>
-        <Tag icon="pi pi-home" rounded 
-        :style="{'--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff'}" 
-        v-if="device.room">{{ device.room.name }}</Tag>
+        <Tag icon="pi pi-home" rounded
+          :style="{ '--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff' }"
+          v-if="device.room">{{ device.room.name }}</Tag>
+        <Chip :label="deviceCategoryLabels[device.type.category]" />
         <Chip v-if="device.owner">
+          <i class="pi pi-user"></i>
           <RouterLink :to="{ name: 'profile', params: { userId: device.owner!.id } }"
             style="text-decoration: none; color: inherit;" @click.stop>{{ device.owner!.firstName + ' ' +
               device.owner.lastName }}</RouterLink>
         </Chip>
+      </div>
+
+      <div class="del-request" v-if="device.deletionRequestedBy != null">
+        <i class="pi pi-trash me-2"></i>Suppression demandée par
+        {{ device.deletionRequestedBy.firstName + ' ' + device.deletionRequestedBy.lastName }}
       </div>
     </div>
   </div>
@@ -78,6 +101,10 @@ function viewDeviceDetails(device: CompleteDevice) {
 
   display: flex;
   flex-direction: column;
+
+  &:has(.del-request) {
+    padding-bottom: 0;
+  }
 }
 
 .device-card:hover {
@@ -87,6 +114,16 @@ function viewDeviceDetails(device: CompleteDevice) {
 
 .device-card.powered {
   border-left-color: rgb(16, 110, 101);
+}
+
+.del-request {
+  background-color: rgb(190, 0, 0);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  padding: 0.5rem;
+
+  margin-top: 1rem;
+  text-align: center;
 }
 
 .card-content {

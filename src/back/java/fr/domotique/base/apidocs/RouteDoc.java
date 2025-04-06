@@ -217,6 +217,11 @@ public class RouteDoc {
         return this;
     }
 
+    public RouteDoc queryParam(String name, Type valType, ParamDoc.Format format, String description) {
+        params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).format(format).valueType(valType));
+        return this;
+    }
+
     public RouteDoc optionalQueryParam(String name, Type valType, String description) {
         params.add(new ParamDoc().location(ParamDoc.Location.QUERY).name(name).desc(description).valueType(valType).required(false));
         return this;

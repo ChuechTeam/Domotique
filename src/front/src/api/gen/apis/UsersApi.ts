@@ -476,7 +476,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`.
+     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`. - all users, if you\'re at least an expert.
      * Get users
      */
     async searchUsersRaw(requestParameters: SearchUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProfileSearchOutput>> {
@@ -503,7 +503,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`.
+     * Find users by either: - a list of ids, using `ids` - their full name, using `fullName`. - all users, if you\'re at least an expert.
      * Get users
      */
     async searchUsers(requestParameters: SearchUsersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProfileSearchOutput> {

@@ -35,8 +35,8 @@ public class DeviceSection extends Section {
         // Create a sub-router for all device routes
         var deviceRoutes = newSubRouter(router, PATH_PREFIX)
             .putMetadata(RouteDoc.KEY, new RouteDoc().tag("Devices")
-            .response(401, ErrorResponse.class, "You are not logged in.")
-            .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
+                .response(401, ErrorResponse.class, "You are not logged in.")
+                .response(403, ErrorResponse.class, "You don't have permission to access this resource."));
 
         // When:
         // - A user requests data, they must be AT LEAST a BEGINNER (= confirmed email)
@@ -63,6 +63,8 @@ public class DeviceSection extends Section {
         deviceRoutes.get("/:deviceId").respond(this::getDeviceById).putMetadata(RouteDoc.KEY, GET_DEVICE_DOC);
         deviceRoutes.patch("/:deviceId").respond(vt(this::patchDevice)).putMetadata(RouteDoc.KEY, PATCH_DEVICE_DOC);
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
+
+        deviceRoutes.get("/:deviceId/report").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
     }
 
     // region GET /api/devices | Get all devices
@@ -81,6 +83,8 @@ public class DeviceSection extends Section {
     record DevicesResponse(List<CompleteDevice> devices) {}
 
     Future<DevicesResponse> getAll(RoutingContext context) {
+        Authenticator authenticator = Authenticator.get(context);
+
         List<Integer> ids = readIntListFromQueryParams(context, "ids");
         if (!ids.isEmpty()) {
             // If we have IDs, we ignore all other parameters
@@ -106,6 +110,14 @@ public class DeviceSection extends Section {
         var query = new DeviceTable.CompleteQuery(name, typeId, roomId, userId, powered, category);
 
         return server.db().devices().queryComplete(query)
+            .map(devices -> {
+                // Remove personal data from the devices
+                for (CompleteDevice dev : devices) {
+                    nullifyPersonalData(dev, authenticator);
+                }
+
+                return devices;
+            })
             .map(DevicesResponse::new);
     }
     // endregion
@@ -118,19 +130,31 @@ public class DeviceSection extends Section {
         .response(200, DeviceStats.class, "The device stats.", new DeviceStats(
             List.of(new DeviceStat(1, 80), new DeviceStat(8, 41))
         ))
-        .response(204, "Device not found.");
+        .response(204, "Device not found.")
+        .response(403, ErrorResponse.class, "You don't have permission to access this resource.")
+        .response(422, ErrorResponse.class, "Invalid query.");
 
     record DeviceStats(List<DeviceStat> stats) {}
 
     Future<DeviceStats> getDeviceStats(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
         // TODO: Make it send full entities for room, user, and device.
         var body = readBody(context, DeviceStatsQuery.class);
         if (!body.validQuery()) {
             throw new RequestException("Invalid query.", 422, "INVALID_QUERY");
         }
+
+        // Personal attributes can't be queried. TODO: Instead, add a ownerId = thisUserId to the query.
+        if (body.attribute().isPersonal()
+            && !DeviceOperations.canSeePersonalAttributes(0, auth)) {
+            throw new RequestException("Vous n'avez pas le niveau requis pour voir cet attribut.", 403, "PERSONAL_ATTRIBUTE");
+        }
+
         return server.db().devices().queryStats(body)
             .map(DeviceStats::new);
     }
+    // endregion
 
     // region GET /api/devices/:deviceId | Get device by ID
     static final RouteDoc GET_DEVICE_DOC = new RouteDoc("getDeviceById")
@@ -141,8 +165,9 @@ public class DeviceSection extends Section {
         .response(204, "Device not found.");
 
     Future<CompleteDevice> getDeviceById(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
         int deviceId = readIntPathParam(context, "deviceId");
-        return server.db().devices().getComplete(deviceId);
+        return server.db().devices().getComplete(deviceId).map(d -> nullifyPersonalData(d, auth));
     }
     // endregion
 
@@ -189,7 +214,8 @@ public class DeviceSection extends Section {
         JsonNullable<Integer> userId,
         EnumMap<AttributeType, Object> attributes,
         Boolean powered, // required
-        Double energyConsumption // required
+        Double energyConsumption, // required
+        JsonNullable<Integer> deletionRequestedById
     ) {
         public DevicePatchInput {
             name = Sanitize.string(name);
@@ -241,6 +267,7 @@ public class DeviceSection extends Section {
         .response(CREATE_OR_UPDATE_ERR);
 
     CompleteDevice createDevice(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
         DeviceInput input = readBody(context, DeviceInput.class);
 
         // Validate data
@@ -265,7 +292,8 @@ public class DeviceSection extends Section {
             input.userId,
             input.attributes,
             input.powered,
-            input.energyConsumption
+            input.energyConsumption,
+            null
         );
 
         try {
@@ -279,8 +307,16 @@ public class DeviceSection extends Section {
                 status = "POWER_OFF";
             }
             server.db().powerLogs().insert(
-                new PowerLog(device.getId(), status, LocalDateTime.now())
+                new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
             ).await();
+
+            // Log the changes
+            server.db().actionLogs().insert(new ActionLog(
+                auth.getUserId(),
+                device.getId(),
+                ActionLogTarget.DEVICE,
+                ActionLogOperation.CREATE
+            )).await();
 
             // Get the complete device with all the related data
             CompleteDevice completeDevice = server.db().devices().getComplete(device.getId()).await();
@@ -306,13 +342,16 @@ public class DeviceSection extends Section {
             JsonNullable.of(1),
             new EnumMap<>(AttributeType.class),
             null,
-            null
+            null,
+            JsonNullable.undefined()
         ))
         .response(200, CompleteDevice.class, "The device was patched successfully.")
         .response(404, ErrorResponse.class, "Device not found.")
         .response(CREATE_OR_UPDATE_ERR);
 
     CompleteDevice patchDevice(RoutingContext context) {
+        Authenticator auth = Authenticator.get(context);
+
         int deviceId = readIntPathParam(context, "deviceId");
         DevicePatchInput input = readBody(context, DevicePatchInput.class);
 
@@ -332,8 +371,28 @@ public class DeviceSection extends Section {
             throw new RequestException("Type d'appareil introuvable.", 404, "DEVICE_TYPE_NOT_FOUND");
         }
 
+        // Make sure the new deletionRequestedById is valid and that we have the right to set it
+        if (input.deletionRequestedById.isPresent()) {
+            Integer delId = input.deletionRequestedById.get();
+            // Don't check when values are the same.
+            if (!Objects.equals(delId, device.getDeletionRequestedById())) {
+                if (delId == null && !auth.hasLevel(Level.ADVANCED)) {
+                    throw new RequestException("Vous n'avez pas le niveau requis pour ignorer une demande de suppression.",
+                        403, "CANNOT_IGNORE_DELETION_REQUEST");
+                } else if (delId != null && delId != auth.getUserId()) {
+                    throw new RequestException("Impossible d'ajouter une demande de suppression pour un autre utilisateur.",
+                        422, "CANNOT_IMPERSONATE_DELETION_REQUEST");
+                }
+            }
+        }
+
         // See if our device turned off or on.
         boolean devicePowerChanged = input.powered != null && input.powered != device.isPowered();
+        // See if we cleared or added a deletion request
+        boolean deletionRequestChanged = input.deletionRequestedById.isPresent()
+                                         && !Objects.equals(input.deletionRequestedById.get(), device.getDeletionRequestedById());
+        boolean energyConsumptionChanged = input.energyConsumption != null
+                                           && input.energyConsumption != device.getEnergyConsumption();
 
         // Update device properties
         if (input.name != null) device.setName(input.name);
@@ -347,13 +406,14 @@ public class DeviceSection extends Section {
 
         if (input.powered != null) device.setPowered(input.powered);
         if (input.energyConsumption != null) device.setEnergyConsumption(input.energyConsumption);
+        input.deletionRequestedById.ifPresent(device::setDeletionRequestedById);
 
         try {
             // Update device on the database
             server.db().devices().update(device).await();
             log.info("Device patched with id {} and name {}", device.getId(), device.getName());
 
-            if (devicePowerChanged) {
+            if (devicePowerChanged || energyConsumptionChanged) {
                 String status;
                 if (device.isPowered()) {
                     status = "POWER_ON";
@@ -361,9 +421,23 @@ public class DeviceSection extends Section {
                     status = "POWER_OFF";
                 }
                 server.db().powerLogs().insert(
-                    new PowerLog(device.getId(), status, LocalDateTime.now())
+                    new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
                 ).await();
             }
+
+            // Log the changes
+            var flags = EnumSet.noneOf(ActionLogFlags.class);
+            if (devicePowerChanged) {
+                flags.add(input.powered ? ActionLogFlags.POWER_ON : ActionLogFlags.POWER_OFF);
+            }
+            if (deletionRequestChanged) {
+                flags.add(input.deletionRequestedById.get() != null ? ActionLogFlags.DELETE_REQUESTED : ActionLogFlags.DELETE_REQUEST_DELETED);
+            }
+            server.db().actionLogs().insert(new ActionLog(auth.getUserId(), deviceId,
+                ActionLogTarget.DEVICE,
+                ActionLogOperation.UPDATE,
+                flags
+            )).await();
 
             // Get the complete device with all the related data
             return server.db().devices().getComplete(device.getId()).await();
@@ -383,6 +457,10 @@ public class DeviceSection extends Section {
         .response(404, ErrorResponse.class, "Device not found.");
 
     void deleteDevice(RoutingContext context) {
+        // Must be an expert user to delete a device
+        Authenticator auth = Authenticator.get(context);
+        auth.requireAuth(Level.EXPERT);
+
         int deviceId = readIntPathParam(context, "deviceId");
 
         // Get the device
@@ -391,11 +469,43 @@ public class DeviceSection extends Section {
             throw new RequestException("Cet appareil n'existe pas.", 404, "NOT_FOUND");
         }
 
-        // Delete device
+        // Delete device and log it!
         server.db().devices().delete(deviceId).await();
+        server.db().actionLogs().insert(new ActionLog(auth.getUserId(), deviceId, ActionLogTarget.DEVICE, ActionLogOperation.DELETE)).await();
         log.info("Device deleted with id {}", deviceId);
     }
     // endregion
+
+    static final RouteDoc GEN_REPORT_DOC = new RouteDoc("genReport")
+        .summary("Generate a report for a device")
+        .description("Generates a report for a device.")
+        .pathParam("deviceId", int.class, "The ID of the device to generate the report for.")
+        .response(200, Object.class, "The report was generated successfully.")
+        .response(404, ErrorResponse.class, "Device not found.");
+
+    Object genReport(RoutingContext context) {
+        int deviceId = readIntPathParam(context, "deviceId");
+
+
+        Device device = server.db().devices().get(deviceId).await();
+        if (device == null) {
+            throw new RequestException("Appareil introuvable.", 404, "DEVICE_NOT_FOUND");
+        }
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("deviceId", device.getId());
+        report.put("name", device.getName());
+        report.put("powered", device.isPowered());
+        report.put("energyConsumption", device.getEnergyConsumption());
+
+        String efficiencyStatus = device.getEnergyConsumption() > 200 ? "Inefficient" : "Normal";
+        boolean needsMaintenance = !device.isPowered() && device.getEnergyConsumption() > 50;
+
+        report.put("efficiencyStatus", efficiencyStatus);
+        report.put("needsMaintenance", needsMaintenance);
+
+        return report;
+    }
 
     /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {
@@ -404,9 +514,19 @@ public class DeviceSection extends Section {
         } else if (ex.getMessage().contains(DeviceTable.TYPE_FK)) {
             throw new RequestException("Le type d'appareil n'existe pas.", 422, "DEVICE_TYPE_NOT_FOUND");
         } else if (ex.getMessage().contains(DeviceTable.USER_FK)) {
-            throw new RequestException("L'utilisateur n'existe pas.", 422, "USER_NOT_FOUND");
+            throw new RequestException("Le propriétaire n'existe pas.", 422, "OWNER_NOT_FOUND");
+        } else if (ex.getMessage().contains(DeviceTable.DELETION_REQ_USER_FK)) {
+            throw new RequestException("Le demandeur de la suppression de l'appareil n'existe pas.", 422, "DELETION_REQUEST_USER_NOT_FOUND");
         } else {
             throw new IllegalStateException("Unknown foreign key error: " + ex.getMessage(), ex);
         }
+    }
+
+    private @Nullable CompleteDevice nullifyPersonalData(@Nullable CompleteDevice dev, Authenticator a) {
+        if (dev == null) {
+            return null;
+        }
+        DeviceOperations.nullifyPersonalAttributes(dev.attributes(), dev.ownerId(), a);
+        return dev;
     }
 }

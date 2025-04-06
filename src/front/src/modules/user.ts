@@ -39,6 +39,26 @@ export function useUserModule() {
             } catch (e) {
                 return findErrDataOrThrow(e);
             }
+        },
+
+        async deleteAccount(userId: number, password?: string): Promise<ErrorResponse | undefined> {
+            if (userId == auth.userId) {
+                if (password == null) {
+                    throw new Error("Password is empty!");
+                }
+                return await auth.deleteUser(password)
+            } else {
+                try {
+                    await api.users.deleteUser({
+                        userId: userId.toString(),
+                        deleteUserInput: {
+                            password
+                        }
+                    });
+                } catch (e) {
+                    return findErrDataOrThrow(e);
+                }
+            }
         }
     };
 }

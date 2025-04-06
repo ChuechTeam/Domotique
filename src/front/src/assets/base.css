@@ -32,9 +32,61 @@ body {
   --color-admin-dark: #aed62c;
   --color-admin-light: #dcffa4;
 
+  --color-calm-background: #fdfdfd;
+
   --gradient-admin: linear-gradient(
     135deg,
     var(--color-admin) 0%,
     var(--color-admin-light) 100%
   );
+}
+
+* {
+  scrollbar-width: thin;
+}
+
+.sub-page-title {
+  margin: 2rem 0;
+  text-align: center;
+  font-size: 3rem;
+}
+
+.scrollable-page {
+  height: 100%;
+  flex-grow: 1;
+  overflow: auto;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+}
+
+/**
+Animations for sliding
+*/
+
+.slide-leave-active {
+  transition: transform var(--anim-duration) cubic-bezier(1, 0, 0, 1), opacity var(--anim-duration) ease;
+}
+
+.slide-leave-from {
+  transform: translateX(0%);
+  opacity: 1;
+}
+
+.slide-leave-to {
+  transform: translateX(calc(var(--anim-direction) * -100%));
+  opacity: 0;
+}
+
+.slide-enter-active {
+  transition: transform var(--anim-duration) cubic-bezier(1, 0, 0, 1), opacity var(--anim-duration) ease;
+}
+
+.slide-enter-from {
+  transform: translateX(calc(var(--anim-direction) * 100%));
+  opacity: 0;
+}
+
+.slide-enter-to {
+  transform: translateX(0%);
+  opacity: 1;
 }

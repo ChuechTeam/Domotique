@@ -25,6 +25,10 @@ import {
     LoginLogsResponseToJSON,
 } from '../models/index';
 
+export interface GetLoginLogsRequest {
+    userId?: number;
+}
+
 /**
  * 
  */
@@ -34,8 +38,12 @@ export class LoginLogsApi extends runtime.BaseAPI {
      * Returns a list of all login logs in the database
      * Get all login logs
      */
-    async getLoginLogsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LoginLogsResponse>> {
+    async getLoginLogsRaw(requestParameters: GetLoginLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LoginLogsResponse>> {
         const queryParameters: any = {};
+
+        if (requestParameters['userId'] != null) {
+            queryParameters['userId'] = requestParameters['userId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -53,8 +61,8 @@ export class LoginLogsApi extends runtime.BaseAPI {
      * Returns a list of all login logs in the database
      * Get all login logs
      */
-    async getLoginLogs(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LoginLogsResponse> {
-        const response = await this.getLoginLogsRaw(initOverrides);
+    async getLoginLogs(requestParameters: GetLoginLogsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LoginLogsResponse> {
+        const response = await this.getLoginLogsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

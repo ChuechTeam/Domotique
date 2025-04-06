@@ -10,8 +10,8 @@ export type RoomFormModel = ReturnType<typeof defaultRoomFormModel>;
 </script>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { useToast } from 'primevue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
+import { Popover, useToast } from 'primevue';
 import api, { UserProfile, ValidationErrorResponse, findErrData } from '@/api';
 import ValidationErrList from '@/components/ValidationErrList.vue';
 
@@ -36,6 +36,10 @@ const editFormUsers = ref<UserProfile[]>([]);
 
 // User <Select/> input to do focus
 const userInput = ref<any>(null);
+// Popover to delete the room
+const deletePopover = useTemplateRef<InstanceType<typeof Popover>>("deletePopover");
+const deletePromise = ref<Promise<any> | null>(null);
+const deleteErr = ref<string | null>(null);
 
 const emit = defineEmits(['update:modelValue', 'save-success', 'cancel']);
 
@@ -105,6 +109,31 @@ async function saveRoom() {
     }
 }
 
+function deleteRoom() {
+    if (!model.value || deletePromise.value) return;
+
+    deleteErr.value = null;
+    deletePromise.value = null;
+
+    deletePromise.value = api.rooms.deleteRoom({ roomId: props.roomId! })
+        .then(() => {
+            toast.add({
+                severity: 'success',
+                summary: 'Salle supprimée',
+                detail: 'La salle a été supprimée avec succès',
+                life: 3000
+            });
+            emit('save-success', null);
+        })
+        .catch(err => {
+            console.error('Failed to delete room:', err);
+            deleteErr.value = findErrData(err)?.message ?? 'Une erreur est survenue lors de la suppression';
+        })
+        .finally(() => {
+            deletePromise.value = null;
+        });
+}
+
 function cancelEdit() {
     emit('cancel');
 }
@@ -153,7 +182,8 @@ if (model.value?.ownerId) {
 
                 <div class="form-group px-1">
                     <label class="d-block mb-2">Couleur</label>
-                    <ColorPicker v-model="color" format="hex" class="w-100" style="--p-colorpicker-preview-width: 100%" />
+                    <ColorPicker v-model="color" format="hex" class="w-100"
+                        style="--p-colorpicker-preview-width: 100%" />
                     <ValidationErrList :errors="validationErrors?.data?.color" />
                 </div>
 
@@ -176,6 +206,17 @@ if (model.value?.ownerId) {
             </div>
 
             <div class="form-actions">
+                <Button type="button" label="Supprimer" icon="pi pi-trash" class="me-auto" severity="danger"
+                    @click="deletePopover.toggle($event)" v-if="!isNew" />
+                <Popover ref="deletePopover">
+                    <p>Voulez-vous vraiment supprimer cette salle ?</p>
+                    <Message v-if="deleteErr" severity="error">{{ deleteErr }}</Message>
+                    <div class="d-flex gap-2 mt-2">
+                        <Button label="Annuler" severity="secondary" class="px-4" @click="deletePopover.hide()" />
+                        <Button label="Supprimer la salle" fluid severity="danger" @click="deleteRoom"
+                            :disabled="deletePromise != null" v-if="!isNew" />
+                    </div>
+                </Popover>
                 <Button type="button" label="Annuler" class="p-button-outlined" @click="cancelEdit"
                     :disabled="isSaving" />
                 <Button type="submit" label="Enregistrer" icon="pi pi-check" :loading="isSaving" />

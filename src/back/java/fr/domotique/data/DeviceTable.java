@@ -28,6 +28,8 @@ public class DeviceTable extends Table {
     public static final String ROOM_FK = "fk_device_room";
     /// The foreign key to [User].
     public static final String USER_FK = "fk_device_user";
+    /// The foreign key to [User] for the user who requested the deletion of this device ([Device#getDeletionRequestedById]).
+    public static final String DELETION_REQ_USER_FK = "fk_device_deletion_requested_by";
 
     public Future<List<Device>> getAll() {
         return queryMany(ENTITY.mapper(), "SELECT * FROM Device");
@@ -38,17 +40,19 @@ public class DeviceTable extends Table {
     }
 
     static final String COMPLETE_MANY_SQL = makeModularSQL("""
-            SELECT %s, %s, %s, %s, %s
+            SELECT %s, %s, %s, %s, %s, %s
             FROM Device d
             INNER JOIN DeviceType dt ON d.typeId = dt.id
             LEFT JOIN Room r ON d.roomId = r.id
             LEFT JOIN User roomUser ON r.ownerId = roomUser.id
-            LEFT JOIN User deviceUser ON d.userId = deviceUser.id""",
+            LEFT JOIN User deviceUser ON d.userId = deviceUser.id
+            LEFT JOIN User deletionUser ON d.deletionRequestedById = deletionUser.id""",
         CompleteDevice.columnList("d"),
         CompleteDeviceType.columnList("dt"),
         CompleteRoom.columnList("r"),
         UserProfile.columnList("roomUser"),
-        UserProfile.columnList("deviceUser"));
+        UserProfile.columnList("deviceUser"),
+        UserProfile.columnList("deletionUser"));
 
     static final String COMPLETE_SINGLE_SQL = COMPLETE_MANY_SQL + " WHERE d.id = ?";
 
@@ -99,7 +103,7 @@ public class DeviceTable extends Table {
             args.add(completeQuery.roomId);
         }
         if (completeQuery.userId != null) {
-            sql.append("\nAND r.userId = ?");
+            sql.append("\nAND d.userId = ?");
             args.add(completeQuery.userId);
         }
         if (completeQuery.powered != null) {
@@ -220,10 +224,15 @@ public class DeviceTable extends Table {
     public Future<Boolean> delete(int id) {
         return delete(ENTITY, id);
     }
+
     // --- Special functions ---
 
     public Future<List<DeviceAndAttributes>> getAllAttribsOfDeviceType(int deviceTypeId) {
         return queryMany(DeviceAndAttributes::fromTuple, "SELECT id, attributes FROM Device WHERE typeId = ?", deviceTypeId);
+    }
+
+    public Future<List<DeviceAndAttributes>> getAllAttributesOfOwner(int ownerId) {
+        return queryMany(DeviceAndAttributes::fromTuple, "SELECT id, attributes FROM Device WHERE userId = ?", ownerId);
     }
 
     public Future<Void> updateAttributesBatch(List<DeviceAndAttributes> updates) {
