@@ -1,13 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import TourTemplate from "@/views/tour/TourTemplate.vue";
 import AppTemplate from "@/views/app/AppTemplate.vue";
-import TourHome from "@/views/tour/TourHome.vue";
 import DashboardView from "@/views/app/DashboardView.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import EmailConfirmView from "@/views/app/EmailConfirmView.vue";
 import ProfileDetailView from "@/views/app/ProfileDetailView.vue";
-import InscriptionView from '@/inscription.vue';
-import RadioButton from 'primevue/radiobutton';
+import RegisterView from '@/views/RegisterView.vue';
 import HomeView from '@/views/tour/HomeView.vue';
 import ProfileEditModal from "@/views/app/ProfileEditModal.vue";
 import CredentialsEditModal from "@/views/app/CredentialsEditModal.vue";
@@ -46,8 +44,8 @@ const router = createRouter({
                 {
                     path: '/register',
                     name: 'register',
-                    component: InscriptionView
-                  }
+                    component: RegisterView
+                }
             ],
         },
         // --- LOGIN ROUTES ---
@@ -55,8 +53,8 @@ const router = createRouter({
             path: '/login',
             name: 'login',
             component: () => import('@/views/AuthView.vue'),
-        },    
-        
+        },
+
         // --- LOGGED-IN ROUTES ---
         {
             path: '/',
@@ -296,11 +294,11 @@ router.beforeEach(async (to, from) => {
         if (!auth.isLoggedIn) {
             // The user is not logged in! Double check for sure...
             const err = await auth.fetchUser()
-            if (err != null) {
-      // Yup. Not authenticated. Redirect to '/'
+            if (err != null || auth.user == null) {
+                // Yup. Not authenticated. Redirect to '/'
                 return "/";
             }
-       }
+        }
 
         // Now that we have the user, we must make sure that they have confirmed their email.
         // If it's not the case, redirect them to the email confirmation page.

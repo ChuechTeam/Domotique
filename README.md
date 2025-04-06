@@ -53,7 +53,9 @@
    **Terminal (Windows) :** `gradlew.bat run`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
 
-Puis, ouvre le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
+Puis, ouvrez le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
+
+Il ne reste plus qu'à créer votre premier compte administrateur avec le code d'invitation "retraitons"
 
 ## Ouh là je suis perdu là
 

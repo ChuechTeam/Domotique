@@ -225,6 +225,7 @@ function backToList() {
 
 // Initialize component
 await fetchDevice();
+await api.userEvents.reportDeviceCheck();
 </script>
 
 <template>

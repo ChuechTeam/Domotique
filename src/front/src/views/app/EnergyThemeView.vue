@@ -60,6 +60,8 @@ const endMinValue = computed(() => {
     return query.value.start;
 })
 
+api.userEvents.reportEnergyCheck();
+
 function formatWh(value: number) {
     return value.toLocaleString('fr-FR', {
         minimumFractionDigits: 0,

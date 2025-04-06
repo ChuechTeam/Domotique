@@ -41,6 +41,8 @@ async function loadLeaderboard() {
             }
         });
 
+        api.userEvents.reportSportRankingsCheck();
+
         if (!statsResponse || !statsResponse.stats) {
             leaderboardData.value = [];
             return;
@@ -299,7 +301,7 @@ onMounted(() => {
     }
 
     .rank {
-        width: 50px;
+        width: 75px;
     }
 
     .score {

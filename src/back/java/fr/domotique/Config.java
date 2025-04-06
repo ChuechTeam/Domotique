@@ -38,7 +38,7 @@ import java.util.*;
 /// @param sendGridToken `domotique.sendGridToken`: the SendGrid token to send emails; a null or blank value will default
 ///                                                 to the [Console email sender][fr.domotique.email.ConsoleEmail]
 /// @param sendGridEmail `domotique.sendGridEmail`: the email to send emails from, must be SendGrid "Single Sender Verification"
-/// @param adminCode `domotique.adminCode`: the code used to create a new admin account (default is "retraitons")
+/// @param adminCode `domotique.adminCode`: the code used to register a new account as an admin (default: "retraitons")
 /// @author Dynamic
 public record Config(
         String databaseUri,

@@ -27,9 +27,13 @@ const canEdit = computed(() => isCurrentUser.value || auth.canAdminister);
 let profile;
 if (isCurrentUser.value) {
     const { user } = storeToRefs(auth);
+    await auth.fetchUser();
+
     profile = computed(() => user.value.profile);
+    await api.userEvents.reportOwnProfileCheck();
 } else {
     profile = ref(await api.users.findUser({ userId: props.userId }));
+    await api.userEvents.reportOtherProfilesCheck();
 }
 
 const genderIcon = computed(() => {

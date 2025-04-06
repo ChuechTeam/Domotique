@@ -58,7 +58,7 @@ async function save() {
     }
 
     try {
-        savePromise.value = userModule.deleteAccount(userId)
+        savePromise.value = userModule.deleteAccount(userId, password.value)
 
         const result = await savePromise.value;
 
