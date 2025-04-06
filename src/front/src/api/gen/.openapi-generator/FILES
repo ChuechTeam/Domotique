@@ -1,7 +1,9 @@
 apis/ActionLogsApi.ts
 apis/DeviceTypesApi.ts
 apis/DevicesApi.ts
+apis/EnergyApi.ts
 apis/HealthApi.ts
+apis/InviteCodesApi.ts
 apis/LoginLogsApi.ts
 apis/RoomsApi.ts
 apis/UserEventsApi.ts
@@ -20,6 +22,8 @@ models/CompleteDevice.ts
 models/CompleteDeviceType.ts
 models/CompleteRoom.ts
 models/CompleteUser.ts
+models/Consumption.ts
+models/ConsumptionOutput.ts
 models/DeleteUserInput.ts
 models/DeviceCategory.ts
 models/DeviceInput.ts
@@ -36,6 +40,9 @@ models/ErrorResponse.ts
 models/Gender.ts
 models/HealthStatus.ts
 models/HealthValue.ts
+models/InviteCode.ts
+models/InviteCodeInput.ts
+models/InviteCodesResponse.ts
 models/Level.ts
 models/LoginInput.ts
 models/LoginLog.ts

@@ -3,7 +3,9 @@ package fr.domotique;
 import fr.domotique.api.actionlogs.*;
 import fr.domotique.api.devices.*;
 import fr.domotique.api.devicetypes.*;
+import fr.domotique.api.energy.*;
 import fr.domotique.api.health.*;
+import fr.domotique.api.invitecodes.*;
 import fr.domotique.api.loginlogs.*;
 import fr.domotique.api.rooms.*;
 import fr.domotique.api.userevents.*;
@@ -74,7 +76,9 @@ public class RouterVerticle extends VerticleBase {
             new LoginLogSection(server),
             new UserEventsSection(server),
             new ActionLogSection(server),
-            new HealthSection(server)
+            new HealthSection(server),
+            new EnergySection(server),
+            new InviteCodeSection(server)
         };
     }
 

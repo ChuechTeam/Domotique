@@ -69,7 +69,7 @@ function viewDeviceDetails(device: CompleteDevice) {
         <Tag icon="pi pi-home" rounded
           :style="{ '--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff' }"
           v-if="device.room">{{ device.room.name }}</Tag>
-          <Chip :label="deviceCategoryLabels[device.type.category]" />
+        <Chip :label="deviceCategoryLabels[device.type.category]" />
         <Chip v-if="device.owner">
           <i class="pi pi-user"></i>
           <RouterLink :to="{ name: 'profile', params: { userId: device.owner!.id } }"
@@ -79,7 +79,7 @@ function viewDeviceDetails(device: CompleteDevice) {
       </div>
 
       <div class="del-request" v-if="device.deletionRequestedBy != null">
-        <i class="pi pi-trash me-2"></i>Suppression demandée par 
+        <i class="pi pi-trash me-2"></i>Suppression demandée par
         {{ device.deletionRequestedBy.firstName + ' ' + device.deletionRequestedBy.lastName }}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import {Configuration, ResponseError, RoomsApi, UsersApi, LoginLogsApi, UserEventsApi, DevicesApi, DeviceTypesApi, ActionLogsApi, HealthApi} from "./gen";
+import {Configuration, ResponseError, RoomsApi, UsersApi, LoginLogsApi, UserEventsApi, DevicesApi, DeviceTypesApi, ActionLogsApi, HealthApi, EnergyApi, InviteCodesApi} from "./gen";
 import type {ErrorResponse} from "./gen";
 
 // A classic fetch Response, with a bonus attribute: "errData", containing the error JSON if any.
@@ -139,6 +139,8 @@ export default {
     userEvents: new UserEventsApi(config),
     actionLogs: new ActionLogsApi(config),
     health: new HealthApi(config),
+    energy: new EnergyApi(config),
+    inviteCodes: new InviteCodesApi(config)
 };
 
 // Export everything from the generated API (types, mainly)

@@ -307,7 +307,7 @@ public class DeviceSection extends Section {
                 status = "POWER_OFF";
             }
             server.db().powerLogs().insert(
-                new PowerLog(device.getId(), status, LocalDateTime.now())
+                new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
             ).await();
 
             // Log the changes
@@ -391,6 +391,8 @@ public class DeviceSection extends Section {
         // See if we cleared or added a deletion request
         boolean deletionRequestChanged = input.deletionRequestedById.isPresent()
                                          && !Objects.equals(input.deletionRequestedById.get(), device.getDeletionRequestedById());
+        boolean energyConsumptionChanged = input.energyConsumption != null
+                                           && input.energyConsumption != device.getEnergyConsumption();
 
         // Update device properties
         if (input.name != null) device.setName(input.name);
@@ -411,7 +413,7 @@ public class DeviceSection extends Section {
             server.db().devices().update(device).await();
             log.info("Device patched with id {} and name {}", device.getId(), device.getName());
 
-            if (devicePowerChanged) {
+            if (devicePowerChanged || energyConsumptionChanged) {
                 String status;
                 if (device.isPowered()) {
                     status = "POWER_ON";
@@ -419,7 +421,7 @@ public class DeviceSection extends Section {
                     status = "POWER_OFF";
                 }
                 server.db().powerLogs().insert(
-                    new PowerLog(device.getId(), status, LocalDateTime.now())
+                    new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
                 ).await();
             }
 

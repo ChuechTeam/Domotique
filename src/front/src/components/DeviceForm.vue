@@ -345,7 +345,7 @@ watch(() => model.value.typeId, t => {
                         <!-- Dynamically render appropriate inputs for each attribute type -->
                         <IftaLabel class="attr" v-for="(val, type) of model.attributes" :key="type">
                             <InputNumber v-if="attributeTypeContents[type] === Number" v-model="model.attributes[type]"
-                                v-bind="attributeTypeFormats[type]" fluid max-fraction-digits="2" />
+                                v-bind="attributeTypeFormats[type]" fluid :max-fraction-digits="2" />
                             <!-- TODO: Implement inputs for string/bool attribute types -->
                             <label>{{ attributeTypeLabels[type] }}</label>
                             <ValidationErrList :errors="validationErrors?.data?.attributes?.[type]" />

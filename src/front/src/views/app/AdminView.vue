@@ -6,7 +6,8 @@ import { useRouter } from 'vue-router';
 const links = [
     { name: 'Actions', to: { name: 'admin-actions' } },
     { name: 'Connexions', to: { name: 'admin-logins' } },
-]
+    { name: 'Codes', to: { name: 'admin-codes' } },
+];
 const dir = ref(1);
 const router = useRouter();
 

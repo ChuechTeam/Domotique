@@ -27,6 +27,7 @@ import ThemeView from '@/views/app/ThemeView.vue';
 import HealthThemeView from '@/views/app/HealthThemeView.vue';
 import EnergyThemeView from '@/views/app/EnergyThemeView.vue';
 import SportThemeView from '@/views/app/SportThemeView.vue';
+import AdminCodesView from '@/views/app/AdminCodesView.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -221,6 +222,11 @@ const router = createRouter({
                             path: "logins",
                             name: "admin-logins",
                             component: AdminLoginsView
+                        },
+                        {
+                            path: "codes",
+                            name: "admin-codes",
+                            component: AdminCodesView
                         }
                     ],
                     // Prevent users from accessing admin section if they don't have admin rights
@@ -314,7 +320,7 @@ router.beforeEach(async (to, from) => {
             // Same for themes
             return "/themes/health";
         }
-    } else if (inArea(to, "tour") && auth.isLoggedIn) {
+    } else if ((inArea(to, "tour") || inArea(to, "login")) && auth.isLoggedIn) {
         // If the user is logged in, redirect them to the dashboard instead.
         return "/dashboard";
     }

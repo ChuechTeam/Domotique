@@ -50,7 +50,7 @@ const { title, items } = defineProps<{
     color: white;
     z-index: 1;
 
-    --nav-tr-duration: 0.2s;
+    --nav-tr-duration: 0.4s;
     transition: --subnav-bg-left var(--nav-tr-duration) ease, --subnav-bg-right var(--nav-tr-duration) ease, --subnav-shadow-col var(--nav-tr-duration) ease;
 
     padding: 1rem 4rem;

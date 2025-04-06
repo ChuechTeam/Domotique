@@ -168,3 +168,32 @@ CREATE TABLE ActionLog(
     INDEX idx_actionlog_target(targetId),
     INDEX idx_actionlog_time(time)
 );
+
+-- rollback drop table `ActionLog`;
+
+-- changeset dynamic:add_consumption_to_powerlog
+
+ALTER TABLE PowerLog
+    ADD energyConsumption DOUBLE NOT NULL DEFAULT 0 AFTER status;
+
+UPDATE PowerLog p
+JOIN Device d on d.id = p.deviceId
+SET p.energyConsumption = d.energyConsumption
+WHERE p.status = 'POWER_ON' OR p.status = 'POWER_OFF';
+
+-- rollback ALTER TABLE PowerLog
+-- rollback     DROP energyConsumption;
+
+-- changeset dynamic:add_invite_codes
+
+CREATE TABLE InviteCode(
+    id VARCHAR(16) PRIMARY KEY NOT NULL,
+    usagesLeft INT NOT NULL CHECK ( usagesLeft > 0 ),
+    role TINYINT NOT NULL, -- Role enum
+    creatorId INT NULL,
+    createdAt DATETIME NOT NULL,
+
+    CONSTRAINT fk_invite_code_creator FOREIGN KEY (creatorId) REFERENCES User(id) ON DELETE SET NULL
+)
+
+-- rollback drop table `InviteCode`;

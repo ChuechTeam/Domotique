@@ -213,6 +213,8 @@ if (model.value?.ownerId) {
                     <Message v-if="deleteErr" severity="error">{{ deleteErr }}</Message>
                     <div class="d-flex gap-2 mt-2">
                         <Button label="Annuler" severity="secondary" class="px-4" @click="deletePopover.hide()" />
+                        <Button label="Supprimer la salle" fluid severity="danger" @click="deleteRoom"
+                            :disabled="deletePromise != null" v-if="!isNew" />
                     </div>
                 </Popover>
                 <Button type="button" label="Annuler" class="p-button-outlined" @click="cancelEdit"
