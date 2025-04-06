@@ -26,7 +26,7 @@
       <!-- Sélection du Genre -->
       <div class="form-group">
         <label>Genre :</label>
-        <select v-model="selectedRole">
+        <select v-model="selectedGenre">
           <option value="" disabled>Selectionnez un Genre </option>
           <option v-for="genre in genre" :key="genre" :value="genre">
             {{ genre }}
@@ -50,7 +50,7 @@
       <!-- Champ Mot de passe -->
       <div class="form-group">
         <label>Mot de passe :</label>
-        <input type="password" v-model="motDePasse" />
+        <Password fluid v-model="motDePasse" toggleMask />
         <span v-if="erreurs.motDePasse" class="error">{{ erreurs.motDePasse }}</span>
       </div>
 
@@ -61,7 +61,7 @@
         <span v-if="erreurs.motDePasseAdmin" class="error">{{ erreurs.motDePasseAdmin }}</span>
       </div>
 
-      <button type="submit">S'inscrire</button>
+      <Button fluid type="submit">S'inscrire</Button>
     </form>
 
     <!-- Message de succès -->
@@ -70,7 +70,13 @@
 </template>
 
 <script>
+import { useAuthStore } from './stores/auth';
+
 export default {
+  setup(){
+    const auth = useAuthStore();
+    return{auth};
+  },
   data() {
     return {
       nom: "",
@@ -81,16 +87,15 @@ export default {
       motDePasseAdmin: "", 
       erreurs: {},
       messageSucces: "",
-      genre:["Homme","Femme","Autre"],
-      roles: ["Résident", "Admin", "Soignant"] 
+      genre:["MALE","FEMALE","UNDISCLOSED"],
+      roles: ["RESIDENT", "ADMIN", "CAREGIVER"],
     };
   },
   methods: {
-    validerFormulaire() {
+    async validerFormulaire() {
       this.erreurs = {}; // Réinitialisation des erreurs
       let valide = true;
 
-      // Validation des champs
       if (!this.nom) {
         this.erreurs.nom = "Le nom est requis.";
         valide = false;
@@ -123,18 +128,13 @@ export default {
 
       if (valide) {
         this.messageSucces = "Inscription réussie !";
-        console.log("Données envoyées :", {
-          nom: this.nom,
-          prenom: this.prenom,
-          email: this.email,
-          role: this.selectedRole,
-          motDePasse: this.motDePasse,
-          motDePasseAdmin: this.motDePasseAdmin
-        });
-      }
+        await this.auth.register({email:this.email,gender:this.selectedGenre ,firstName:this.prenom,lastName: this.nom,role:this.selectedRole, password:this.motDePasse})
+        };
+      },
+    
     },
-  },
-};
+  };
+
 </script>
 
 <style scoped>
@@ -164,16 +164,6 @@ input, select {
   align-items: center;
 }
 
-button {
-  background: #42b983;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  width: 50%;
-
-}
 
 button:hover {
   background: #35495e;
