@@ -5,9 +5,11 @@ import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { Toast, useToast } from 'primevue';
 import api, { config as apiConfig } from './api';
+import { usePrefsStore } from './stores/prefs';
 
 const router = useRouter()
 const auth = useAuthStore()
+const prefs = usePrefsStore()
 const toast = useToast()
 
 // Begin loading the logged-in user in the background.

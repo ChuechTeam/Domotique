@@ -157,9 +157,6 @@ function createNewDevice() {
         padding-left: 1rem;
         padding-right: 1rem;
         border-left: 1px solid rgba(4, 91, 172, 0.1);
-
-        overflow: auto;
-        scrollbar-gutter: stable both-edges;
     }
 
     & .-filters {
@@ -178,6 +175,9 @@ function createNewDevice() {
 
     max-width: 400px;
     margin-left: auto;
+
+    position: sticky;
+    top: 32px;
 }
 
 
@@ -209,7 +209,6 @@ function createNewDevice() {
         margin: 0;
     }
 }
-
 
 .filter-item {
     display: flex;
