@@ -7,7 +7,7 @@ import java.time.*;
 public class PowerLog {
     private int id;
     private int deviceId;
-    private String status;
+    private String status; // POWER_ON or POWER_OFF
     private double energyConsumption;
     private Instant time;
 

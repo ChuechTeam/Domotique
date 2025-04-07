@@ -23,6 +23,7 @@ import type {
   DeviceStatsQuery,
   DevicesResponse,
   ErrorResponse,
+  PowerLogsResponse,
 } from '../models/index';
 import {
     CompleteDeviceFromJSON,
@@ -41,6 +42,8 @@ import {
     DevicesResponseToJSON,
     ErrorResponseFromJSON,
     ErrorResponseToJSON,
+    PowerLogsResponseFromJSON,
+    PowerLogsResponseToJSON,
 } from '../models/index';
 
 export interface CreateDeviceRequest {
@@ -71,6 +74,10 @@ export interface GetDevicesRequest {
     category?: DeviceCategory;
     ids?: Array<number>;
     roomId?: number;
+}
+
+export interface GetPowerLogsRequest {
+    deviceId: number;
 }
 
 export interface PatchDeviceRequest {
@@ -330,6 +337,41 @@ export class DevicesApi extends runtime.BaseAPI {
      */
     async getDevices(requestParameters: GetDevicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DevicesResponse> {
         const response = await this.getDevicesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns all power logs for a specific device sorted by time in descending order.
+     * Get power logs for a device
+     */
+    async getPowerLogsRaw(requestParameters: GetPowerLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PowerLogsResponse>> {
+        if (requestParameters['deviceId'] == null) {
+            throw new runtime.RequiredError(
+                'deviceId',
+                'Required parameter "deviceId" was null or undefined when calling getPowerLogs().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/devices/{deviceId}/power-logs`.replace(`{${"deviceId"}}`, encodeURIComponent(String(requestParameters['deviceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PowerLogsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns all power logs for a specific device sorted by time in descending order.
+     * Get power logs for a device
+     */
+    async getPowerLogs(requestParameters: GetPowerLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PowerLogsResponse> {
+        const response = await this.getPowerLogsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

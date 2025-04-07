@@ -49,6 +49,8 @@ models/LoginLog.ts
 models/LoginLogsResponse.ts
 models/MyHealthOutput.ts
 models/PatchProfileInput.ts
+models/PowerLog.ts
+models/PowerLogsResponse.ts
 models/ProfileSearchOutput.ts
 models/RegisterInput.ts
 models/Role.ts

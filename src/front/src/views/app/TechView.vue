@@ -56,7 +56,7 @@ onUnmounted(removeListener);
 }
 
 .view {
-    scrollbar-gutter: stable both-edges;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
 
     position: absolute;

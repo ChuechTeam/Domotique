@@ -233,8 +233,10 @@ public class UserSection extends Section {
             // TODO: Do it in the background instead, maybe move it to auth.login?
             server.db().loginLogs().insert(new LoginLog(0, user.getId(), Instant.now())).await();
 
-            // Send the confirmation e-mail, and wait for it to be sent.
-            sendConfirmationEmail(user, context).await();
+            // Send the confirmation e-mail, and wait for it to be sent. Only if we actually need to send it!
+            if (!user.isEmailConfirmed()) {
+                sendConfirmationEmail(user, context).await();
+            }
 
             // Success, now register the status code and send the CompleteUser
             context.response().setStatusCode(201);
