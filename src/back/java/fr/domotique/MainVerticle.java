@@ -23,6 +23,7 @@ import org.openapitools.jackson.nullable.*;
 import org.slf4j.*;
 
 import java.io.*;
+import java.util.stream.*;
 
 /// This is the starting point of our web server application.
 /// It's the main control center that sets everything up.
@@ -83,6 +84,10 @@ public class MainVerticle extends VerticleBase {
                 Make sure the database is configured properly; use the 'gradle updateDatabase'/liquibase command!
                 """, e);
             return Future.failedFuture(e);
+        }
+
+        if (config.seedDatabase()) {
+            seedDatabase(config, client).await();
         }
 
         // Create the Database object containing all our tables for easy access.
@@ -169,5 +174,33 @@ public class MainVerticle extends VerticleBase {
                     }
                 });
             });
+    }
+
+    private Future<Void> seedDatabase(Config config, SqlClient client) {
+        try {
+            log.info("Running any migration before seeding the database...");
+
+            try {
+                MigrationRunner.update(config);
+            } catch (CommandExecutionException e) {
+                log.warn("Failed to run migrations before seeding the database", e);
+            }
+
+            log.info("Seeding the database...");
+            InputStream stream = getClass().getResourceAsStream("/seed.sql");
+            if (stream == null) {
+                throw new RuntimeException("Failed to find the seed.sql file in the classpath.");
+            }
+
+            try (var streamReader = new BufferedReader(new InputStreamReader(stream))) {
+                String sql = streamReader.lines().collect(Collectors.joining("\n"));
+
+                String seedQuery = "START TRANSACTION;\n" + sql + "\nCOMMIT;";
+                log.debug("Executing seed SQL query: {}", seedQuery);
+                return client.query(seedQuery).execute().mapEmpty();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load seed.sql", e);
+        }
     }
 }
