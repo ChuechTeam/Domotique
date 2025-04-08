@@ -27,7 +27,7 @@
 
       <p class="register-link">
       Nouveau ici ?
-      <a href="/register" class="regiterbutton">Inscrivez-vous maintenant</a>
+      <RouterLink class="regiterbutton" to="/register">Inscrivez-vous maintenant</RouterLink>
     </p>
     </div>
   </div>

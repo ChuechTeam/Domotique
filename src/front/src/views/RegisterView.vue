@@ -47,7 +47,7 @@
 
       <p class="register-link">
         Déjà inscrit ?
-        <a href="/login" class="registerbutton">Se connecter</a>
+        <RouterLink class="regiterbutton" to="/login">Se connecter</RouterLink>
       </p>
     </div>
   </div>
