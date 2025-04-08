@@ -47,15 +47,17 @@ const router = createRouter({
                     path: '/register',
                     name: 'register',
                     component: InscriptionView
-                  }
-            ],
+                },
+                // --- LOGIN ROUTES ---
+                {
+                    path: '/login',
+                    name: 'login',
+                    component: () => import('@/views/AuthView.vue'),
+                },  
+            ], 
         },
-        // --- LOGIN ROUTES ---
-        {
-            path: '/login',
-            name: 'login',
-            component: () => import('@/views/AuthView.vue'),
-        },    
+       
+        
         
         // --- LOGGED-IN ROUTES ---
         {

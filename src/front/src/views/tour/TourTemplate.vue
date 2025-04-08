@@ -8,8 +8,8 @@ import {RouterView} from "vue-router";
             <RouterLink class="navbar-brand fw-bold" to="/">Retraités Connectés</RouterLink>
             <div class="ms-auto d-flex gap-3">
                 <RouterLink class="nav-link" to="/">Accueil</RouterLink>
-                <RouterLink class="nav-link" to="/inscription">Inscription</RouterLink>
-                <RouterLink class="nav-link" to="/connexion">Connexion</RouterLink>
+                <RouterLink class="nav-link" to="/register">Inscription</RouterLink>
+                <RouterLink class="nav-link" to="/login">Connexion</RouterLink>
             </div>
         </nav>
         <RouterView/>

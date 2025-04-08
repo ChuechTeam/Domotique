@@ -1,11 +1,8 @@
 <template>
   <div class="page-container">
-    <header class="app-header">
-      <h1>Retraités Connectés</h1>
-    </header>
-
+  
     <div class="login-box">
-      <h2>Se connecter ou créer un compte</h2>
+      <h2>Se connecter </h2>
 
       <form @submit.prevent="handleLogin">
         <label for="identifier">Adresse email ou nom d'utilisateur</label>
@@ -28,10 +25,10 @@
         <a href="#">Politique de confidentialité</a>.
       </p>
 
-      <button class="btn-google" @click="continueWithGoogle">
-        <img src="https://img.icons8.com/color/20/google-logo.png" />
-        Continuer avec Google
-      </button>
+      <p class="register-link">
+      Nouveau ici ?
+      <a href="/register" class="regiterbutton">Inscrivez-vous maintenant</a>
+    </p>
     </div>
   </div>
 </template>
@@ -64,9 +61,7 @@ const handleLogin = () => {
   })
 }
 
-const continueWithGoogle = () => {
-  alert("🔐 Authentification Google à connecter plus tard.")
-}
+
 </script>
 
 <style scoped>
@@ -75,18 +70,6 @@ const continueWithGoogle = () => {
   background-color: #fff;
   padding: 2rem;
   text-align: center;
-}
-
-.app-header {
-  padding: 1rem 0;
-  border-bottom: 1px solid #ddd;
-  margin-bottom: 2rem;
-}
-
-.app-header h1 {
-  font-family: Georgia, serif;
-  font-size: 1.8rem;
-  font-weight: bold;
 }
 
 .login-box {
@@ -135,6 +118,10 @@ input {
   cursor: pointer;
 }
 
+.btn-primary:hover {
+  background-color: #369f73;
+}
+
 .divider {
   margin: 2rem 0 1rem;
   position: relative;
@@ -163,22 +150,15 @@ input {
   color: #111;
   text-decoration: underline;
 }
-
-.btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  font-weight: 500;
-  background: white;
-  border: 1px solid #ccc;
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 1rem;
+.register-link {
+  margin-top: 1rem;
+  font-size: 14px;
 }
 
+.registerbutton {
+  text-decoration: none;
+  font-weight: bold;
+}
 .error-msg {
   color: #d93025;
   font-size: 0.9rem;
