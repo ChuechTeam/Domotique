@@ -35,57 +35,34 @@ const poweredPeriods = computed(() => calculatePeriods(powerLogs.value, settings
 // Logs are sorted by time in descending order
 function calculatePeriods(logs: PowerLog[], includeOff: boolean): PoweredPeriod[] {
     const periods: PoweredPeriod[] = [];
+    for (let i = logs.length - 1; i >= 0; i--) {
+        const earlier = logs[i];
+        const later = logs[i - 1];
 
-    const firstLog = logs[0];
-    if (firstLog != null && firstLog.status === "POWER_ON") {
-        const startDate = new Date(firstLog.time); // ON / E.g. 10
-        const endDate = new Date(); // Now
+        const start = earlier.time;
+        const end = later?.time ?? new Date();
 
-        periods.splice(0, 0, {
-            start: startDate,
-            end: endDate,
-            totalConsumption: (endDate.getTime() - startDate.getTime()) / 1000 * firstLog.energyConsumption / 3600,
-            powered: true,
-            live: true,
-        });
-    }
+        const live = later == null;
 
-    let prevPowered: PowerLog | null = null;
-    for (let i = 0; i < logs.length; i++) {
-        const nextLog = logs[i];
-        if (prevPowered == null && nextLog.status === "POWER_ON") {
-            prevPowered = nextLog;
-        } else if (prevPowered != null) {
-            const startDate = new Date(nextLog.time); // OFF (likely) / E.g. 8
-            const endDate = new Date(prevPowered.time); // ON / E.g. 10
-
-            if (includeOff && periods.length > 0) {
-                const prevPeriod = periods[periods.length - 1];
-
-                periods.push({
-                    start: endDate,
-                    end: prevPeriod.start,
-                    totalConsumption: 0,
-                    powered: false,
-                    live: false,
-                })
-            }
-
-            periods.push({
-                start: startDate,
-                end: endDate,
-                totalConsumption: (endDate.getTime() - startDate.getTime()) / 1000 * prevPowered.energyConsumption / 3600,
-                powered: true,
-                live: false,
-            });
-
-            if (nextLog.status === "POWER_ON") {
-                prevPowered = nextLog;
-            } else {
-                prevPowered = null;
-            }
+        const powered = earlier.status === "POWER_ON";
+        if (!powered && !includeOff) {
+            continue;
         }
+
+        const period: PoweredPeriod = {
+            start,
+            end,
+            powered,
+            live,
+            totalConsumption: powered ?
+                (end.getTime() - start.getTime()) / 1000 * earlier.energyConsumption / 3600 :
+                0,
+        };
+        periods.push(period);
     }
+
+    // We need time in descending order
+    periods.reverse();
 
     return periods;
 }
@@ -103,7 +80,7 @@ function sameDay(d1: Date, d2: Date): boolean {
 function exportCsv() {
     // Create CSV header
     const header = 'start_date,end_date,status,totalConsumption\n';
-    
+
     // Convert periods to CSV rows
     const csvContent = poweredPeriods.value.map(period => {
         const status = period.powered ? 'ON' : 'OFF';
@@ -111,10 +88,10 @@ function exportCsv() {
         const endDate = period.end.toISOString();
         return `${startDate},${endDate},${status},${period.totalConsumption}`;
     }).join('\n');
-    
+
     // Combine header and content
     const fullCsv = header + csvContent;
-    
+
     // Create download link
     const blob = new Blob([fullCsv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -309,7 +286,7 @@ h3 {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .header-controls {
         width: 100%;
         justify-content: space-between;
