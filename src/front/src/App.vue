@@ -2,12 +2,15 @@
 import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth"
 import { storeToRefs } from "pinia";
-import { watch } from "vue";
-import { Toast } from 'primevue';
+import { ref, watch } from "vue";
+import { Toast, useToast } from 'primevue';
 import api, { config as apiConfig } from './api';
+import { usePrefsStore } from './stores/prefs';
 
 const router = useRouter()
 const auth = useAuthStore()
+const prefs = usePrefsStore()
+const toast = useToast()
 
 // Begin loading the logged-in user in the background.
 auth.fetchUser()
@@ -27,10 +30,17 @@ watch(isLoggedIn, () => {
     }
 })
 
+const timeout = ref(null);
 apiConfig.middleware.push({
     async post(ctx) {
         if (ctx.response.status === 401) {
             auth.setUser(null)
+        } else if (ctx.response.headers.get("Domotique-Refresh-Points") === "true") {
+            // Schedule a user reload when we know that our points will probably change.
+            if (timeout.value) {
+                clearTimeout(timeout.value)
+            }
+            timeout.value = setTimeout(() => auth.fetchUser(), 1000)
         }
         return ctx.response
     }

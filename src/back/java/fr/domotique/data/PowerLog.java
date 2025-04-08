@@ -7,21 +7,21 @@ import java.time.*;
 public class PowerLog {
     private int id;
     private int deviceId;
-    private String status;
-    private Instant time;
+    private String status; // POWER_ON or POWER_OFF
     private double energyConsumption;
+    private Instant time;
 
     public PowerLog() {
     }
 
-    public PowerLog(int deviceId, String status, Instant time, double energyConsumption) {
+    public PowerLog(int deviceId, String status, double energyConsumption, Instant time) {
         this.deviceId = deviceId;
         this.status = status;
         this.time = time;
         this.energyConsumption = energyConsumption;
     }
 
-    public PowerLog(int id, int deviceId, String status, Instant time, double energyConsumption) {
+    public PowerLog(int id, int deviceId, String status, double energyConsumption, Instant time) {
         this.id = id;
         this.deviceId = deviceId;
         this.status = status;
@@ -70,13 +70,13 @@ public class PowerLog {
             r.getInteger(s.next()),
             r.getInteger(s.next()),
             r.getString(s.next()),
-            r.getLocalDateTime(s.next()).toInstant(ZoneOffset.UTC),
-            r.getDouble(s.next())
+            r.getDouble(s.next()),
+            r.getLocalDateTime(s.next()).toInstant(ZoneOffset.UTC)
         ),
         new EntityColumn<>("id", PowerLog::getId, ColumnType.GENERATED_KEY),
         new EntityColumn<>("deviceId", PowerLog::getDeviceId),
         new EntityColumn<>("status", PowerLog::getStatus),
-        new EntityColumn<>("time", x -> LocalDateTime.ofInstant(x.getTime(), ZoneOffset.UTC)),
-        new EntityColumn<>("energyConsumption", PowerLog::getEnergyConsumption)
+        new EntityColumn<>("energyConsumption", PowerLog::getEnergyConsumption),
+        new EntityColumn<>("time", x -> LocalDateTime.ofInstant(x.getTime(), ZoneOffset.UTC))
     );
 }

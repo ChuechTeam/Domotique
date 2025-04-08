@@ -9,9 +9,11 @@ import LoginLogs from "@/components/LoginLogs.vue";
 import LevelBar from "@/components/LevelBar.vue";
 import { genderLabels, levelLabels, roleLabels } from "@/labels";
 import ProfileDevices from "@/components/ProfileDevices.vue";
+import { usePrefsStore } from "@/stores/prefs";
 
 const auth = useAuthStore();
 const router = useRouter();
+const prefs = usePrefsStore();
 
 const props = defineProps({
     userId: {
@@ -19,7 +21,6 @@ const props = defineProps({
         required: true
     }
 });
-
 const userId = parseInt(props.userId);
 const isCurrentUser = ref(userId === auth.userId);
 const canEdit = computed(() => isCurrentUser.value || auth.canAdminister);
@@ -27,10 +28,17 @@ const canEdit = computed(() => isCurrentUser.value || auth.canAdminister);
 let profile;
 if (isCurrentUser.value) {
     const { user } = storeToRefs(auth);
+    await auth.fetchUser();
+
     profile = computed(() => user.value.profile);
+    await api.userEvents.reportOwnProfileCheck();
 } else {
     profile = ref(await api.users.findUser({ userId: props.userId }));
+    await api.userEvents.reportOtherProfilesCheck();
 }
+
+const settingsDialogOpen = ref(false);
+const prefsRefs = storeToRefs(prefs);
 
 const genderIcon = computed(() => {
     if (!profile.value) return null;
@@ -102,8 +110,13 @@ const getLevelColor = (level) => {
                                 class="ms-2" style="--p-tag-secondary-background: rgb(222, 222, 222)" />
                         </div>
                     </div>
-                    <Button class="ms-auto details-actions" severity="danger" style="grid-area: actions;" label="Déconnexion"
-                        icon="pi pi-sign-out" @click="auth.logout" v-if="auth.userId == profile.id" />
+                    <div class="ms-auto details-actions">
+                        <Button severity="info" icon="pi pi-cog" v-if="isCurrentUser"
+                            @click="settingsDialogOpen = true" />
+                        <Button severity="danger" style="grid-area: actions;" label="Déconnexion" icon="pi pi-sign-out"
+                            @click="auth.logout" v-if="auth.userId == profile.id" class="logout" />
+                    </div>
+
                     <LevelBar :value="profile.points" class="pe-2" style="grid-area: level;" />
                 </div>
             </header>
@@ -149,6 +162,15 @@ const getLevelColor = (level) => {
                     </template>
                 </Suspense>
             </div>
+
+            <!-- Settings dialog -->
+            <Dialog v-model:visible="settingsDialogOpen" modal header="Paramètres" style="width: min(97vw, 400px)">
+                <div class="d-flex gap-3 mb-3">
+                    <Checkbox input-id="reducedMotionCheck" v-model="prefsRefs.reducedMotion" binary size="large" />
+                    <label for="reducedMotionCheck">Réduire les animations</label>
+                </div>
+                <Button fluid label="Fermer" @click="settingsDialogOpen = false" />
+            </Dialog>
         </div>
         <RouterView v-slot="{ Component }">
             <component :is="Component" @profile-update="profileUpdated" />
@@ -204,6 +226,11 @@ const getLevelColor = (level) => {
     align-items: center;
 }
 
+.details-actions {
+    display: flex;
+    gap: 1rem;
+}
+
 @media (max-width: 1024px) {
     .infos {
         grid-template: "name" "level" "actions";
@@ -212,6 +239,10 @@ const getLevelColor = (level) => {
     .details-actions {
         width: 100%;
         margin-top: 1rem;
+    }
+
+    .logout {
+        flex-grow: 1;
     }
 
     .header {

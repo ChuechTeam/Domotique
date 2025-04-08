@@ -39,7 +39,7 @@ public class PointsVerticle extends VerticleBase {
         vertx.eventBus().registerDefaultCodec(AddPointsMessage.class, new LocalCodec<>());
 
         consumer = vertx.eventBus().consumer(AddPointsMessage.CHANNEL, msg -> pendingMessages.add(msg.body()));
-        timer = vertx.setPeriodic(1000, this::processAllMessages);
+        timer = vertx.setPeriodic(500, this::processAllMessages);
 
         return Future.succeededFuture();
     }

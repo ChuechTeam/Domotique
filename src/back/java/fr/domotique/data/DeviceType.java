@@ -58,6 +58,10 @@ public class DeviceType {
         for (int i = 0; i < ar.size(); i++) {
             enums[i] = AttributeType.values()[ar.getInteger(i)];
         }
-        return EnumSet.copyOf(Arrays.asList(enums));
+        if (enums.length != 0) {
+            return EnumSet.copyOf(Arrays.asList(enums));
+        } else {
+            return EnumSet.noneOf(AttributeType.class);
+        }
     }
 }

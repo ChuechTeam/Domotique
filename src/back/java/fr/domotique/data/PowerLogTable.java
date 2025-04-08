@@ -23,6 +23,10 @@ public class PowerLogTable extends Table {
         return querySingle(ENTITY.mapper(), "SELECT * FROM PowerLog WHERE id = ?", id);
     }
 
+    public Future<List<PowerLog>> queryForDeviceSorted(int deviceId) {
+        return queryMany(ENTITY.mapper(), "SELECT * FROM PowerLog WHERE deviceId = ? ORDER BY time DESC", deviceId);
+    }
+
     public Future<List<Consumption>> queryTotalConsumption(Instant start, Instant end) {
         // Argument list:
         // 1. startTime: Instant

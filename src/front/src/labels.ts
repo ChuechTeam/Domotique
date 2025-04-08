@@ -65,6 +65,7 @@ export const attributeTypeLabels: Record<AttributeType, string> = {
     "BODY_WEIGHT": "Poids",
     "BATTERY_LEVEL": "Batterie restante",
     "BODY_HEIGHT": "Taille",
+    "LIGHT_INTENSITY": "Intensité de la lumière",
 }
 
 // All attribute type enum values
@@ -89,6 +90,7 @@ export const attributeTypeContents: Record<AttributeType, NumberConstructor | St
     "BODY_WEIGHT": Number,
     "BATTERY_LEVEL": Number,
     "BODY_HEIGHT": Number,
+    "LIGHT_INTENSITY": Number,
 } as const;
 
 // https://primevue.org/inputnumber/#prefixsuffix
@@ -109,7 +111,8 @@ export const attributeTypeFormats: Record<AttributeType, any> = {
     "BODY_TEMPERATURE": { suffix: " °C" },
     "BODY_WEIGHT": { suffix: " kg" },
     "BATTERY_LEVEL": { suffix: " %" },
-    "BODY_HEIGHT": { suffix: " cm" }
+    "BODY_HEIGHT": { suffix: " cm" },
+    "LIGHT_INTENSITY": { suffix: " lx" },
 }
 
 export function formatAttribute(type: AttributeType, val: any) {
@@ -152,6 +155,8 @@ export function formatAttribute(type: AttributeType, val: any) {
             return `${val} %`
         case "BODY_HEIGHT":
             return `${val} cm`
+        case "LIGHT_INTENSITY":
+            return `${val} lx`
     }
 }
 

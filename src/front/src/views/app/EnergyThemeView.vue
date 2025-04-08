@@ -79,6 +79,7 @@ function load() {
                 start: query.value.start,
                 end: query.value.end,
             });
+            api.userEvents.reportEnergyCheck();
             if (thisProm === consumptionPromise.value) {
                 consumptionResult.value = result;
                 loadContributions(result);

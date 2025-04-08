@@ -40,7 +40,9 @@
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue'
+  import api from '@/api'
+import { createPinia } from 'pinia'
+import { ref, computed } from 'vue'
   
   const user = {
     nom: 'Ben Omar',
@@ -74,6 +76,9 @@
       (searchFilter.value === '' || obj.etat === searchFilter.value)
     )
   })
+
+  // Add points for visiting the home page
+  api.userEvents.reportHomePageVisit();
   </script>
   
   <style scoped>

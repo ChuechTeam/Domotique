@@ -1,6 +1,5 @@
 package fr.domotique.api.devices;
 
-import com.fasterxml.jackson.annotation.*;
 import fr.domotique.*;
 import fr.domotique.base.*;
 import fr.domotique.base.Validation;
@@ -65,6 +64,7 @@ public class DeviceSection extends Section {
         deviceRoutes.delete("/:deviceId").respond(vt(this::deleteDevice)).putMetadata(RouteDoc.KEY, DELETE_DEVICE_DOC);
 
         deviceRoutes.get("/:deviceId/report").respond(vt(this::genReport)).putMetadata(RouteDoc.KEY, GEN_REPORT_DOC);
+        deviceRoutes.get("/:deviceId/power-logs").respond(this::getPowerLogs).putMetadata(RouteDoc.KEY, GET_POWER_LOGS_DOC);
     }
 
     // region GET /api/devices | Get all devices
@@ -170,6 +170,8 @@ public class DeviceSection extends Section {
         return server.db().devices().getComplete(deviceId).map(d -> nullifyPersonalData(d, auth));
     }
     // endregion
+
+
 
     // todo: less code duplication with DevicePathInput for both + patchRequestBody
 
@@ -307,7 +309,7 @@ public class DeviceSection extends Section {
                 status = "POWER_OFF";
             }
             server.db().powerLogs().insert(
-                new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
+                new PowerLog(device.getId(), status, device.getEnergyConsumption(), Instant.now())
             ).await();
 
             // Log the changes
@@ -421,7 +423,7 @@ public class DeviceSection extends Section {
                     status = "POWER_OFF";
                 }
                 server.db().powerLogs().insert(
-                    new PowerLog(device.getId(), status, Instant.now(), device.getEnergyConsumption())
+                    new PowerLog(device.getId(), status, device.getEnergyConsumption(), Instant.now())
                 ).await();
             }
 
@@ -506,6 +508,33 @@ public class DeviceSection extends Section {
 
         return report;
     }
+
+    // region GET /api/devices/:deviceId/power-logs | Get power logs for a device
+    static final RouteDoc GET_POWER_LOGS_DOC = new RouteDoc("getPowerLogs")
+        .summary("Get power logs for a device")
+        .description("Returns all power logs for a specific device sorted by time in descending order.")
+        .pathParam("deviceId", int.class, "The ID of the device to get power logs for.")
+        .response(200, PowerLogsResponse.class, "The list of power logs for the device.")
+        .response(404, ErrorResponse.class, "Device not found.");
+
+    record PowerLogsResponse(List<PowerLog> logs) {}
+
+    Future<PowerLogsResponse> getPowerLogs(RoutingContext context) {
+        int deviceId = readIntPathParam(context, "deviceId");
+
+        // Check if device exists
+        return server.db().devices().get(deviceId)
+            .compose(device -> {
+                if (device == null) {
+                    throw new RequestException("Appareil introuvable.", 404, "DEVICE_NOT_FOUND");
+                }
+
+                // Get all power logs for this device
+                return server.db().powerLogs().queryForDeviceSorted(deviceId)
+                    .map(PowerLogsResponse::new);
+            });
+    }
+    // endregion
 
     /// Throw an API error when a foreign key constraint fails for rooms or device types.
     private RuntimeException missingRoomOrTypeErr(ForeignException ex) {

@@ -13,6 +13,8 @@ const devicesModalVisible = ref(false);
 const devicesModalDevices = ref<CompleteDevice[]>([]);
 const devicesModalPromise = ref(null);
 
+api.userEvents.reportHealthCheck();
+
 function openDevicesModal(ids: number[]) {
     let thePromise: any
     async function doIt() {

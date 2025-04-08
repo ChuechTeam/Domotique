@@ -32,6 +32,7 @@
  * - `BODY_WEIGHT`: The current weight of the user, in kg.
  * - `BATTERY_LEVEL`: The amount of battery left in percent.
  * - `BODY_HEIGHT`: The height of your body in centimeters.
+ * - `LIGHT_INTENSITY`: The light intensity in the room, in lux.
  * @export
  */
 export const AttributeType = {
@@ -51,7 +52,8 @@ export const AttributeType = {
     BodyTemperature: 'BODY_TEMPERATURE',
     BodyWeight: 'BODY_WEIGHT',
     BatteryLevel: 'BATTERY_LEVEL',
-    BodyHeight: 'BODY_HEIGHT'
+    BodyHeight: 'BODY_HEIGHT',
+    LightIntensity: 'LIGHT_INTENSITY'
 } as const;
 export type AttributeType = typeof AttributeType[keyof typeof AttributeType];
 

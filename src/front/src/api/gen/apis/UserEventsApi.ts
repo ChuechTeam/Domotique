@@ -22,7 +22,88 @@ export class UserEventsApi extends runtime.BaseAPI {
 
     /**
      * 
-     * Report Event: Home page visited
+     * Report Event: CHECK_DEVICE
+     */
+    async reportDeviceCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-device`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_DEVICE
+     */
+    async reportDeviceCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportDeviceCheckRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_ENERGY
+     */
+    async reportEnergyCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-energy`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_ENERGY
+     */
+    async reportEnergyCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportEnergyCheckRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_HEALTH
+     */
+    async reportHealthCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-health`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_HEALTH
+     */
+    async reportHealthCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportHealthCheckRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: VISIT_HOME_PAGE
      */
     async reportHomePageVisitRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
@@ -41,10 +122,91 @@ export class UserEventsApi extends runtime.BaseAPI {
 
     /**
      * 
-     * Report Event: Home page visited
+     * Report Event: VISIT_HOME_PAGE
      */
     async reportHomePageVisit(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.reportHomePageVisitRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_OTHER_PROFILES
+     */
+    async reportOtherProfilesCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-other-profiles`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_OTHER_PROFILES
+     */
+    async reportOtherProfilesCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportOtherProfilesCheckRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_OWN_PROFILE
+     */
+    async reportOwnProfileCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-own-profile`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_OWN_PROFILE
+     */
+    async reportOwnProfileCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportOwnProfileCheckRaw(initOverrides);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_SPORT_RANKINGS
+     */
+    async reportSportRankingsCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/user-events/check-sport-rankings`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 
+     * Report Event: CHECK_SPORT_RANKINGS
+     */
+    async reportSportRankingsCheck(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.reportSportRankingsCheckRaw(initOverrides);
     }
 
 }

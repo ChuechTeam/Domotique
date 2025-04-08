@@ -123,8 +123,8 @@ public class DeviceTypeSection extends Section {
                     "Le nom est vide.",
                     "Le nom est trop long.");
 
-                if (attributes == null || attributes.isEmpty()) {
-                    block.addError("attributes", "La liste d'attributs ne peut pas être vide.");
+                if (attributes == null) {
+                    block.addError("attributes", "La liste d'attributs ne peut pas être nulle.");
                 }
             }
         }

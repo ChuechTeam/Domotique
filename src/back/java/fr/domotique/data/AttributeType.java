@@ -60,7 +60,10 @@ public enum AttributeType {
     BATTERY_LEVEL("Batterie restante (%)", Content.NUMBER, (Double x) -> x >= 0 && x <= 100),
 
     @ApiDoc("The height of your body in centimeters.")
-    BODY_HEIGHT("Taille (cm)", Content.NUMBER, true, (Double x) -> x >= 0);
+    BODY_HEIGHT("Taille (cm)", Content.NUMBER, true, (Double x) -> x >= 0),
+
+    @ApiDoc("The light intensity in the room, in lux.")
+    LIGHT_INTENSITY("Luminosité (lux)", Content.NUMBER, (Double x) -> x >= 0);
 
     /// The displayed name of the attribute.
     public final String name;

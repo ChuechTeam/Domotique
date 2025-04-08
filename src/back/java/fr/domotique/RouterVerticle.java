@@ -94,9 +94,6 @@ public class RouterVerticle extends VerticleBase {
         // Create a new router to handle different URLs
         var r = Router.router(vertx);
 
-        // Serve files from the 'assets' folder when someone requests them from the assets/ folder
-        r.route("/assets/*").handler(StaticHandler.create("assets"));
-
         // Limit the incoming requests to 128KB of data, for better security.
         // Could also be used later on to add support for file uploads.
         r.route("/api/*").handler(BodyHandler.create().setBodyLimit(128 * 1024 * 1024));

@@ -12,7 +12,6 @@ import io.vertx.ext.web.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
 
-import javax.validation.*;
 import java.time.*;
 import java.util.*;
 
@@ -108,8 +107,7 @@ public class UserSection extends Section {
             "Juréma",
             "Deveri",
             Gender.FEMALE,
-            Role.RESIDENT,
-            "mot2passe", null))
+            "mot2passe", "retraitons"))
         .response(201, CompleteUser.class, "The user was created.")
         .response(422, ErrorResponse.class, """
                 Either:
@@ -125,9 +123,8 @@ public class UserSection extends Section {
                          String firstName,
                          String lastName,
                          Gender gender,
-                         Role role,
                          String password,
-                         @Nullable @ApiDoc(optional = true) String adminCode) {
+                         String inviteCode) {
         public RegisterInput {
             // Sanitize all sensitive strings (not password)
             email = Sanitize.string(email);
@@ -161,14 +158,24 @@ public class UserSection extends Section {
             // Validate the password (for registration; login requirements are different)
             UserValidation.password(block, "password", input.password);
 
-            // Ensure that admin registration use the admin code
-            if (input.role == Role.ADMIN) {
-                if (input.adminCode == null || input.adminCode.isBlank()) {
-                    block.addError("adminCode", "Le code d'administrateur est vide.");
-                } else if (!input.adminCode.equals(server.config().adminCode())) {
-                    block.addError("adminCode", "Le code d'administrateur est incorrect.");
-                }
+            // Make sure the invite code is not blank
+            Validation.nonBlank(block, "inviteCode", input.inviteCode, "Le code d'invitation est vide.");
+        }
+
+        // Now, see if the invalidation is valid.
+        Role assignedRole;
+        InviteCode invite = null;
+        if (input.inviteCode.equals(server.config().adminCode())) {
+            // Special code! we're an admin and everything is good!
+            assignedRole = Role.ADMIN;
+        } else {
+            invite = server.db().inviteCodes().get(input.inviteCode).await();
+            if (invite == null) {
+                throw new RequestException("Le code d'invitation est invalide.", 422, "INVALID_INVITE_CODE",
+                    Map.of("inviteCode", new String[]{"Le code d'invitation est invalide."}));
             }
+
+            assignedRole = invite.getRole();
         }
 
         // Hash the password, and create the User object
@@ -182,13 +189,13 @@ public class UserSection extends Section {
         var user = new User(0,
             input.email,
             confirmationToken,
-            input.role == Role.ADMIN,
+            assignedRole == Role.ADMIN,
             passwordHashed,
             input.firstName,
             input.lastName,
             input.gender,
-            input.role,
-            input.role == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
+            assignedRole,
+            assignedRole == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
             0);
 
         try {
@@ -197,6 +204,19 @@ public class UserSection extends Section {
 
             // Report that registration to the log (-> the console)
             log.info("User registered with id {} and email {}", user.getId(), user.getEmail());
+
+            // Now decrement or delete the invite code.
+            // This has OBVIOUS concurrency issues (lost updates) but we don't have time to fix this!
+            if (invite != null) {
+                if (invite.getUsagesLeft() <= 1) {
+                    // Last usage: delete it
+                    server.db().inviteCodes().delete(invite.getId());
+                } else {
+                    // Usages remaining: update it; update won't do anything on a missing invite so we don't really care
+                    invite.setUsagesLeft(invite.getUsagesLeft() - 1);
+                    server.db().inviteCodes().update(invite).await();
+                }
+            }
 
             // Log this action in the action log
             server.db().actionLogs().insert(new ActionLog(
@@ -213,8 +233,10 @@ public class UserSection extends Section {
             // TODO: Do it in the background instead, maybe move it to auth.login?
             server.db().loginLogs().insert(new LoginLog(0, user.getId(), Instant.now())).await();
 
-            // Send the confirmation e-mail, and wait for it to be sent.
-            sendConfirmationEmail(user, context).await();
+            // Send the confirmation e-mail, and wait for it to be sent. Only if we actually need to send it!
+            if (!user.isEmailConfirmed()) {
+                sendConfirmationEmail(user, context).await();
+            }
 
             // Success, now register the status code and send the CompleteUser
             context.response().setStatusCode(201);
@@ -712,6 +734,13 @@ public class UserSection extends Section {
 
                     // Update the user in the database
                     server.db().users().update(u)
+                        .compose(v -> server.db().actionLogs().insert(new ActionLog(
+                            u.getId(),
+                            u.getId(),
+                            ActionLogTarget.USER,
+                            ActionLogOperation.UPDATE,
+                            EnumSet.of(ActionLogFlags.EMAIL_CONFIRMED)
+                        )).map(v))
                         .onSuccess(v -> {
                             log.info("User {} successfully confirmed their email", u.getId());
 
@@ -724,15 +753,6 @@ public class UserSection extends Section {
                             context.redirect("/?confirmResult=ok");
                         })
                         .onFailure(ex -> context.redirect("/?confirmResult=err"));
-
-                    // Write that down!
-                    server.db().actionLogs().insert(new ActionLog(
-                        u.getId(),
-                        u.getId(),
-                        ActionLogTarget.USER,
-                        ActionLogOperation.UPDATE,
-                        EnumSet.of(ActionLogFlags.EMAIL_CONFIRMED)
-                    )).await();
                 } else {
                     // Nope, redirect to the home page with an error
                     context.redirect("/?confirmResult=err");

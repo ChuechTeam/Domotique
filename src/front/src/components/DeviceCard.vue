@@ -191,6 +191,7 @@ function viewDeviceDetails(device: CompleteDevice) {
   flex-direction: row;
   gap: 0.75rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .info-item {

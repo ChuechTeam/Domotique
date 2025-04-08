@@ -111,6 +111,20 @@ const userLabel = computed(() => auth.user.profile.firstName[0] + auth.user.prof
     opacity: 1;
 }
 
+
+:global(html.reduced-motion .scale-leave-from),
+:global(html.reduced-motion .scale-leave-to), 
+:global(html.reduced-motion .scale-enter-from), 
+:global(html.reduced-motion .scale-enter-to) {
+        transform: scale(1.0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scale-leave-from, .scale-leave-to, .scale-enter-from, .scale-enter-to {
+        transform: scale(1.0) !important;
+    }
+}
+
 .content {
     flex: 1;
     overflow: hidden;

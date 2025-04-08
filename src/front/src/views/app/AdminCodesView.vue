@@ -90,8 +90,8 @@ loadInviteCodes();
                         <label for="role">Rôle</label>
                     </IftaLabel>
                     <IftaLabel>
-                        <InputNumber v-model="newInviteCode.usagesLeft" :min="1" fluid />
-                        <label for="usagesLeft">Usages restants</label>
+                        <InputNumber v-model="newInviteCode.usagesLeft" :min="1" fluid show-buttons />
+                        <label for="usagesLeft">Utilisations</label>
                     </IftaLabel>
                     <div class="form-actions">
                         <Button label="Annuler" class="p-button-outlined" @click="showCreateDialog = false" />
@@ -111,11 +111,11 @@ loadInviteCodes();
             <div v-else class="codes-list">
                 <div v-for="code in inviteCodes" :key="code.id" class="code-card">
                     <div class="code-info">
-                        <h3 class="code-id">{{ code.id }}</h3>
-                        <p class="code-role">Rôle: {{ code.role }}</p>
-                        <p class="code-creator" v-if="code.creatorId">Créé par l'utilisateur ID: {{ code.creatorId }}
-                        </p>
-                        <p class="code-date">Créé le: {{ new Date(code.createdAt).toLocaleString('fr-FR') }}</p>
+                        <h3 class="code-id">{{ code.id }} <span class="opacity-50">({{ code.usagesLeft }} usages restants)</span></h3>
+                        <p class="code-role">Rôle: {{ roleLabels[code.role] }}</p>
+                        <!-- Todo -->
+                        <!-- <p class="code-creator" v-if="code.creatorId">Créé par l'utilisateur ID: {{ code.creatorId }} </p> -->
+                        <p class="code-date">Créé le : {{ code.createdAt.toLocaleString('fr-FR') }}</p>
                     </div>
                     <div class="code-actions">
                         <Button icon="pi pi-trash" class="p-button-danger" @click="deleteInviteCode(code.id)" />

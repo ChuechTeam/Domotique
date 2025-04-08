@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Role } from './Role';
-import {
-    RoleFromJSON,
-    RoleFromJSONTyped,
-    RoleToJSON,
-    RoleToJSONTyped,
-} from './Role';
 import type { Gender } from './Gender';
 import {
     GenderFromJSON,
@@ -54,12 +47,6 @@ export interface RegisterInput {
     password: string;
     /**
      * 
-     * @type {Role}
-     * @memberof RegisterInput
-     */
-    role: Role;
-    /**
-     * 
      * @type {Gender}
      * @memberof RegisterInput
      */
@@ -69,7 +56,7 @@ export interface RegisterInput {
      * @type {string}
      * @memberof RegisterInput
      */
-    adminCode?: string;
+    inviteCode: string;
     /**
      * 
      * @type {string}
@@ -87,8 +74,8 @@ export function instanceOfRegisterInput(value: object): value is RegisterInput {
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
     if (!('password' in value) || value['password'] === undefined) return false;
-    if (!('role' in value) || value['role'] === undefined) return false;
     if (!('gender' in value) || value['gender'] === undefined) return false;
+    if (!('inviteCode' in value) || value['inviteCode'] === undefined) return false;
     if (!('email' in value) || value['email'] === undefined) return false;
     return true;
 }
@@ -106,9 +93,8 @@ export function RegisterInputFromJSONTyped(json: any, ignoreDiscriminator: boole
         'firstName': json['firstName'],
         'lastName': json['lastName'],
         'password': json['password'],
-        'role': RoleFromJSON(json['role']),
         'gender': GenderFromJSON(json['gender']),
-        'adminCode': json['adminCode'] == null ? undefined : json['adminCode'],
+        'inviteCode': json['inviteCode'],
         'email': json['email'],
     };
 }
@@ -127,9 +113,8 @@ export function RegisterInputToJSONTyped(value?: RegisterInput | null, ignoreDis
         'firstName': value['firstName'],
         'lastName': value['lastName'],
         'password': value['password'],
-        'role': RoleToJSON(value['role']),
         'gender': GenderToJSON(value['gender']),
-        'adminCode': value['adminCode'],
+        'inviteCode': value['inviteCode'],
         'email': value['email'],
     };
 }

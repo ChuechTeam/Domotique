@@ -39,6 +39,8 @@ export * from './LoginLog';
 export * from './LoginLogsResponse';
 export * from './MyHealthOutput';
 export * from './PatchProfileInput';
+export * from './PowerLog';
+export * from './PowerLogsResponse';
 export * from './ProfileSearchOutput';
 export * from './RegisterInput';
 export * from './Role';
