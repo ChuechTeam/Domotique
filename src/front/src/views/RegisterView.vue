@@ -1,59 +1,55 @@
 <template>
-  <div class="container">
-    <h2>Inscription</h2>
-    <form @submit.prevent="validateForm">
-      <!-- Champ Nom -->
-      <div class="form-group">
-        <label>Nom :</label>
-        <input type="text" v-model="lastName" />
+  <div class="page-container">
+    <div class="login-box">
+      <h2>Inscription</h2>
+
+      <form @submit.prevent="validateForm">
+        <!-- Champ Nom -->
+        <label for="lastName">Nom</label>
+        <input id="lastName" type="text" v-model="lastName" required />
         <ValidationErrList :errors="errs.lastName" />
-      </div>
 
-      <!-- Champ Prénom -->
-      <div class="form-group">
-        <label>Prénom :</label>
-        <input type="text" v-model="firstName" />
+        <!-- Champ Prénom -->
+        <label for="firstName">Prénom</label>
+        <input id="firstName" type="text" v-model="firstName" required />
         <ValidationErrList :errors="errs.firstName" />
-      </div>
 
-      <!-- Champ Email -->
-      <div class="form-group">
-        <label>Email :</label>
-        <input type="email" v-model="email" />
+        <!-- Champ Email -->
+        <label for="email">Email</label>
+        <input id="email" type="email" v-model="email" required />
         <ValidationErrList :errors="errs.email" />
-      </div>
 
-      <!-- Sélection du Genre -->
-      <div class="form-group">
-        <label>Genre :</label>
-        <select v-model="gender">
-          <option value="" disabled>Selectionnez un Genre </option>
-          <option v-for="g in genders" :key="g" :value="g">
-            {{ genderLabels[g] }}
-          </option>
+        <!-- Sélection du Genre -->
+        <label for="gender">Genre</label>
+        <select id="gender" v-model="gender" required>
+          <option value="" disabled>Selectionnez un Genre</option>
+          <option v-for="g in genders" :key="g" :value="g">{{ genderLabels[g] }}</option>
         </select>
         <ValidationErrList :errors="errs.gender" />
-      </div>
 
-      <!-- Champ Mot de passe -->
-      <div class="form-group">
-        <label>Mot de passe :</label>
-        <Password fluid v-model="password" toggleMask />
+        <!-- Champ Mot de passe -->
+        <label for="password">Mot de passe</label>
+        <Password id="password" fluid v-model="password" toggleMask />
         <ValidationErrList :errors="errs.password" />
-      </div>
 
-      <!-- Invite Code -->
-      <div class="form-group">
-        <label>Code d'invitation :</label>
-        <input v-model="inviteCode" />
+        <!-- Invite Code -->
+        <label for="inviteCode">Code d'invitation</label>
+        <input id="inviteCode" v-model="inviteCode" />
         <ValidationErrList :errors="errs.inviteCode" />
-      </div>
 
-      <Button fluid type="submit">S'inscrire</Button>
-    </form>
+        <!-- Bouton de soumission -->
+        <button type="submit" class="btn-primary" :disabled="errs.length > 0">S'inscrire</button>
+      </form>
 
-    <!-- Err message -->
-    <div v-if="errMsg" class="text-danger">{{ errMsg }}</div>
+      <div v-if="errMsg" class="error-msg">{{ errMsg }}</div>
+
+      <div class="divider">ou</div>
+
+      <p class="register-link">
+        Déjà inscrit ?
+        <a href="/login" class="registerbutton">Se connecter</a>
+      </p>
+    </div>
   </div>
 </template>
 
@@ -72,14 +68,14 @@ export default {
   },
   data() {
     return {
-      lastName: "",
-      firstName: "",
-      email: "",
-      password: "",
-      inviteCode: "",
-      gender: "",
+      lastName: '',
+      firstName: '',
+      email: '',
+      password: '',
+      inviteCode: '',
+      gender: '',
       errs: {},
-      errMsg: ""
+      errMsg: '',
     };
   },
   methods: {
@@ -112,7 +108,7 @@ export default {
         valid = false;
       }
 
-      if (this.inviteCode == "") {
+      if (this.inviteCode === "") {
         this.errs.inviteCode = ["Code d'invitation incorrect."];
         valid = false;
       }
@@ -123,11 +119,10 @@ export default {
           gender: this.gender,
           firstName: this.firstName,
           lastName: this.lastName,
-          role: this.selectedRole,
           password: this.password,
           inviteCode: this.inviteCode.trim(),
-        })
-        // If we have any error while registering, grab that error info
+        });
+        
         if (err != null) {
           this.errs = err.data ?? {};
           this.errMsg = err.message ?? "Erreur lors de l'inscription !";
@@ -136,57 +131,103 @@ export default {
         this.errMsg = "Veuillez corriger les erreurs ci-dessus.";
       }
     },
-
   },
 };
-
 </script>
 
 <style scoped>
-.container {
-  max-width: 400px;
-  margin: auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+.page-container {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #fff;
+  padding: 2rem;
+  text-align: center;
 }
 
-.form-group {
-  margin-bottom: 15px;
-  display: block;
-  /* Pour faire en sorte que les champs passent sous le label */
+.login-box {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 6px;
+}
 
+h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  color: #111;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.8rem;
 }
 
 label {
-  display: block;
-  /* Pour que le label apparaisse au-dessus du champ */
-  margin-bottom: 5px;
-  /* Espacement entre le label et le champ */
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
 }
 
-input,
-select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  align-items: center;
+input, select {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #aaa;
+  border-radius: 4px;
 }
 
-
-button:hover {
-  background: #35495e;
+.btn-primary {
+  background: black;
+  color: white;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.error {
-  color: red;
-  font-size: 12px;
+.btn-primary:hover {
+  background-color: #369f73;
 }
 
-.success {
-  color: green;
+.divider {
+  margin: 2rem 0 1rem;
+  position: relative;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  display: inline-block;
+  height: 1px;
+  width: 30%;
+  background: #ccc;
+  vertical-align: middle;
+  margin: 0 0.5rem;
+}
+
+.error-msg {
+  color: #d93025;
+  font-size: 0.9rem;
+  margin-top: -0.5rem;
+}
+
+.register-link {
+  margin-top: 1rem;
   font-size: 14px;
+}
+
+.registerbutton {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.registerbutton:hover {
+  text-decoration: underline;
 }
 </style>
