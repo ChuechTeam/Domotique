@@ -1,37 +1,46 @@
 -- Sample data for the EHPAD
 
+    -- First remove all data
+DELETE FROM Device WHERE id >= 0;
+DELETE FROM DeviceType WHERE id >= 0;
+DELETE FROM Room WHERE id >= 0;
+DELETE FROM User WHERE id >= 0;
+DELETE FROM ActionLog WHERE id >= 0;
+DELETE FROM PowerLog WHERE id >= 0;
+DELETE FROM InviteCode WHERE id <> '';
+    
 -- Users (Residents, Caregivers, Admins)
 -- Gender: 0=MALE, 1=FEMALE, 2=UNDISCLOSED
 -- Role: 0=RESIDENT, 1=CAREGIVER, 2=ADMIN
 -- Level: 0=BEGINNER, 1=INTERMEDIATE, 2=ADVANCED, 3=EXPERT
-INSERT INTO `user` (`id`, `email`, `emailConfirmationToken`, `emailConfirmed`, `passHash`, `firstName`, `lastName`, `gender`, `role`, `level`, `points`) VALUES
-                                                                                                                                                             (1, 'jean.dupont@ehpad.fr', 1234567890123456, 1, 'pbkdf2_sha256$390000$...', 'Jean', 'Dupont', 0, 0, 1, 150),
-                                                                                                                                                             (2, 'marie.martin@ehpad.fr', 2345678901234567, 1, 'pbkdf2_sha256$390000$...', 'Marie', 'Martin', 1, 0, 0, 50),
-                                                                                                                                                             (3, 'pierre.bernard@ehpad.fr', 3456789012345678, 1, 'pbkdf2_sha256$390000$...', 'Pierre', 'Bernard', 0, 0, 1, 210),
-                                                                                                                                                             (4, 'sophie.dubois@ehpad.fr', 4567890123456789, 1, 'pbkdf2_sha256$390000$...', 'Sophie', 'Dubois', 1, 0, 2, 520),
-                                                                                                                                                             (5, 'jacques.robert@ehpad.fr', 5678901234567890, 1, 'pbkdf2_sha256$390000$...', 'Jacques', 'Robert', 0, 0, 0, 80),
-                                                                                                                                                             (6, 'isabelle.richard@ehpad.fr', 6789012345678901, 1, 'pbkdf2_sha256$390000$...', 'Isabelle', 'Richard', 1, 0, 1, 190),
-                                                                                                                                                             (7, 'alain.petit@ehpad.fr', 7890123456789012, 0, 'pbkdf2_sha256$390000$...', 'Alain', 'Petit', 0, 0, 0, 25), -- Email not confirmed
-                                                                                                                                                             (8, 'monique.durand@ehpad.fr', 8901234567890123, 1, 'pbkdf2_sha256$390000$...', 'Monique', 'Durand', 1, 0, 2, 480),
-                                                                                                                                                             (9, 'gerard.leroy@ehpad.fr', 9012345678901234, 1, 'pbkdf2_sha256$390000$...', 'Gérard', 'Leroy', 0, 0, 1, 250),
-                                                                                                                                                             (10, 'nicole.moreau@ehpad.fr', 1122334455667788, 1, 'pbkdf2_sha256$390000$...', 'Nicole', 'Moreau', 1, 0, 0, 95),
-                                                                                                                                                             (11, 'andre.simon@ehpad.fr', 2233445566778899, 1, 'pbkdf2_sha256$390000$...', 'André', 'Simon', 0, 0, 1, 310),
-                                                                                                                                                             (12, 'chantal.laurent@ehpad.fr', 3344556677889900, 1, 'pbkdf2_sha256$390000$...', 'Chantal', 'Laurent', 1, 0, 0, 115),
-                                                                                                                                                             (13, 'michel.lefevre@ehpad.fr', 4455667788990011, 1, 'pbkdf2_sha256$390000$...', 'Michel', 'Lefevre', 0, 0, 2, 600),
-                                                                                                                                                             (14, 'brigitte.roux@ehpad.fr', 5566778899001122, 1, 'pbkdf2_sha256$390000$...', 'Brigitte', 'Roux', 1, 0, 1, 280),
-                                                                                                                                                             (15, 'bernard.david@ehpad.fr', 6677889900112233, 1, 'pbkdf2_sha256$390000$...', 'Bernard', 'David', 0, 0, 0, 65),
+INSERT INTO User (`id`, `email`, `emailConfirmationToken`, `emailConfirmed`, `passHash`, `firstName`, `lastName`, `gender`, `role`, `level`, `points`) VALUES
+                                                                                                                                                             (1, 'jean.dupont@ehpad.fr', 1234567890123456, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Jean', 'Dupont', 0, 0, 1, 150),
+                                                                                                                                                             (2, 'marie.martin@ehpad.fr', 2345678901234567, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Marie', 'Martin', 1, 0, 0, 50),
+                                                                                                                                                             (3, 'pierre.bernard@ehpad.fr', 3456789012345678, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Pierre', 'Bernard', 0, 0, 1, 210),
+                                                                                                                                                             (4, 'sophie.dubois@ehpad.fr', 4567890123456789, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Sophie', 'Dubois', 1, 0, 2, 520),
+                                                                                                                                                             (5, 'jacques.robert@ehpad.fr', 5678901234567890, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Jacques', 'Robert', 0, 0, 0, 80),
+                                                                                                                                                             (6, 'isabelle.richard@ehpad.fr', 6789012345678901, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Isabelle', 'Richard', 1, 0, 1, 190),
+                                                                                                                                                             (7, 'alain.petit@ehpad.fr', 7890123456789012, 0, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Alain', 'Petit', 0, 0, 0, 25), -- Email not confirmed
+                                                                                                                                                             (8, 'monique.durand@ehpad.fr', 8901234567890123, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Monique', 'Durand', 1, 0, 2, 480),
+                                                                                                                                                             (9, 'gerard.leroy@ehpad.fr', 9012345678901234, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Gérard', 'Leroy', 0, 0, 1, 250),
+                                                                                                                                                             (10, 'nicole.moreau@ehpad.fr', 1122334455667788, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Nicole', 'Moreau', 1, 0, 0, 95),
+                                                                                                                                                             (11, 'andre.simon@ehpad.fr', 2233445566778899, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'André', 'Simon', 0, 0, 1, 310),
+                                                                                                                                                             (12, 'chantal.laurent@ehpad.fr', 3344556677889900, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Chantal', 'Laurent', 1, 0, 0, 115),
+                                                                                                                                                             (13, 'michel.lefevre@ehpad.fr', 4455667788990011, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Michel', 'Lefevre', 0, 0, 2, 600),
+                                                                                                                                                             (14, 'brigitte.roux@ehpad.fr', 5566778899001122, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Brigitte', 'Roux', 1, 0, 1, 280),
+                                                                                                                                                             (15, 'bernard.david@ehpad.fr', 6677889900112233, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Bernard', 'David', 0, 0, 0, 65),
 -- Caregivers
-                                                                                                                                                             (16, 'sylvie.caron@soignant.ehpad.fr', 7788990011223344, 1, 'pbkdf2_sha256$390000$...', 'Sylvie', 'Caron', 1, 1, 2, 800),
-                                                                                                                                                             (17, 'luc.mercier@soignant.ehpad.fr', 8899001122334455, 1, 'pbkdf2_sha256$390000$...', 'Luc', 'Mercier', 0, 1, 1, 450),
-                                                                                                                                                             (18, 'nathalie.guerin@soignant.ehpad.fr', 9900112233445566, 1, 'pbkdf2_sha256$390000$...', 'Nathalie', 'Guerin', 1, 1, 2, 750),
-                                                                                                                                                             (19, 'patrick.moulin@soignant.ehpad.fr', 1001122334455667, 1, 'pbkdf2_sha256$390000$...', 'Patrick', 'Moulin', 0, 1, 1, 400),
+                                                                                                                                                             (16, 'sylvie.caron@soignant.ehpad.fr', 7788990011223344, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Sylvie', 'Caron', 1, 1, 2, 800),
+                                                                                                                                                             (17, 'luc.mercier@soignant.ehpad.fr', 8899001122334455, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Luc', 'Mercier', 0, 1, 1, 450),
+                                                                                                                                                             (18, 'nathalie.guerin@soignant.ehpad.fr', 9900112233445566, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Nathalie', 'Guerin', 1, 1, 2, 750),
+                                                                                                                                                             (19, 'patrick.moulin@soignant.ehpad.fr', 1001122334455667, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Patrick', 'Moulin', 0, 1, 1, 400),
 -- Admins
-                                                                                                                                                             (20, 'admin.boss@ehpad.fr', 1112223334445556, 1, 'pbkdf2_sha256$390000$...', 'Admin', 'Boss', 2, 2, 3, 10000),
-                                                                                                                                                             (21, 'technicien.support@ehpad.fr', 2223334445556667, 1, 'pbkdf2_sha256$390000$...', 'Technicien', 'Support', 0, 2, 2, 1500);
+                                                                                                                                                             (20, 'admin.boss@ehpad.fr', 1112223334445556, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Admin', 'Boss', 2, 2, 3, 10000),
+                                                                                                                                                             (21, 'technicien.support@ehpad.fr', 2223334445556667, 1, '$pbkdf2$$zP3DwtYzvu0Kf+X2FQHptQ$WdxhcSVAbCVtEBvy+Q0uBNds31VXzoi70fjXZwB3sLPYGX4y8i18435bJm8YFdETC8Os2DtGovIKJKCK0Rb57A', 'Technicien', 'Support', 0, 2, 2, 1500);
 
 -- Rooms (Personal and Common)
 -- Colors are in 0xRRGGBB format (integer representation)
-INSERT INTO `room` (`id`, `name`, `color`, `ownerId`) VALUES
+INSERT INTO Room (`id`, `name`, `color`, `ownerId`) VALUES
                                                           (1, 'Chambre 101', 16777215, 1), -- White, Jean Dupont
                                                           (2, 'Chambre 102', 16761035, 2), -- Light Pink, Marie Martin
                                                           (3, 'Chambre 103', 15132390, 3), -- Light Blue, Pierre Bernard
@@ -59,15 +68,15 @@ INSERT INTO `room` (`id`, `name`, `color`, `ownerId`) VALUES
 -- Category: 0=OTHER, 1=LIGHTING, 2=KITCHEN, 3=SECURITY, 4=TEMPERATURE_REGULATION, 5=SPORT, 6=HEALTH, 7=GARDENING
 -- Attributes: JSON array of AttributeType ordinals
 -- Ordinals: CALORIES_BURNED=0, ACTIVITY_DURATION=1, TEMPERATURE=2, HUMIDITY=3, HEART_RATE=4, BLOOD_PRESSURE=5, BLOOD_OXYGEN=6, BLOOD_GLUCOSE=7, FAT_PERCENTAGE=8, STEPS=9, LAST_SLEEP_DURATION=10, MAX_VO2=11, RESPIRATORY_RATE=12, BODY_TEMPERATURE=13, BODY_WEIGHT=14, BATTERY_LEVEL=15, BODY_HEIGHT=16, LIGHT_INTENSITY=17
-INSERT INTO `devicetype` (`id`, `name`, `category`, `attributes`) VALUES
+INSERT INTO DeviceType (`id`, `name`, `category`, `attributes`) VALUES
                                                                       (1, 'Lampe Connectée', 1, CAST('[15, 17]' AS JSON)), -- Battery, Light Intensity
                                                                       (2, 'Thermostat Intelligent', 4, CAST('[2, 3]' AS JSON)), -- Temperature, Humidity
                                                                       (3, 'Bracelet d''Activité', 6, CAST('[0, 1, 4, 6, 9, 10, 12, 13, 15]' AS JSON)), -- Calories, Activity, HR, SpO2, Steps, Sleep, Resp Rate, Body Temp, Battery
                                                                       (4, 'Tensiomètre Connecté', 6, CAST('[5, 15]' AS JSON)), -- Blood Pressure, Battery
                                                                       (5, 'Balance Intelligente', 6, CAST('[8, 14, 15, 16]' AS JSON)), -- Fat %, Weight, Battery, Height (user enters height)
                                                                       (6, 'Capteur de Porte/Fenêtre', 3, CAST('[15]' AS JSON)), -- Battery
-                                                                      (7, 'Caméra de Surveillance', 3, CAST('[[], []]' AS JSON)), -- No specific attributes tracked here, maybe status implied
-                                                                      (8, 'Prise Intelligente', 0, CAST('[[], []]' AS JSON)), -- Simple on/off
+                                                                      (7, 'Caméra de Surveillance', 3, CAST('[]' AS JSON)), -- No specific attributes tracked here, maybe status implied
+                                                                      (8, 'Prise Intelligente', 0, CAST('[]' AS JSON)), -- Simple on/off
                                                                       (9, 'Pilulier Intelligent', 6, CAST('[15]' AS JSON)), -- Battery (tracks doses taken via interaction)
                                                                       (10, 'Détecteur de Chute', 6, CAST('[15]' AS JSON)), -- Battery (sends alert on fall)
                                                                       (11, 'Glucomètre Connecté', 6, CAST('[7, 15]' AS JSON)), -- Blood Glucose, Battery
@@ -81,7 +90,7 @@ INSERT INTO `devicetype` (`id`, `name`, `category`, `attributes`) VALUES
 
 -- Devices
 -- Attributes JSON format: [[key_ordinals], [values]]
-INSERT INTO `device` (`id`, `name`, `description`, `typeId`, `roomId`, `userId`, `attributes`, `powered`, `energyConsumption`, `deletionRequestedById`) VALUES
+INSERT INTO Device (`id`, `name`, `description`, `typeId`, `roomId`, `userId`, `attributes`, `powered`, `energyConsumption`, `deletionRequestedById`) VALUES
 -- Jean Dupont (User 1, Room 1)
 (1, 'Lampe Chevet Jean', 'Lampe sur la table de nuit', 1, 1, 1, CAST('[[15, 17], [85.0, 350.0]]' AS JSON), 1, 5.0, NULL),
 (2, 'Bracelet Jean', 'Bracelet d''activité Fitbit', 3, 1, 1, CAST('[[0, 1, 4, 6, 9, 10, 12, 13, 15], [15234.0, 2500.0, 72.0, 98.0, 123456.0, 420.0, 16.0, 36.8, 92.0]]' AS JSON), 1, 0.1, NULL),
@@ -178,7 +187,7 @@ INSERT INTO `device` (`id`, `name`, `description`, `typeId`, `roomId`, `userId`,
 (61, 'Détecteur Chute Ch 401', NULL, 10, 13, 13, CAST('[[15], [99.0]]' AS JSON), 1, 0.05, NULL);
 
 -- Power Logs (Sample entries)
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (1, 'POWER_ON', 5.0, NOW() - INTERVAL 2 HOUR),
                                                                                (5, 'POWER_ON', 7.0, NOW() - INTERVAL 1 HOUR),
                                                                                (25, 'POWER_ON', 1.5, NOW() - INTERVAL 5 HOUR),
@@ -193,7 +202,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
 -- TargetType: 0=DEVICE, 1=USER, 2=ROOM, 3=DEVICE_TYPE
 -- Operation: 0=CREATE, 1=UPDATE, 2=DELETE
 -- Flags: POWER_ON=1, POWER_OFF=2, DELETE_REQUESTED=4, DELETE_REQUEST_DELETED=8, PASSWORD_CHANGED=16, EMAIL_CONFIRMED=32
-INSERT INTO `actionlog` (`userId`, `targetId`, `targetType`, `operation`, `flags`, `time`) VALUES
+INSERT INTO ActionLog (`userId`, `targetId`, `targetType`, `operation`, `flags`, `time`) VALUES
                                                                                                (1, 1, 0, 1, 1, NOW() - INTERVAL 2 HOUR), -- Jean turned on device 1 (flag POWER_ON)
                                                                                                (16, 2, 0, 1, 0, NOW() - INTERVAL 2 DAY), -- Sylvie (caregiver) updated device 2 (Bracelet Jean - maybe settings)
                                                                                                (20, 5, 3, 0, 0, NOW() - INTERVAL 1 MONTH), -- Admin created DeviceType 5 (Balance)
@@ -206,7 +215,7 @@ INSERT INTO `actionlog` (`userId`, `targetId`, `targetType`, `operation`, `flags
                                                                                                (13, 22, 0, 1, 4, NOW() - INTERVAL 10 MINUTE); -- Michel requested deletion of device 22 (Tapis Marche)
 
 -- Login Logs (Sample entries)
-INSERT INTO `loginlog` (`userId`, `time`) VALUES
+INSERT INTO LoginLog (`userId`, `time`) VALUES
                                               (1, NOW() - INTERVAL 5 MINUTE),
                                               (4, NOW() - INTERVAL 1 HOUR),
                                               (16, NOW() - INTERVAL 15 MINUTE),
@@ -219,16 +228,14 @@ INSERT INTO `loginlog` (`userId`, `time`) VALUES
 
 -- Invite Codes (Sample entries)
 -- Role: 0=RESIDENT, 1=CAREGIVER, 2=ADMIN
-INSERT INTO `invitecode` (`id`, `usagesLeft`, `role`, `creatorId`, `createdAt`) VALUES
+INSERT INTO InviteCode (`id`, `usagesLeft`, `role`, `creatorId`, `createdAt`) VALUES
                                                                                     ('NEWCAREGIVER2024', 1, 1, 20, NOW() - INTERVAL 3 DAY), -- Invite code for one caregiver, created by Admin Boss
                                                                                     ('RESIDENTTEST01', 5, 0, 21, NOW() - INTERVAL 1 WEEK); -- Invite code for 5 residents, created by Tech Support
 
 -- Generated PowerLog Data --
 -- Timestamp: 2025-04-07 23:54:15 --
 
-DELETE FROM powerlog WHERE id >= 0;
-
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (1, 'POWER_OFF', 5.0, '2025-04-05 11:54:15'),
                                                                                (1, 'POWER_ON', 5.0, '2025-04-05 18:59:15'),
                                                                                (1, 'POWER_OFF', 5.0, '2025-04-06 02:08:15'),
@@ -242,7 +249,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (1, 'POWER_OFF', 5.0, '2025-04-07 17:50:15'),
                                                                                (1, 'POWER_ON', 5.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (2, 'POWER_OFF', 0.1, '2025-04-06 03:11:15'),
                                                                                (2, 'POWER_ON', 0.1, '2025-04-06 11:08:15'),
                                                                                (2, 'POWER_OFF', 0.1, '2025-04-06 16:33:15'),
@@ -252,7 +259,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (2, 'POWER_OFF', 0.1, '2025-04-07 21:02:15'),
                                                                                (2, 'POWER_ON', 0.1, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (3, 'POWER_ON', 0.5, '2025-04-05 00:41:15'),
                                                                                (3, 'POWER_OFF', 0.5, '2025-04-05 06:27:15'),
                                                                                (3, 'POWER_ON', 0.5, '2025-04-05 15:28:15'),
@@ -268,7 +275,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (3, 'POWER_ON', 0.5, '2025-04-07 19:13:15'),
                                                                                (3, 'POWER_OFF', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (4, 'POWER_OFF', 0.2, '2025-04-06 09:03:15'),
                                                                                (4, 'POWER_ON', 0.2, '2025-04-06 12:38:15'),
                                                                                (4, 'POWER_OFF', 0.2, '2025-04-06 19:28:15'),
@@ -280,7 +287,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (4, 'POWER_OFF', 0.2, '2025-04-07 17:17:15'),
                                                                                (4, 'POWER_ON', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (5, 'POWER_OFF', 7.0, '2025-04-07 03:44:15'),
                                                                                (5, 'POWER_ON', 7.0, '2025-04-07 12:47:15'),
                                                                                (5, 'POWER_OFF', 7.0, '2025-04-07 15:59:15'),
@@ -288,7 +295,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (5, 'POWER_OFF', 7.0, '2025-04-07 21:16:15'),
                                                                                (5, 'POWER_ON', 7.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (6, 'POWER_OFF', 0.3, '2025-04-04 21:23:15'),
                                                                                (6, 'POWER_ON', 0.3, '2025-04-05 00:20:15'),
                                                                                (6, 'POWER_OFF', 0.3, '2025-04-05 05:24:15'),
@@ -303,7 +310,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (6, 'POWER_ON', 0.3, '2025-04-07 15:31:15'),
                                                                                (6, 'POWER_OFF', 0.3, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (7, 'POWER_OFF', 0.05, '2025-04-05 20:53:15'),
                                                                                (7, 'POWER_ON', 0.05, '2025-04-06 02:30:15'),
                                                                                (7, 'POWER_OFF', 0.05, '2025-04-06 11:59:15'),
@@ -313,7 +320,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (7, 'POWER_OFF', 0.05, '2025-04-07 15:44:15'),
                                                                                (7, 'POWER_ON', 0.05, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (8, 'POWER_OFF', 1.0, '2025-04-05 18:41:15'),
                                                                                (8, 'POWER_ON', 1.0, '2025-04-05 21:40:15'),
                                                                                (8, 'POWER_OFF', 1.0, '2025-04-06 05:34:15'),
@@ -329,7 +336,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (8, 'POWER_OFF', 1.0, '2025-04-07 19:26:15'),
                                                                                (8, 'POWER_ON', 1.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (9, 'POWER_ON', 0.2, '2025-04-05 07:25:15'),
                                                                                (9, 'POWER_OFF', 0.2, '2025-04-05 16:40:15'),
                                                                                (9, 'POWER_ON', 0.2, '2025-04-05 21:29:15'),
@@ -343,7 +350,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (9, 'POWER_ON', 0.2, '2025-04-07 16:41:15'),
                                                                                (9, 'POWER_OFF', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (10, 'POWER_OFF', 0.1, '2025-04-04 19:31:15'),
                                                                                (10, 'POWER_ON', 0.1, '2025-04-05 05:17:15'),
                                                                                (10, 'POWER_OFF', 0.1, '2025-04-05 13:04:15'),
@@ -359,7 +366,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (10, 'POWER_OFF', 0.1, '2025-04-07 14:22:15'),
                                                                                (10, 'POWER_ON', 0.1, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (11, 'POWER_ON', 3.0, '2025-04-07 06:07:15'),
                                                                                (11, 'POWER_OFF', 3.0, '2025-04-07 06:28:15'),
                                                                                (11, 'POWER_ON', 3.0, '2025-04-07 07:56:15'),
@@ -367,7 +374,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (11, 'POWER_ON', 3.0, '2025-04-07 15:54:15'),
                                                                                (11, 'POWER_OFF', 3.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (12, 'POWER_ON', 0.4, '2025-04-05 10:29:15'),
                                                                                (12, 'POWER_OFF', 0.4, '2025-04-05 16:49:15'),
                                                                                (12, 'POWER_ON', 0.4, '2025-04-06 01:16:15'),
@@ -381,7 +388,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (12, 'POWER_ON', 0.4, '2025-04-07 15:02:15'),
                                                                                (12, 'POWER_OFF', 0.4, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (13, 'POWER_OFF', 0.02, '2025-04-05 15:41:15'),
                                                                                (13, 'POWER_ON', 0.02, '2025-04-05 18:28:15'),
                                                                                (13, 'POWER_OFF', 0.02, '2025-04-06 01:29:15'),
@@ -395,7 +402,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (13, 'POWER_OFF', 0.02, '2025-04-07 13:58:15'),
                                                                                (13, 'POWER_ON', 0.02, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (14, 'POWER_OFF', 12.0, '2025-04-06 11:38:15'),
                                                                                (14, 'POWER_ON', 12.0, '2025-04-06 16:42:15'),
                                                                                (14, 'POWER_OFF', 12.0, '2025-04-07 01:19:15'),
@@ -405,7 +412,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (14, 'POWER_OFF', 12.0, '2025-04-07 20:05:15'),
                                                                                (14, 'POWER_ON', 12.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (15, 'POWER_ON', 0.5, '2025-04-05 06:28:15'),
                                                                                (15, 'POWER_OFF', 0.5, '2025-04-05 14:39:15'),
                                                                                (15, 'POWER_ON', 0.5, '2025-04-05 21:51:15'),
@@ -421,14 +428,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (15, 'POWER_ON', 0.5, '2025-04-07 17:02:15'),
                                                                                (15, 'POWER_OFF', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (16, 'POWER_OFF', 0.3, '2025-04-07 04:00:15'),
                                                                                (16, 'POWER_ON', 0.3, '2025-04-07 10:02:15'),
                                                                                (16, 'POWER_OFF', 0.3, '2025-04-07 15:31:15'),
                                                                                (16, 'POWER_ON', 0.3, '2025-04-07 15:52:15'),
                                                                                (16, 'POWER_OFF', 0.3, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (17, 'POWER_OFF', 0.5, '2025-04-04 09:22:15'),
                                                                                (17, 'POWER_ON', 0.5, '2025-04-04 16:15:15'),
                                                                                (17, 'POWER_OFF', 0.5, '2025-04-04 20:00:15'),
@@ -444,7 +451,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (17, 'POWER_OFF', 0.5, '2025-04-07 16:08:15'),
                                                                                (17, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (18, 'POWER_ON', 0.3, '2025-04-06 11:49:15'),
                                                                                (18, 'POWER_OFF', 0.3, '2025-04-06 15:44:15'),
                                                                                (18, 'POWER_ON', 0.3, '2025-04-07 01:23:15'),
@@ -453,7 +460,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (18, 'POWER_OFF', 0.3, '2025-04-07 15:28:15'),
                                                                                (18, 'POWER_ON', 0.3, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (19, 'POWER_OFF', 0.2, '2025-04-06 17:50:15'),
                                                                                (19, 'POWER_ON', 0.2, '2025-04-06 21:02:15'),
                                                                                (19, 'POWER_OFF', 0.2, '2025-04-07 04:31:15'),
@@ -461,7 +468,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (19, 'POWER_OFF', 0.2, '2025-04-07 15:20:15'),
                                                                                (19, 'POWER_ON', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (20, 'POWER_OFF', 0.1, '2025-04-06 01:30:15'),
                                                                                (20, 'POWER_ON', 0.1, '2025-04-06 01:55:15'),
                                                                                (20, 'POWER_OFF', 0.1, '2025-04-06 06:55:15'),
@@ -473,7 +480,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (20, 'POWER_OFF', 0.1, '2025-04-07 16:34:15'),
                                                                                (20, 'POWER_ON', 0.1, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (21, 'POWER_ON', 6.0, '2025-04-06 01:31:15'),
                                                                                (21, 'POWER_OFF', 6.0, '2025-04-06 02:41:15'),
                                                                                (21, 'POWER_ON', 6.0, '2025-04-06 12:15:15'),
@@ -483,7 +490,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (21, 'POWER_ON', 6.0, '2025-04-07 18:56:15'),
                                                                                (21, 'POWER_OFF', 6.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (22, 'POWER_ON', 200.0, '2025-04-05 12:48:15'),
                                                                                (22, 'POWER_OFF', 200.0, '2025-04-05 13:15:15'),
                                                                                (22, 'POWER_ON', 200.0, '2025-04-05 14:52:15'),
@@ -499,7 +506,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (22, 'POWER_ON', 200.0, '2025-04-07 15:51:15'),
                                                                                (22, 'POWER_OFF', 200.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (23, 'POWER_OFF', 0.5, '2025-04-06 06:26:15'),
                                                                                (23, 'POWER_ON', 0.5, '2025-04-06 12:13:15'),
                                                                                (23, 'POWER_OFF', 0.5, '2025-04-06 15:57:15'),
@@ -510,7 +517,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (23, 'POWER_ON', 0.5, '2025-04-07 20:35:15'),
                                                                                (23, 'POWER_OFF', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (24, 'POWER_ON', 0.2, '2025-04-04 21:56:15'),
                                                                                (24, 'POWER_OFF', 0.2, '2025-04-05 07:25:15'),
                                                                                (24, 'POWER_ON', 0.2, '2025-04-05 13:36:15'),
@@ -527,7 +534,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (24, 'POWER_OFF', 0.2, '2025-04-07 23:31:15'),
                                                                                (24, 'POWER_ON', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (25, 'POWER_ON', 1.5, '2025-04-06 01:09:15'),
                                                                                (25, 'POWER_OFF', 1.5, '2025-04-06 10:33:15'),
                                                                                (25, 'POWER_ON', 1.5, '2025-04-06 17:57:15'),
@@ -538,7 +545,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (25, 'POWER_OFF', 1.5, '2025-04-07 14:07:15'),
                                                                                (25, 'POWER_ON', 1.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (26, 'POWER_ON', 10.0, '2025-04-06 05:49:15'),
                                                                                (26, 'POWER_OFF', 10.0, '2025-04-06 14:18:15'),
                                                                                (26, 'POWER_ON', 10.0, '2025-04-06 23:48:15'),
@@ -547,7 +554,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (26, 'POWER_OFF', 10.0, '2025-04-07 21:45:15'),
                                                                                (26, 'POWER_ON', 10.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (27, 'POWER_OFF', 10.0, '2025-04-06 10:28:15'),
                                                                                (27, 'POWER_ON', 10.0, '2025-04-06 13:26:15'),
                                                                                (27, 'POWER_OFF', 10.0, '2025-04-06 15:57:15'),
@@ -559,14 +566,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (27, 'POWER_OFF', 10.0, '2025-04-07 21:35:15'),
                                                                                (27, 'POWER_ON', 10.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (28, 'POWER_ON', 4.0, '2025-04-06 23:27:15'),
                                                                                (28, 'POWER_OFF', 4.0, '2025-04-07 09:12:15'),
                                                                                (28, 'POWER_ON', 4.0, '2025-04-07 14:40:15'),
                                                                                (28, 'POWER_OFF', 4.0, '2025-04-07 19:24:15'),
                                                                                (28, 'POWER_ON', 4.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (29, 'POWER_ON', 0.8, '2025-04-05 01:39:15'),
                                                                                (29, 'POWER_OFF', 0.8, '2025-04-05 06:44:15'),
                                                                                (29, 'POWER_ON', 0.8, '2025-04-05 10:11:15'),
@@ -581,7 +588,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (29, 'POWER_OFF', 0.8, '2025-04-07 14:44:15'),
                                                                                (29, 'POWER_ON', 0.8, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (30, 'POWER_OFF', 0.5, '2025-04-06 19:42:15'),
                                                                                (30, 'POWER_ON', 0.5, '2025-04-06 19:47:15'),
                                                                                (30, 'POWER_OFF', 0.5, '2025-04-06 22:24:15'),
@@ -593,7 +600,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (30, 'POWER_OFF', 0.5, '2025-04-07 20:47:15'),
                                                                                (30, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (31, 'POWER_OFF', 200.0, '2025-04-05 05:14:15'),
                                                                                (31, 'POWER_ON', 200.0, '2025-04-05 06:28:15'),
                                                                                (31, 'POWER_OFF', 200.0, '2025-04-05 12:40:15'),
@@ -608,7 +615,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (31, 'POWER_ON', 200.0, '2025-04-07 15:20:15'),
                                                                                (31, 'POWER_OFF', 200.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (32, 'POWER_OFF', 3.0, '2025-04-05 08:21:15'),
                                                                                (32, 'POWER_ON', 3.0, '2025-04-05 10:54:15'),
                                                                                (32, 'POWER_OFF', 3.0, '2025-04-05 20:26:15'),
@@ -623,7 +630,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (32, 'POWER_ON', 3.0, '2025-04-07 23:11:15'),
                                                                                (32, 'POWER_OFF', 3.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (33, 'POWER_ON', 25.0, '2025-04-06 08:04:15'),
                                                                                (33, 'POWER_OFF', 25.0, '2025-04-06 15:14:15'),
                                                                                (33, 'POWER_ON', 25.0, '2025-04-07 00:16:15'),
@@ -636,7 +643,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (33, 'POWER_OFF', 25.0, '2025-04-07 21:53:15'),
                                                                                (33, 'POWER_ON', 25.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (34, 'POWER_OFF', 15.0, '2025-04-05 16:48:15'),
                                                                                (34, 'POWER_ON', 15.0, '2025-04-05 18:17:15'),
                                                                                (34, 'POWER_OFF', 15.0, '2025-04-05 19:27:15'),
@@ -652,7 +659,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (34, 'POWER_OFF', 15.0, '2025-04-07 22:51:15'),
                                                                                (34, 'POWER_ON', 15.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (35, 'POWER_OFF', 15.0, '2025-04-05 14:13:15'),
                                                                                (35, 'POWER_ON', 15.0, '2025-04-05 18:30:15'),
                                                                                (35, 'POWER_OFF', 15.0, '2025-04-06 02:47:15'),
@@ -666,7 +673,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (35, 'POWER_OFF', 15.0, '2025-04-07 14:57:15'),
                                                                                (35, 'POWER_ON', 15.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (36, 'POWER_OFF', 0.02, '2025-04-06 09:48:15'),
                                                                                (36, 'POWER_ON', 0.02, '2025-04-06 13:44:15'),
                                                                                (36, 'POWER_OFF', 0.02, '2025-04-06 20:47:15'),
@@ -678,7 +685,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (36, 'POWER_OFF', 0.02, '2025-04-07 19:38:15'),
                                                                                (36, 'POWER_ON', 0.02, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (37, 'POWER_ON', 0.6, '2025-04-06 08:34:15'),
                                                                                (37, 'POWER_OFF', 0.6, '2025-04-06 16:12:15'),
                                                                                (37, 'POWER_ON', 0.6, '2025-04-06 21:44:15'),
@@ -686,7 +693,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (37, 'POWER_ON', 0.6, '2025-04-07 13:54:15'),
                                                                                (37, 'POWER_OFF', 0.6, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (38, 'POWER_ON', 0.4, '2025-04-06 15:59:15'),
                                                                                (38, 'POWER_OFF', 0.4, '2025-04-06 16:46:15'),
                                                                                (38, 'POWER_ON', 0.4, '2025-04-06 20:49:15'),
@@ -696,7 +703,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (38, 'POWER_ON', 0.4, '2025-04-07 20:59:15'),
                                                                                (38, 'POWER_OFF', 0.4, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (39, 'POWER_OFF', 0.3, '2025-04-06 08:19:15'),
                                                                                (39, 'POWER_ON', 0.3, '2025-04-06 12:18:15'),
                                                                                (39, 'POWER_OFF', 0.3, '2025-04-06 15:50:15'),
@@ -709,7 +716,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (39, 'POWER_ON', 0.3, '2025-04-07 20:57:15'),
                                                                                (39, 'POWER_OFF', 0.3, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (40, 'POWER_ON', 0.4, '2025-04-06 11:31:15'),
                                                                                (40, 'POWER_OFF', 0.4, '2025-04-06 16:29:15'),
                                                                                (40, 'POWER_ON', 0.4, '2025-04-07 02:10:15'),
@@ -717,14 +724,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (40, 'POWER_ON', 0.4, '2025-04-07 18:15:15'),
                                                                                (40, 'POWER_OFF', 0.4, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (41, 'POWER_ON', 1.5, '2025-04-06 21:09:15'),
                                                                                (41, 'POWER_OFF', 1.5, '2025-04-07 06:17:15'),
                                                                                (41, 'POWER_ON', 1.5, '2025-04-07 16:09:15'),
                                                                                (41, 'POWER_OFF', 1.5, '2025-04-07 20:50:15'),
                                                                                (41, 'POWER_ON', 1.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (42, 'POWER_OFF', 0.5, '2025-04-05 20:44:15'),
                                                                                (42, 'POWER_ON', 0.5, '2025-04-06 04:45:15'),
                                                                                (42, 'POWER_OFF', 0.5, '2025-04-06 05:15:15'),
@@ -738,7 +745,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (42, 'POWER_OFF', 0.5, '2025-04-07 18:43:15'),
                                                                                (42, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (43, 'POWER_OFF', 0.8, '2025-04-06 11:46:15'),
                                                                                (43, 'POWER_ON', 0.8, '2025-04-06 18:43:15'),
                                                                                (43, 'POWER_OFF', 0.8, '2025-04-07 03:55:15'),
@@ -748,7 +755,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (43, 'POWER_OFF', 0.8, '2025-04-07 16:16:15'),
                                                                                (43, 'POWER_ON', 0.8, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (44, 'POWER_ON', 5.0, '2025-04-05 19:44:15'),
                                                                                (44, 'POWER_OFF', 5.0, '2025-04-06 02:23:15'),
                                                                                (44, 'POWER_ON', 5.0, '2025-04-06 09:24:15'),
@@ -760,14 +767,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (44, 'POWER_ON', 5.0, '2025-04-07 22:15:15'),
                                                                                (44, 'POWER_OFF', 5.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (45, 'POWER_ON', 0.02, '2025-04-06 19:14:15'),
                                                                                (45, 'POWER_OFF', 0.02, '2025-04-07 05:04:15'),
                                                                                (45, 'POWER_ON', 0.02, '2025-04-07 11:03:15'),
                                                                                (45, 'POWER_OFF', 0.02, '2025-04-07 16:23:15'),
                                                                                (45, 'POWER_ON', 0.02, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (46, 'POWER_OFF', 0.5, '2025-04-06 06:35:15'),
                                                                                (46, 'POWER_ON', 0.5, '2025-04-06 06:56:15'),
                                                                                (46, 'POWER_OFF', 0.5, '2025-04-06 14:47:15'),
@@ -777,14 +784,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (46, 'POWER_OFF', 0.5, '2025-04-07 16:28:15'),
                                                                                (46, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (47, 'POWER_ON', 12.0, '2025-04-07 02:59:15'),
                                                                                (47, 'POWER_OFF', 12.0, '2025-04-07 11:07:15'),
                                                                                (47, 'POWER_ON', 12.0, '2025-04-07 15:58:15'),
                                                                                (47, 'POWER_OFF', 12.0, '2025-04-07 19:02:15'),
                                                                                (47, 'POWER_ON', 12.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (48, 'POWER_ON', 0.1, '2025-04-05 08:37:15'),
                                                                                (48, 'POWER_OFF', 0.1, '2025-04-05 18:07:15'),
                                                                                (48, 'POWER_ON', 0.1, '2025-04-05 21:51:15'),
@@ -797,7 +804,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (48, 'POWER_OFF', 0.1, '2025-04-07 14:45:15'),
                                                                                (48, 'POWER_ON', 0.1, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (49, 'POWER_ON', 20.0, '2025-04-04 19:49:15'),
                                                                                (49, 'POWER_OFF', 20.0, '2025-04-05 01:32:15'),
                                                                                (49, 'POWER_ON', 20.0, '2025-04-05 09:12:15'),
@@ -814,7 +821,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (49, 'POWER_OFF', 20.0, '2025-04-07 17:55:15'),
                                                                                (49, 'POWER_ON', 20.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (50, 'POWER_ON', 4.5, '2025-04-06 09:26:15'),
                                                                                (50, 'POWER_OFF', 4.5, '2025-04-06 09:49:15'),
                                                                                (50, 'POWER_ON', 4.5, '2025-04-06 13:26:15'),
@@ -827,7 +834,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (50, 'POWER_OFF', 4.5, '2025-04-07 17:06:15'),
                                                                                (50, 'POWER_ON', 4.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (51, 'POWER_OFF', 1.0, '2025-04-06 05:33:15'),
                                                                                (51, 'POWER_ON', 1.0, '2025-04-06 06:58:15'),
                                                                                (51, 'POWER_OFF', 1.0, '2025-04-06 14:11:15'),
@@ -839,7 +846,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (51, 'POWER_OFF', 1.0, '2025-04-07 14:54:15'),
                                                                                (51, 'POWER_ON', 1.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (52, 'POWER_ON', 0.5, '2025-04-03 22:17:15'),
                                                                                (52, 'POWER_OFF', 0.5, '2025-04-04 07:40:15'),
                                                                                (52, 'POWER_ON', 0.5, '2025-04-04 15:31:15'),
@@ -856,14 +863,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (52, 'POWER_OFF', 0.5, '2025-04-07 16:20:15'),
                                                                                (52, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (53, 'POWER_ON', 9.0, '2025-04-07 01:01:15'),
                                                                                (53, 'POWER_OFF', 9.0, '2025-04-07 08:19:15'),
                                                                                (53, 'POWER_ON', 9.0, '2025-04-07 12:31:15'),
                                                                                (53, 'POWER_OFF', 9.0, '2025-04-07 18:15:15'),
                                                                                (53, 'POWER_ON', 9.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (54, 'POWER_OFF', 0.02, '2025-04-06 05:01:15'),
                                                                                (54, 'POWER_ON', 0.02, '2025-04-06 06:45:15'),
                                                                                (54, 'POWER_OFF', 0.02, '2025-04-06 16:04:15'),
@@ -873,14 +880,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (54, 'POWER_OFF', 0.02, '2025-04-07 16:48:15'),
                                                                                (54, 'POWER_ON', 0.02, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (55, 'POWER_ON', 6.0, '2025-04-07 11:42:15'),
                                                                                (55, 'POWER_OFF', 6.0, '2025-04-07 13:15:15'),
                                                                                (55, 'POWER_ON', 6.0, '2025-04-07 14:51:15'),
                                                                                (55, 'POWER_OFF', 6.0, '2025-04-07 21:14:15'),
                                                                                (55, 'POWER_ON', 6.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (56, 'POWER_ON', 0.2, '2025-04-06 05:19:15'),
                                                                                (56, 'POWER_OFF', 0.2, '2025-04-06 08:19:15'),
                                                                                (56, 'POWER_ON', 0.2, '2025-04-06 15:07:15'),
@@ -894,7 +901,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (56, 'POWER_ON', 0.2, '2025-04-07 22:02:15'),
                                                                                (56, 'POWER_OFF', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (57, 'POWER_OFF', 0.2, '2025-04-06 07:44:15'),
                                                                                (57, 'POWER_ON', 0.2, '2025-04-06 08:05:15'),
                                                                                (57, 'POWER_OFF', 0.2, '2025-04-06 17:03:15'),
@@ -906,14 +913,14 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (57, 'POWER_OFF', 0.2, '2025-04-07 22:16:15'),
                                                                                (57, 'POWER_ON', 0.2, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (58, 'POWER_ON', 0.5, '2025-04-06 22:12:15'),
                                                                                (58, 'POWER_OFF', 0.5, '2025-04-07 07:56:15'),
                                                                                (58, 'POWER_ON', 0.5, '2025-04-07 15:42:15'),
                                                                                (58, 'POWER_OFF', 0.5, '2025-04-07 22:29:15'),
                                                                                (58, 'POWER_ON', 0.5, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (59, 'POWER_OFF', 18.0, '2025-04-06 11:24:15'),
                                                                                (59, 'POWER_ON', 18.0, '2025-04-06 12:52:15'),
                                                                                (59, 'POWER_OFF', 18.0, '2025-04-06 22:47:15'),
@@ -927,7 +934,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (59, 'POWER_OFF', 18.0, '2025-04-07 18:50:15'),
                                                                                (59, 'POWER_ON', 18.0, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (60, 'POWER_ON', 0.02, '2025-04-06 09:50:15'),
                                                                                (60, 'POWER_OFF', 0.02, '2025-04-06 09:59:15'),
                                                                                (60, 'POWER_ON', 0.02, '2025-04-06 12:49:15'),
@@ -942,7 +949,7 @@ INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUE
                                                                                (60, 'POWER_OFF', 0.02, '2025-04-07 23:18:15'),
                                                                                (60, 'POWER_ON', 0.02, '2025-04-07 23:54:15');
 
-INSERT INTO `powerlog` (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
+INSERT INTO PowerLog (`deviceId`, `status`, `energyConsumption`, `time`) VALUES
                                                                                (61, 'POWER_ON', 0.05, '2025-04-05 07:46:15'),
                                                                                (61, 'POWER_OFF', 0.05, '2025-04-05 12:16:15'),
                                                                                (61, 'POWER_ON', 0.05, '2025-04-05 16:09:15'),

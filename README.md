@@ -1,8 +1,8 @@
-# Projet domotique (nom temporaire)
+# Reetraités connectés
 
 ## Prérequis
 
-🤩 **Vous avez la flemme et êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !**
+🤩 **Vous êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !**
 
 - JDK (Java Development Kit) 23 ou plus  
   **Commandes Ubuntu (une ligne = une commande)**
@@ -22,7 +22,7 @@
 
 ## Première configuration
 
-🤩 **Vous avez la flemme et êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !**
+🤩 **Vous êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !**
 
 1. Cloner le dépôt dans un dossier au choix et s'y rendre (important !)
    **Terminal (Linux & Windows) :**
@@ -48,14 +48,18 @@
    **Terminal (Linux) :** `./gradlew updateDatabase` ou `./liquibase`     
    **Terminal (Windows) :** `gradlew.bat build` ou `./liquibase.bat`    
    **IntelliJ :** Onglet Gradle > Sync All Gradle Projects
-6. Lancer l'application !  
-   **Terminal (Linux) :** `./gradlew run`    
-   **Terminal (Windows) :** `gradlew.bat run`    
+6. Lancer l'application !  (Avec les données de base)
+   **Terminal (Linux) :** `./gradlew runSeed`    
+   **Terminal (Windows) :** `gradlew.bat runSeed`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
 
 Puis, ouvrez le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
 
 Il ne reste plus qu'à créer votre premier compte administrateur avec le code d'invitation "retraitons"
+
+Pour lancer l'application, deux choix : 
+- **Avec les données de base** : `./gradlew runSeed` ou `gradlew.bat runSeed` (réinitialise la base de donnée)
+- **Sans les données de base** : `./gradlew run` ou `gradlew.bat run`
 
 ## Ouh là je suis perdu là
 
@@ -64,9 +68,6 @@ Regarde le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
 ## Comment tester le backend ?
 
 **Recommendation :** utiliser la documentation incluse `http://localhost:7777/api-docs`
-
-Autre possibilité : utiliser l'application [Yaak](https://yaak.app/download) puis importer le fichier OpenAPI
-`src/main/resources/openapi.yml`.
 
 ## Documentation supplémentaire
 

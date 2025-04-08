@@ -159,6 +159,18 @@ tasks.withType<JavaExec> {
     workingDir = rootDir.resolve("src/back")
 }
 
+// Create the "runSeed" task to run the application with database seeding enabled
+tasks.register<JavaExec>("runSeed") {
+    group = "application"
+    description = "Runs the application with database seeding enabled"
+
+    mainClass.set(application.mainClass)
+    classpath = sourceSets["main"].runtimeClasspath
+
+    jvmArgs = listOf("-Dvertxweb.environment=dev", "-Ddomotique.srcroot=" + rootDir.resolve("src/back"), "-Ddomotique.seedDatabase=true")
+    workingDir = rootDir.resolve("src/back")
+}
+
 // This block just adds the config-dev-local.properties file if it doesn't exist
 gradle.projectsEvaluated {
     val file = projectDir.resolve("src/back/resources/config-dev-local.properties")
