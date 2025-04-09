@@ -63,4 +63,4 @@ else
   echo "✅ Database initialized!"
 fi
 
-echo "🚀 Setup complete! 🎉  --- Launch './gradlew.run' to run the app!"
+echo "🚀 Setup complete! 🎉  --- Launch './gradlew runSeed' to run the app!"

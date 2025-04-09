@@ -46,6 +46,14 @@ function viewDeviceDetails(device: CompleteDevice) {
     params: { deviceId: device.id }
   });
 }
+
+function roomTagStyle(col: number) {
+  const hex ='#' + col.toString(16).padStart(6, '0');
+  return {
+    '--p-tag-primary-background': `color-mix(in oklab, ${hex}, black 33%)`,
+    '--p-tag-primary-color': '#fff'
+  };
+}
 </script>
 
 <template>
@@ -67,7 +75,7 @@ function viewDeviceDetails(device: CompleteDevice) {
       <div class="device-info">
         <Tag icon="pi pi-lightbulb" rounded severity="warn">{{ device.energyConsumption.toFixed(2) + ' Wh' }}</Tag>
         <Tag icon="pi pi-home" rounded
-          :style="{ '--p-tag-primary-background': '#' + device.room!.color.toString(16).padStart(6, '0'), '--p-tag-primary-color': '#fff' }"
+          :style="roomTagStyle(device.room!.color)"
           v-if="device.room">{{ device.room.name }}</Tag>
         <Chip :label="deviceCategoryLabels[device.type.category]" />
         <Chip v-if="device.owner">

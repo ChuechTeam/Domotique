@@ -1,8 +1,10 @@
-# Reetraités connectés
+# Retraités connectés
+
+Le site d'appareils connectés pour les retraités en EHPAD.
 
 ## Prérequis
 
-🤩 **Vous êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !**
+**Vous êtes sur Linux ? Clonez le repo et lancez le script `./setup.sh` qui s'occupe de tout !**
 
 - JDK (Java Development Kit) 23 ou plus  
   **Commandes Ubuntu (une ligne = une commande)**
@@ -22,7 +24,7 @@
 
 ## Première configuration
 
-🤩 **Vous êtes sur Linux ? Faites que l'étape 2 et lancez le script `./setup.sh` qui s'occupe de tout !**
+**Vous êtes sur Linux ? Faites que l'étape 1 et lancez le script `./setup.sh` qui s'occupe de tout !**
 
 1. Cloner le dépôt dans un dossier au choix et s'y rendre (important !)
    **Terminal (Linux & Windows) :**
@@ -32,8 +34,8 @@
    ```
    **IntelliJ :** File > New > Project from Version Control > GitHub
 2. Télécharger toutes les dépendances du projet Java  
-   **Terminal (Linux) :** `./gradlew build`  
-   **Terminal (Windows) :** `gradlew.bat build`  
+   **Terminal (Linux) :** `./gradlew classes`  
+   **Terminal (Windows) :** `gradlew.bat classes`  
    **IntelliJ :** Onglet Gradle > Sync All Gradle Projects
 3. Télécharger toutes les dépendances du projet Frontend  
    **Terminal (Linux & Windows) :** 
@@ -48,7 +50,7 @@
    **Terminal (Linux) :** `./gradlew updateDatabase` ou `./liquibase`     
    **Terminal (Windows) :** `gradlew.bat build` ou `./liquibase.bat`    
    **IntelliJ :** Onglet Gradle > Sync All Gradle Projects
-6. Lancer l'application !  (Avec les données de base)
+6. Lancer l'application ! (Avec les données de base)  
    **Terminal (Linux) :** `./gradlew runSeed`    
    **Terminal (Windows) :** `gradlew.bat runSeed`    
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
@@ -61,9 +63,12 @@ Pour lancer l'application, deux choix :
 - **Avec les données de base** : `./gradlew runSeed` ou `gradlew.bat runSeed` (réinitialise la base de donnée)
 - **Sans les données de base** : `./gradlew run` ou `gradlew.bat run`
 
-## Ouh là je suis perdu là
+Avec ces données de base, tous les utilisateurs ont pour mot de passe "mot2passe". 
+L'administrateur a pour e-mail "admin.boss@ehpad.fr"
 
-Regarde le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
+## Que faire si je suis perdu ?
+
+Regardez le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
 
 ## Comment tester le backend ?
 
@@ -83,4 +88,4 @@ Voir le dossier `docs/` du projet :
 | **[Cookbook Database Update](docs/COOKBOOK_DatabaseUpdate.md)** | Fiche pratique pour utiliser Liquibase                               |
 | **[API JavaScript](docs/API_JavaScript.md)**                    | Guide pour utiliser le client API du JavaScript                      |
 | **Script Javadoc** (`docs/javadoc`)                             | Script à lancer pour générer les javadocs accessibles sur navigateur |
-| **[Help](docs/HELP.md)**                                        | Liens un peu au pif de documentation                                 |
+| **[Help](docs/HELP.md)**                                        | Liens de documentation pris un peu au hasard                         |
