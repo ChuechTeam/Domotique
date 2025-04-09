@@ -26,7 +26,7 @@ Le site d'appareils connectés pour les retraités en EHPAD.
 
 **Vous êtes sur Linux ? Faites que l'étape 1 et lancez le script `./setup.sh` qui s'occupe de tout !**
 
-1. Cloner le dépôt dans un dossier au choix et s'y rendre (important !)
+1. Cloner le dépôt dans un dossier au choix et s'y rendre (important !)  
    **Terminal (Linux & Windows) :**
    ```bash
    git clone https://github.com/ChuechTeam/Domotique.git

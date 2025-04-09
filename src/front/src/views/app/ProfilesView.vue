@@ -123,8 +123,11 @@ load(); // Initial load
                     <InputIcon class="pi pi-search" />
                     <InputText v-model="filters.fullName" fluid placeholder="Rechercher un profil" />
                 </IconField>
-                <Button v-if="!allUsersMode && canSearchAllUsers" label="Tous les profils" @click="allUsersMode = true"
-                    icon="pi pi-users" />
+                <div v-if="!allUsersMode" class="d-flex gap-2 buttons">
+                    <Button label="Tous les profils" @click="allUsersMode = true" v-if="canSearchAllUsers" icon="pi pi-users" />
+                    <Button label="Mon profil" icon="pi pi-user" class="d-sm-flex d-md-none" @click="router.push({ name: 'profile', params: { userId: auth.userId } })" />
+                </div>
+                
                 <Button v-if="allUsersMode" icon="pi pi-arrow-left" label="Retour" @click="allUsersMode = false" />
                 <div v-if="allUsersMode" class="all-users-box">Consultation de tous les profils</div>
             </div>
@@ -278,6 +281,10 @@ load(); // Initial load
     .search-section {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .buttons > * {
+        flex: 1;
     }
 }
 </style>
