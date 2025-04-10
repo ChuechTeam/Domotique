@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-  
     <div class="login-box">
       <h2>Se connecter </h2>
 
@@ -20,24 +19,23 @@
 
       <p class="consent-text">
         En continuant, vous acceptez nos
-        <a href="#">Conditions générales</a>,
-        <a href="#">Conditions d’utilisation</a> et
-        <a href="#">Politique de confidentialité</a>.
+        <a href="https://policies.google.com/terms?hl=fr" target="_blank" rel="noopener noreferrer">
+          Conditions générales, Conditions d’utilisation et Politique de confidentialité
+        </a>.
       </p>
 
       <p class="register-link">
-      Nouveau ici ?
-      <RouterLink class="regiterbutton" to="/register">Inscrivez-vous maintenant</RouterLink>
-    </p>
+        Nouveau ici ?
+        <RouterLink class="registerbutton" to="/register">Inscrivez-vous maintenant</RouterLink>
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { findErrData } from '@/api'
-import { useAuthStore } from '@/stores/auth'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -45,7 +43,6 @@ const auth = useAuthStore()
 const identifier = ref('')
 const password = ref('')
 const error = ref('')
-
 const loginProm = ref(null)
 
 const handleLogin = () => {
@@ -60,8 +57,6 @@ const handleLogin = () => {
     loginProm.value = null
   })
 }
-
-
 </script>
 
 <style scoped>
@@ -150,6 +145,7 @@ input {
   color: #111;
   text-decoration: underline;
 }
+
 .register-link {
   margin-top: 1rem;
   font-size: 14px;
@@ -159,6 +155,7 @@ input {
   text-decoration: none;
   font-weight: bold;
 }
+
 .error-msg {
   color: #d93025;
   font-size: 0.9rem;
