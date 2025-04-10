@@ -86,24 +86,29 @@ const flagIcons: Record<ActionLogFlags, string> = {
 
             <div class="controls mb-3 d-flex gap-3 flex-column flex-lg-row">
                 <IftaLabel class="flex-grow-1" style="flex-basis: 0;">
-                    <Select v-model="filters.operation" :options="actionLogOperations" :option-label="x => actionLogOperationLabels[x]" 
-                        placeholder="Toutes les opérations" fluid show-clear/>
+                    <Select v-model="filters.operation" :options="actionLogOperations"
+                        :option-label="x => actionLogOperationLabels[x]" placeholder="Toutes les opérations" fluid
+                        show-clear />
                     <label>Opération</label>
                 </IftaLabel>
                 <IftaLabel class="flex-grow-1" style="flex-basis: 0;">
-                    <Select v-model="filters.target" :options="actionLogTargets" :option-label="x => actionLogTargetLabels[x]" 
-                        placeholder="Tous les éléments" fluid show-clear/>
+                    <Select v-model="filters.target" :options="actionLogTargets"
+                        :option-label="x => actionLogTargetLabels[x]" placeholder="Tous les éléments" fluid
+                        show-clear />
                     <label>Élément modifié</label>
                 </IftaLabel>
             </div>
 
             <div class="d-flex flex-column gap-3">
                 <div v-for="a in actions" class="action" :class="classesFor(a)">
-                    <div class="act-title"><span v-if=a.user class="fw-bold">{{ a.user.firstName + ' ' + a.user.lastName
-                            }}</span> a
+                    <div class="act-title">
+                        <RouterLink v-if=a.user class="fw-bold light-link"
+                            :to="{ name: 'profile', params: { userId: a.user.id } }">
+                            {{ a.user.firstName + ' ' + a.user.lastName
+                            }}</RouterLink><span v-else class="opacity-75">[Utilisateur supprimé]</span> a
                         <span>{{ a.operation === "CREATE" ? ' ajouté' : a.operation === "DELETE" ? ' supprimé' :
                             'modifié'
-                        }}</span> <span>{{ typeLabels[a.targetType] }}</span> <span class="fw-bold">{{ a.targetName
+                            }}</span> <span>{{ typeLabels[a.targetType] }}</span> <span class="fw-bold">{{ a.targetName
                                 ?? a.targetId
                             }}</span>
                     </div>
@@ -166,5 +171,14 @@ const flagIcons: Record<ActionLogFlags, string> = {
 .act-date>i {
     font-size: 0.85em;
     vertical-align: baseline;
+}
+
+.light-link {
+    color: rgb(0, 0, 110);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 </style>

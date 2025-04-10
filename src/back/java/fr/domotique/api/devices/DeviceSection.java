@@ -43,7 +43,7 @@ public class DeviceSection extends Section {
         deviceRoutes.route().handler(ctx -> {
             Authenticator auth = Authenticator.get(ctx);
 
-            if (ctx.request().method() == HttpMethod.GET) {
+            if (ctx.request().method() == HttpMethod.GET || ctx.request().path().endsWith("/stats")) {
                 auth.requireAuth(Level.BEGINNER);
             } else {
                 auth.requireAuth(Level.ADVANCED);

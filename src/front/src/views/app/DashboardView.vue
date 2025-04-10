@@ -3,7 +3,8 @@
     <div class="container-lg pt-5 pb-3">
       <header class="dashboard-header" v-if="user">
         <h1>Bienvenue, {{ user.profile.firstName }} 👋</h1>
-        <p>Vous êtes connecté(e) en tant {{ user.profile.role === 'ADMIN' ? 'qu\'' : 'que ' }}<strong>{{ roleLabels[user.profile.role] }}</strong>.</p>
+        <p>Vous êtes connecté(e) en tant {{ user.profile.role === 'ADMIN' ? 'qu\'' : 'que ' }}<strong>{{
+          roleLabels[user.profile.role] }}</strong>.</p>
       </header>
 
       <div v-else>
@@ -12,12 +13,13 @@
 
       <!-- Section profil -->
       <section class="profile-card mb-4" v-if="user">
-        <h2>Votre profil</h2>
+        <h2 class="mb-4">Votre profil</h2>
         <ProfileHeader :profile="user.profile" />
-        <Button fluid label="Voir mon profil" icon="pi pi-user" @click="router.push({ name: 'profile', params: { userId: user.profile.id } })" />
+        <Button fluid label="Voir mon profil" icon="pi pi-user"
+          @click="router.push({ name: 'profile', params: { userId: user.profile.id } })" />
       </section>
 
-        
+
       <!-- Section thématiques -->
       <section class="themes-section mb-4">
         <h2 class="mb-4">Thèmes</h2>
@@ -34,7 +36,7 @@
             <p class="theme-description">Suivez vos données de santé et recevez des recommandations personnalisées</p>
             <Button label="Voir ma santé" @click.stop="router.push({ name: 'health-theme' })" />
           </div>
-          
+
           <!-- Carte Énergie -->
           <div class="theme-card energy-card" @click="router.push({ name: 'energy-theme' })">
             <div class="theme-header">
@@ -44,10 +46,11 @@
             <div class="theme-icon">
               <i class="pi pi-bolt"></i>
             </div>
-            <p class="theme-description">Analysez la consommation énergétique et optimisez l'utilisation des appareils</p>
+            <p class="theme-description">Analysez la consommation énergétique et optimisez l'utilisation des appareils
+            </p>
             <Button label="Voir la consommation d'électricité" @click.stop="router.push({ name: 'energy-theme' })" />
           </div>
-          
+
           <!-- Carte Sport -->
           <div class="theme-card sport-card" @click="router.push({ name: 'sport-theme' })">
             <div class="theme-header">
@@ -77,7 +80,7 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api'
 import { roleLabels } from '@/labels'
-import ProfileHeader from './ProfileHeader.vue'
+import ProfileHeader from '../../components/ProfileHeader.vue'
 import { useRouter } from 'vue-router'
 import ProfileDevices from '@/components/ProfileDevices.vue'
 
@@ -109,7 +112,7 @@ const searchFilter = ref('')
 const filteredObjects = computed(() => {
   return objets.value.filter(obj =>
     (obj.nom.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-     obj.description.toLowerCase().includes(searchKeyword.value.toLowerCase())) &&
+      obj.description.toLowerCase().includes(searchKeyword.value.toLowerCase())) &&
     (searchFilter.value === '' || obj.etat === searchFilter.value)
   )
 })
@@ -168,7 +171,7 @@ select {
 
 .theme-card {
   flex: 1;
-  min-width: 320px;
+  min-width: 300px;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -255,7 +258,7 @@ select {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .theme-card {
     max-width: none;
   }

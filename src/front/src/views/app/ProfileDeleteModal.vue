@@ -22,12 +22,17 @@ const auth = useAuthStore(); // To see our rights
 const userModule = useUserModule(); // To update the user credentials
 const toast = useToast(); // To show toast messages
 
+// Function to emit the profile-delete event
+const emit = defineEmits(["profile-delete"]);
+
 // True when the modal dialog is visible. Set to false to hide it.
 const visible = ref(true);
 // Validation error from the API. Each field has a list of errors.
 const err = ref<ValidationErrorResponse<any> | null>(null);
 // The promise returned by the save function. Used to disable the button while saving.
 const savePromise = ref<Promise<any>>(null);
+// True when the user has been deleted.
+const deleteDone = ref(false);
 
 // Password form fields
 const password = ref("");
@@ -41,6 +46,8 @@ const submitting = computed(() => savePromise.value != null);
 // Called when the dialog closing animation finished.
 function dialogClosed() {
     router.back();
+    if (deleteDone.value)
+        emit("profile-delete");
 }
 
 async function save() {
@@ -71,6 +78,7 @@ async function save() {
                 life: 5000
             })
             visible.value = false;
+            deleteDone.value = true;
         } else {
             // Error during update
             err.value = result;

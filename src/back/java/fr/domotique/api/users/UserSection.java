@@ -196,7 +196,7 @@ public class UserSection extends Section {
             input.gender,
             assignedRole,
             assignedRole == Role.RESIDENT ? Level.BEGINNER : Level.EXPERT,
-            0);
+            assignedRole == Role.ADMIN ? 2000 : 0);
 
         try {
             // Add the user to the database.

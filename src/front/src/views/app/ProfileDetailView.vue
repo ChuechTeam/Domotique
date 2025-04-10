@@ -10,7 +10,7 @@ import LevelBar from "@/components/LevelBar.vue";
 import { genderLabels, levelLabels, roleLabels } from "@/labels";
 import ProfileDevices from "@/components/ProfileDevices.vue";
 import { usePrefsStore } from "@/stores/prefs";
-import ProfileHeader from './ProfileHeader.vue'
+import ProfileHeader from '../../components/ProfileHeader.vue'
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -42,7 +42,6 @@ const settingsDialogOpen = ref(false);
 const prefsRefs = storeToRefs(prefs);
 
 function profileUpdated(np) {
-    console.log(profile);
     if (!isCurrentUser.value) {
         profile.value = np;
     }
@@ -78,7 +77,7 @@ const getLevelColor = (level) => {
 
         <div v-else class="profile-container">
             <!-- Profile Header -->
-            <ProfileHeader :profile="profile" />
+            <ProfileHeader :profile="profile" class="p-sm-3 p-md-5" />
 
             <!-- Profile Details -->
             <div class="devices prof-item">
@@ -123,7 +122,7 @@ const getLevelColor = (level) => {
             </div>
         </div>
         <RouterView v-slot="{ Component }">
-            <component :is="Component" @profile-update="profileUpdated" />
+            <component :is="Component" @profile-update="profileUpdated" @profile-delete="router.back()" />
         </RouterView>
     </div>
 </template>

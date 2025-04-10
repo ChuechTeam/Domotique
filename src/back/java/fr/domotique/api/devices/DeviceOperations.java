@@ -46,8 +46,8 @@ public final class DeviceOperations {
             return true;
         }
 
-        // Intermediate, Expert, caregiver, or admin; they can see this info
-        if (viewerLevel.compareTo(Level.INTERMEDIATE) >= 0 || viewerRole == Role.CAREGIVER || viewerRole == Role.ADMIN) {
+        // ADVANCED, Expert, caregiver, or admin; they can see this info
+        if (viewerLevel.compareTo(Level.ADVANCED) >= 0 || viewerRole == Role.CAREGIVER || viewerRole == Role.ADMIN) {
             return true;
         }
 
