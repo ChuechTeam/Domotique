@@ -2,42 +2,71 @@
   <div class="scrollable-page">
     <div class="container-lg pt-5 pb-3">
       <header class="dashboard-header" v-if="user">
-        <h1>Bienvenue, {{ user.prenom }} 👋</h1>
-        <p>Vous êtes connecté(e) en tant que <strong>{{ user.role }}</strong>.</p>
+        <h1>Bienvenue, {{ user.profile.firstName }} 👋</h1>
+        <p>Vous êtes connecté(e) en tant {{ user.profile.role === 'ADMIN' ? 'qu\'' : 'que ' }}<strong>{{ roleLabels[user.profile.role] }}</strong>.</p>
       </header>
 
       <div v-else>
-        <p>Erreur : utilisateur non connecté.</p>
+        <p>Erreur : utilisateur non connecté. </p>
       </div>
 
       <!-- Section profil -->
       <section class="profile-card mb-4" v-if="user">
         <h2>Votre profil</h2>
-        <ul>
-          <li><strong>Nom :</strong> {{ user.nom }}</li>
-          <li><strong>Prénom :</strong> {{ user.prenom }}</li>
-          <li><strong>Âge :</strong> {{ user.age }} ans</li>
-          <li><strong>Rôle :</strong> {{ user.role }}</li>
-        </ul>
+        <ProfileHeader :profile="user.profile" />
+        <Button fluid label="Voir mon profil" icon="pi pi-user" @click="router.push({ name: 'profile', params: { userId: user.profile.id } })" />
+      </section>
+
+        
+      <!-- Section thématiques -->
+      <section class="themes-section mb-4">
+        <h2 class="mb-4">Thèmes</h2>
+        <div class="theme-cards">
+          <!-- Carte Santé -->
+          <div class="theme-card health-card" @click="router.push({ name: 'health-theme' })">
+            <div class="theme-header">
+              <h3>Santé</h3>
+              <i class="pi pi-arrow-right"></i>
+            </div>
+            <div class="theme-icon">
+              <i class="pi pi-heart-fill"></i>
+            </div>
+            <p class="theme-description">Suivez vos données de santé et recevez des recommandations personnalisées</p>
+            <Button label="Voir ma santé" @click.stop="router.push({ name: 'health-theme' })" />
+          </div>
+          
+          <!-- Carte Énergie -->
+          <div class="theme-card energy-card" @click="router.push({ name: 'energy-theme' })">
+            <div class="theme-header">
+              <h3>Énergie</h3>
+              <i class="pi pi-arrow-right"></i>
+            </div>
+            <div class="theme-icon">
+              <i class="pi pi-bolt"></i>
+            </div>
+            <p class="theme-description">Analysez la consommation énergétique et optimisez l'utilisation des appareils</p>
+            <Button label="Voir la consommation d'électricité" @click.stop="router.push({ name: 'energy-theme' })" />
+          </div>
+          
+          <!-- Carte Sport -->
+          <div class="theme-card sport-card" @click="router.push({ name: 'sport-theme' })">
+            <div class="theme-header">
+              <h3>Sport</h3>
+              <i class="pi pi-arrow-right"></i>
+            </div>
+            <div class="theme-icon">
+              <i class="pi pi-chart-line"></i>
+            </div>
+            <p class="theme-description">Participez à des compétitions sportives et suivez votre classement</p>
+            <Button label="Voir les classements" @click.stop="router.push({ name: 'sport-theme' })" />
+          </div>
+        </div>
       </section>
 
       <!-- Section objets connectés -->
       <section class="objects-section">
-        <h2>Objets connectés</h2>
-        <input v-model="searchKeyword" placeholder="Nom ou type d’objet..." />
-        <select v-model="searchFilter">
-          <option value="">Filtrer par état</option>
-          <option>Actif</option>
-          <option>Inactif</option>
-        </select>
-
-        <div class="d-flex flex-column gap-3">
-          <div class="object-card" v-for="obj in filteredObjects" :key="obj.id">
-            <h3>{{ obj.nom }}</h3>
-            <p>{{ obj.description }}</p>
-            <p><strong>État :</strong> {{ obj.etat }}</p>
-          </div>
-        </div>
+        <h2 class="mb-4">Vos appareils</h2>
+        <ProfileDevices :user-id="user.profile.id" />
       </section>
     </div>
   </div>
@@ -47,6 +76,12 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api'
+import { roleLabels } from '@/labels'
+import ProfileHeader from './ProfileHeader.vue'
+import { useRouter } from 'vue-router'
+import ProfileDevices from '@/components/ProfileDevices.vue'
+
+const router = useRouter()
 
 // ✅ Récupérer l'utilisateur connecté depuis le store
 const auth = useAuthStore()
@@ -90,7 +125,8 @@ api.userEvents.reportHomePageVisit()
 }
 
 .profile-card,
-.objects-section {
+.objects-section,
+.themes-section {
   background: #f4f4f4;
   border-radius: 12px;
   padding: 1.5rem;
@@ -120,5 +156,108 @@ select {
   padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 8px;
+}
+
+/* Theme cards styling */
+.theme-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.theme-card {
+  flex: 1;
+  min-width: 320px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.theme-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.theme-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.theme-header h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.theme-header i {
+  font-size: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.theme-card:hover .theme-header i {
+  transform: translateX(5px);
+}
+
+.theme-icon {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+
+  & i {
+    font-size: 3rem;
+  }
+}
+
+.theme-description {
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+  line-height: 1.4;
+}
+
+/* Specific card styles */
+.health-card {
+  background: linear-gradient(145deg, rgb(236, 253, 245) 0%, rgb(200, 240, 220) 100%);
+  border: 1px solid rgb(8, 150, 80, 0.3);
+}
+
+.health-card .theme-icon i {
+  color: rgb(8, 150, 80);
+}
+
+.energy-card {
+  background: linear-gradient(145deg, rgb(255, 244, 229) 0%, rgb(255, 224, 189) 100%);
+  border: 1px solid rgb(172, 103, 14, 0.3);
+}
+
+.energy-card .theme-icon i {
+  color: rgb(172, 103, 14);
+}
+
+.sport-card {
+  background: linear-gradient(145deg, rgb(229, 237, 255) 0%, rgb(200, 210, 245) 100%);
+  border: 1px solid rgb(38, 22, 126, 0.3);
+}
+
+.sport-card .theme-icon i {
+  color: rgb(38, 22, 126);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .theme-cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .theme-card {
+    max-width: none;
+  }
 }
 </style>

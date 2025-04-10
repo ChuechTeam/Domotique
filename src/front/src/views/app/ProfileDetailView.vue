@@ -10,6 +10,7 @@ import LevelBar from "@/components/LevelBar.vue";
 import { genderLabels, levelLabels, roleLabels } from "@/labels";
 import ProfileDevices from "@/components/ProfileDevices.vue";
 import { usePrefsStore } from "@/stores/prefs";
+import ProfileHeader from './ProfileHeader.vue'
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -39,25 +40,6 @@ if (isCurrentUser.value) {
 
 const settingsDialogOpen = ref(false);
 const prefsRefs = storeToRefs(prefs);
-
-const genderIcon = computed(() => {
-    if (!profile.value) return null;
-    switch (profile.value.gender) {
-        case "MALE":
-            return "pi pi-mars";
-        case "FEMALE":
-            return "pi pi-venus";
-        case "UNDISCLOSED":
-            return "pi pi-asterisk";
-    }
-})
-
-// Generate random background color based on user ID
-function getAvatarColor(id) {
-    // Simple hash function based on user ID
-    const hash = Math.abs(id * 31) % 360;
-    return `hsl(${hash}, 70%, 70%)`;
-}
 
 function profileUpdated(np) {
     console.log(profile);
@@ -96,30 +78,7 @@ const getLevelColor = (level) => {
 
         <div v-else class="profile-container">
             <!-- Profile Header -->
-            <header class="header">
-                <Avatar :label="profile.firstName[0] + profile.lastName[0]"
-                    :style="{ 'background-color': getAvatarColor(profile.id) }" shape="circle" class="avatar"></Avatar>
-                <div class="infos">
-                    <div class="detail" style="grid-area: name;">
-                        <div class="full-name">{{ profile.firstName + ' ' + profile.lastName }}</div>
-                        <div class="tags">
-                            <Tag :value="roleLabels[profile.role]" severity="info" icon="pi pi-crown" />
-                            <Tag :value="levelLabels[profile.level]" severity="success" icon="pi pi-trophy"
-                                class="ms-2" />
-                            <Tag :value="genderLabels[profile.gender]" severity="secondary" :icon="genderIcon"
-                                class="ms-2" style="--p-tag-secondary-background: rgb(222, 222, 222)" />
-                        </div>
-                    </div>
-                    <div class="ms-auto details-actions">
-                        <Button severity="info" icon="pi pi-cog" v-if="isCurrentUser"
-                            @click="settingsDialogOpen = true" />
-                        <Button severity="danger" style="grid-area: actions;" label="Déconnexion" icon="pi pi-sign-out"
-                            @click="auth.logout" v-if="auth.userId == profile.id" class="logout" />
-                    </div>
-
-                    <LevelBar :value="profile.points" class="pe-2" style="grid-area: level;" />
-                </div>
-            </header>
+            <ProfileHeader :profile="profile" />
 
             <!-- Profile Details -->
             <div class="devices prof-item">
@@ -162,15 +121,6 @@ const getLevelColor = (level) => {
                     </template>
                 </Suspense>
             </div>
-
-            <!-- Settings dialog -->
-            <Dialog v-model:visible="settingsDialogOpen" modal header="Paramètres" style="width: min(97vw, 400px)">
-                <div class="d-flex gap-3 mb-3">
-                    <Checkbox input-id="reducedMotionCheck" v-model="prefsRefs.reducedMotion" binary size="large" />
-                    <label for="reducedMotionCheck">Réduire les animations</label>
-                </div>
-                <Button fluid label="Fermer" @click="settingsDialogOpen = false" />
-            </Dialog>
         </div>
         <RouterView v-slot="{ Component }">
             <component :is="Component" @profile-update="profileUpdated" />
@@ -179,12 +129,6 @@ const getLevelColor = (level) => {
 </template>
 
 <style scoped>
-.avatar {
-    width: 10rem;
-    height: 10rem;
-    font-size: 5rem;
-}
-
 .profile-container {
     border-radius: 16px;
     background-color: #fbfbfb;
@@ -226,11 +170,6 @@ const getLevelColor = (level) => {
     align-items: center;
 }
 
-.details-actions {
-    display: flex;
-    gap: 1rem;
-}
-
 @media (max-width: 1024px) {
     .infos {
         grid-template: "name" "level" "actions";
@@ -252,41 +191,13 @@ const getLevelColor = (level) => {
             align-self: center;
         }
     }
-}
-
-.full-name {
-    font-size: 2.5em;
-}
-
-.avatar-placeholder {
-    width: 120px;
-    height: 120px;
-    font-size: 2.5rem;
-    font-weight: 500;
-    margin: 0 auto;
-    color: #6c757d;
-    border: 2px solid #e9ecef;
-}
-
-.points-container {
-    background-color: #f8f9fa;
-    border-left: 4px solid #ffc107;
-}
-
-.card-header {
-    border-bottom: 2px solid #f8f9fa;
-}
-
-@media (max-width: 768px) {
-    .avatar-placeholder {
-        width: 100px;
-        height: 100px;
-        font-size: 2rem;
-    }
-
+    
     .actions .p-buttongroup {
         flex-direction: column;
         width: 100%;
     }
+}
+.card-header {
+    border-bottom: 2px solid #f8f9fa;
 }
 </style>
