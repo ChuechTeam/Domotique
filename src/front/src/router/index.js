@@ -1,3 +1,4 @@
+import AuthView from '@/views/AuthView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import TourTemplate from "@/views/tour/TourTemplate.vue";
 import AppTemplate from "@/views/app/AppTemplate.vue";
@@ -30,6 +31,11 @@ import AdminCodesView from '@/views/app/AdminCodesView.vue';
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
+        {
+            path: '/auth',
+            name: 'auth',
+            component: AuthView
+          },
         // --- FREE TOUR ROUTES ---
         {
             path: '/',
@@ -37,7 +43,7 @@ const router = createRouter({
             component: TourTemplate, // <-- Will host all our sub-routes in <RouterView />
             children: [
                 {
-                    path: '/',
+                    path: '',
                     name: 'home',
                     component: HomeView,
                 },
@@ -58,12 +64,12 @@ const router = createRouter({
 
         // --- LOGGED-IN ROUTES ---
         {
-            path: '/',
+            path: '/app',
             name: "app",
             component: AppTemplate, // <-- Will host all our sub-routes in <RouterView />
             children: [
                 {
-                    path: '/dashboard',
+                    path: 'dashboard',
                     name: 'dashboard',
                     component: DashboardView,
                 },
