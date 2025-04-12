@@ -20,6 +20,7 @@ const promise = ref<ReturnType<typeof api.devices.getDevices>>(null);
 const searchTimer = ref<ReturnType<typeof setTimeout>>(null);
 
 const loading = computed(() => promise.value != null);
+    
 
 function load() {
     let thisProm: any;
