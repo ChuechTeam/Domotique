@@ -69,6 +69,18 @@ Pour lancer l'application, deux choix :
 Avec ces données de base, tous les utilisateurs ont pour mot de passe "mot2passe". 
 L'administrateur a pour e-mail "admin.boss@ehpad.fr"
 
+## Configuration
+
+Les paramètres de configuration personnels sont présents
+dans le fichier `src/main/java/resources/config-dev-local.properties` :
+
+- `domotique.databaseUri`: L'URI de connexion à la base de données MySQL (obligatoire)
+- `domotique.port`: Le port sur lequel le serveur écoute (défaut : 7777)
+- `domotique.sendGridToken`: Le token SendGrid pour envoyer des e-mails (optionnel)
+- `domotique.sendGridEmail`: L'adresse e-mail SendGrid vérifiée pour envoyer des e-mails (requis si token fourni)
+- `domotique.adminCode`: Le code pour créer un compte administrateur (défaut : "retraitons")
+- `domotique.seedDatabase`: Mettre à "true" pour initialiser la base de données avec des données de test
+
 ## Que faire si je suis perdu ?
 
 Regardez le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
