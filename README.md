@@ -57,7 +57,10 @@ Le site d'appareils connectés pour les retraités en EHPAD.
 
 Puis, ouvrez le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
 
-Il ne reste plus qu'à créer votre premier compte administrateur avec le code d'invitation "retraitons"
+Il ne reste plus qu'à créer votre premier compte administrateur avec un code d'invitation :
+- "retraitons" pour créer un compte admin (configurable avec `domotique.adminCode`)
+- "AP1X86" pour créer un soignant (code par défaut dans les données de base)
+- "MWXX0L" pour créer un résident (code par défaut dans les données de base)
 
 Pour lancer l'application, deux choix : 
 - **Avec les données de base** : `./gradlew runSeed` ou `gradlew.bat runSeed` (réinitialise la base de donnée)
