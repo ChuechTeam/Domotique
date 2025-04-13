@@ -64,7 +64,7 @@ const router = createRouter({
 
         // --- LOGGED-IN ROUTES ---
         {
-            path: '/app',
+            path: '/',
             name: "app",
             component: AppTemplate, // <-- Will host all our sub-routes in <RouterView />
             children: [
