@@ -56,6 +56,8 @@ Le site d'appareils connectés pour les retraités en EHPAD.
    **IntelliJ :** Bouton Run (flèche verte) 'Run project'
 
 Puis, ouvrez le navigateur à l'URL [http://localhost:7777](http://localhost:7777) pour avoir accès au site.
+> [!TIP]
+> Si le serveur Vite ne s'est pas lancé tout seul, essayez de le lancer manuellement (`npm run dev` dans `src/front`) 
 
 Il ne reste plus qu'à créer votre premier compte administrateur avec un code d'invitation :
 - "retraitons" pour créer un compte admin (configurable avec `domotique.adminCode`)
