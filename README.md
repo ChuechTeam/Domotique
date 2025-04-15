@@ -81,6 +81,10 @@ dans le fichier `src/main/java/resources/config-dev-local.properties` :
 - `domotique.adminCode`: Le code pour créer un compte administrateur (défaut : "retraitons")
 - `domotique.seedDatabase`: Mettre à "true" pour initialiser la base de données avec des données de test
 
+> [!INFO]
+> Si aucun token SendGrid n'est donné dans la configuration, les mails seront envoyés
+> dans la console et dans les logs.
+
 ## Que faire si je suis perdu ?
 
 Regardez le fichier [LOST.md](docs/LOST.md) dans le dossier `docs/` du projet.
